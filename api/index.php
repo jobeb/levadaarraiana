@@ -1,0 +1,82 @@
+<?php
+/**
+ * Router API — Levada Arraiana
+ * Todas as peticions /api/* chegan aquí vía .htaccess
+ */
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/middleware.php';
+
+cors();
+ensure_dirs();
+
+$method = $_SERVER['REQUEST_METHOD'];
+$uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+// Normalize: remove base path to get just /api/...
+$base   = '/Levadaarraiana/api';
+if (strpos($uri, $base) === 0) {
+    $uri = substr($uri, strlen($base));
+}
+$uri = '/' . ltrim($uri, '/');
+
+$input = null;
+if (in_array($method, ['POST', 'PUT'])) {
+    $input = read_body();
+}
+
+try {
+    // Auth routes
+    if ($uri === '/login' || $uri === '/logout' || $uri === '/register') {
+        require __DIR__ . '/modules/auth.php';
+        handle_auth($uri, $method, $input);
+    }
+
+    // Map URI to module
+    $routes = [
+        '/socios'        => 'socios',
+        '/noticias'      => 'noticias',
+        '/bolos'         => 'bolos',
+        '/albums'        => 'albums',
+        '/mensaxes'      => 'mensaxes',
+        '/documentos'    => 'documentos',
+        '/actas'         => 'actas',
+        '/propostas'     => 'propostas',
+        '/votacions'     => 'votacions',
+        '/votos'         => 'votacions',
+        '/clientes'      => 'contabilidade',
+        '/proveedores'   => 'contabilidade',
+        '/facturas'      => 'contabilidade',
+        '/gastos'        => 'contabilidade',
+        '/config'        => 'configuracion',
+        '/ensaios'       => 'ensaios',
+        '/asistencia'    => 'ensaios',
+        '/instrumentos'  => 'instrumentos',
+        '/repertorio'    => 'repertorio',
+        '/setlists'      => 'setlists',
+        '/backup'        => 'backup',
+        '/youtube'       => 'youtube',
+    ];
+
+    // Find matching route (longest prefix match)
+    $matched = null;
+    $matchLen = 0;
+    foreach ($routes as $prefix => $module) {
+        if (strpos($uri, $prefix) === 0 && strlen($prefix) > $matchLen) {
+            $matched  = $module;
+            $matchLen = strlen($prefix);
+        }
+    }
+
+    if ($matched) {
+        require __DIR__ . '/modules/' . $matched . '.php';
+        $fnName = 'handle_' . $matched;
+        $fnName($method, $uri, $input);
+    }
+
+    send_json(['error' => 'Ruta non atopada: ' . $uri], 404);
+
+} catch (PDOException $e) {
+    send_json(['error' => 'Erro de base de datos', 'detail' => $e->getMessage()], 500);
+} catch (Exception $e) {
+    send_json(['error' => $e->getMessage()], 500);
+}

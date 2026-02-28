@@ -1,0 +1,204 @@
+/* ============================================================
+   Calendar — Monthly calendar widget
+   ============================================================ */
+
+.calendar {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--gap);
+    background: var(--bg-surface-2);
+    border-bottom: 1px solid var(--border);
+}
+
+.calendar-title {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.calendar-nav {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all var(--transition);
+}
+.calendar-nav:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-days {
+    border-bottom: 1px solid var(--border);
+}
+
+.calendar-day-name {
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+
+.calendar-cell {
+    min-height: 80px;
+    padding: 4px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background var(--transition);
+    position: relative;
+}
+.calendar-cell:nth-child(7n) {
+    border-right: none;
+}
+.calendar-cell:hover {
+    background: var(--bg-hover);
+}
+.calendar-cell.outside {
+    opacity: 0.3;
+    cursor: default;
+}
+.calendar-cell.today {
+    background: rgba(232, 168, 50, 0.05);
+}
+
+.cell-num {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: 50%;
+}
+.cell-num.today-num {
+    background: var(--primary);
+    color: var(--bg-dark);
+    font-weight: 700;
+}
+
+.day-event {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    margin-top: 2px;
+    background: var(--bg-dark);
+    border-radius: 3px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+.day-event:hover {
+    background: var(--bg-hover);
+}
+
+.day-event-text {
+    color: var(--text);
+}
+
+.day-event-more {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 2px;
+}
+
+/* ---- Mini calendar (for dashboard) ---- */
+.calendar-mini .calendar-cell {
+    min-height: 36px;
+    text-align: center;
+    padding: 2px;
+}
+.calendar-mini .cell-num {
+    font-size: 0.75rem;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+}
+.calendar-mini .calendar-header {
+    padding: 8px 12px;
+}
+.calendar-mini .calendar-title {
+    font-size: 0.85rem;
+}
+.calendar-mini .day-dots {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin-top: 1px;
+}
+.day-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+
+/* ---- View toggle ---- */
+.view-toggle {
+    display: inline-flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.view-toggle button {
+    padding: 6px 14px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.view-toggle button:not(:last-child) {
+    border-right: 1px solid var(--border);
+}
+.view-toggle button.active {
+    background: var(--primary);
+    color: var(--bg-dark);
+}
+.view-toggle button:hover:not(.active) {
+    background: var(--bg-hover);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .calendar-cell {
+        min-height: 50px;
+    }
+    .day-event {
+        display: none;
+    }
+    .calendar-cell.has-events::after {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 6px;
+        background: var(--primary);
+        border-radius: 50%;
+        margin: 2px auto 0;
+    }
+    .day-event-more {
+        display: none;
+    }
+}

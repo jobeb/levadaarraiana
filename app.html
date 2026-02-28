@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="gl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Levada Arraiana — Panel</title>
+    <link rel="icon" href="assets/img/favicon.jpg">
+    <link rel="stylesheet" href="assets/css/variables.css">
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/layout.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="assets/css/calendar.css">
+    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+
+<!-- Login overlay -->
+<div id="login-overlay" class="auth-overlay">
+    <div class="auth-box" id="login-box">
+        <img src="assets/img/logo-color.png" alt="Levada Arraiana" style="display:block;max-width:180px;margin:0 auto 16px">
+        <h2 data-i18n="login_titulo">Iniciar sesión</h2>
+        <div class="form-group">
+            <input type="text" id="login-user" class="form-control" data-i18n-placeholder="username" placeholder="Usuario">
+        </div>
+        <div class="form-group">
+            <div class="pw-wrap">
+                <input type="password" id="login-pass" class="form-control" data-i18n-placeholder="contrasinal" placeholder="Contrasinal">
+                <button type="button" class="pw-toggle" onclick="togglePw('login-pass', this)" title="Ver contrasinal">&#128065;</button>
+            </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="onLogin()" data-i18n="entrar">Entrar</button>
+        <button class="btn btn-secondary" style="width:100%" onclick="showRegister()" data-i18n="rexistro">Rexistro</button>
+        <div id="login-error" class="auth-error"></div>
+        <div class="lang-selector" style="justify-content:center;margin-top:16px">
+            <button data-lang="gl" class="active">GL</button>
+            <button data-lang="es">ES</button>
+            <button data-lang="pt">PT</button>
+            <button data-lang="en">EN</button>
+        </div>
+    </div>
+    <div class="auth-box hidden" id="register-box">
+        <h2 data-i18n="rexistro_titulo">Crear conta</h2>
+        <div class="form-group">
+            <input type="text" id="reg-user" class="form-control" data-i18n-placeholder="username" placeholder="Usuario">
+        </div>
+        <div class="form-group">
+            <input type="text" id="reg-nome" class="form-control" data-i18n-placeholder="nome_completo" placeholder="Nome completo">
+        </div>
+        <div class="form-group">
+            <div class="pw-wrap">
+                <input type="password" id="reg-pass" class="form-control" data-i18n-placeholder="contrasinal" placeholder="Contrasinal">
+                <button type="button" class="pw-toggle" onclick="togglePw('reg-pass', this)" title="Ver contrasinal">&#128065;</button>
+            </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="onRegister()" data-i18n="rexistro">Rexistro</button>
+        <button class="btn btn-secondary" style="width:100%" onclick="showLogin()" data-i18n="voltar">Voltar</button>
+        <div id="reg-error" class="auth-error"></div>
+        <div id="reg-success" class="auth-success"></div>
+    </div>
+</div>
+
+<!-- Hamburger (mobile only, outside header) -->
+<button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" style="display:none">&#9776;</button>
+
+<!-- Header (compact top-right toolbar) -->
+<header class="app-header" id="app-header" style="display:none">
+    <div class="lang-selector">
+        <button data-lang="gl" class="active">GL</button>
+        <button data-lang="es">ES</button>
+        <button data-lang="pt">PT</button>
+        <button data-lang="en">EN</button>
+    </div>
+    <!-- Notification bell -->
+    <button class="header-bell" id="header-bell" onclick="bellClick()" title="Notificacións">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="bell-badge" id="bell-badge" style="display:none">0</span>
+    </button>
+    <!-- Profile -->
+    <div class="header-profile" id="header-profile">
+        <button class="header-profile-btn" onclick="toggleProfileMenu()">
+            <img id="header-avatar" class="avatar-sm" src="" alt="" style="display:none">
+            <span id="header-username"></span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="profile-dropdown" id="profile-dropdown">
+            <button class="profile-dropdown-item" onclick="openProfileModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span data-i18n="meu_perfil">O meu perfil</span>
+            </button>
+            <div class="profile-dropdown-sep"></div>
+            <button class="profile-dropdown-item profile-dropdown-danger" onclick="doLogout()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="saír">Sa&iacute;r</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- Sidebar -->
+<aside class="app-sidebar" id="app-sidebar" style="display:none">
+    <!-- Logo -->
+    <a href="index.html" class="sidebar-logo" title="Ir á páxina principal">
+        <img src="assets/img/logo-white.png" alt="Levada Arraiana">
+    </a>
+    <!-- Xeral -->
+    <div class="sidebar-section" data-i18n="sec_xeral">Xeral</div>
+    <button class="sidebar-link active" data-section="dashboard" onclick="Router.navigate('dashboard')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span data-i18n="dashboard">Inicio</span>
+    </button>
+    <button class="sidebar-link" data-section="socios" onclick="Router.navigate('socios')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span data-i18n="socios">Socios</span>
+    </button>
+    <button class="sidebar-link" data-section="noticias" onclick="Router.navigate('noticias')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span><span data-i18n="noticias">Noticias</span>
+    </button>
+    <button class="sidebar-link" data-section="bolos" onclick="Router.navigate('bolos')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span><span data-i18n="bolos">Bolos</span>
+    </button>
+    <button class="sidebar-link" data-section="galeria" onclick="Router.navigate('galeria')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span><span data-i18n="galeria">Galería</span>
+    </button>
+
+    <!-- Comunicación -->
+    <div class="sidebar-section" data-i18n="sec_comunicacion">Comunicación</div>
+    <button class="sidebar-link" data-section="mensaxeria" onclick="Router.navigate('mensaxeria')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span data-i18n="mensaxeria">Mensaxería</span>
+    </button>
+    <button class="sidebar-link" data-section="propostas" onclick="Router.navigate('propostas')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span><span data-i18n="propostas">Propostas</span>
+    </button>
+
+    <!-- Administración -->
+    <div class="sidebar-section" data-i18n="sec_administracion">Administración</div>
+    <button class="sidebar-link" data-section="actas" onclick="Router.navigate('actas')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span><span data-i18n="actas">Actas</span>
+    </button>
+    <button class="sidebar-link" data-section="documentos" onclick="Router.navigate('documentos')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span data-i18n="documentos">Documentos</span>
+    </button>
+    <button class="sidebar-link" data-section="votacions" onclick="Router.navigate('votacions')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span data-i18n="votacions">Votacións</span>
+    </button>
+
+    <!-- Finanzas -->
+    <div class="sidebar-section" data-i18n="sec_finanzas">Finanzas</div>
+    <button class="sidebar-link" data-section="contabilidade" onclick="Router.navigate('contabilidade')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span data-i18n="contabilidade">Contabilidade</span>
+    </button>
+
+    <!-- Música -->
+    <div class="sidebar-section" data-i18n="sec_musica">Música</div>
+    <button class="sidebar-link" data-section="ensaios" onclick="Router.navigate('ensaios')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span data-i18n="ensaios">Ensaios</span>
+    </button>
+    <button class="sidebar-link" data-section="instrumentos" onclick="Router.navigate('instrumentos')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><span data-i18n="instrumentos">Instrumentos</span>
+    </button>
+    <button class="sidebar-link" data-section="repertorio" onclick="Router.navigate('repertorio')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span data-i18n="repertorio">Repertorio</span>
+    </button>
+
+    <!-- Config (admin only) -->
+    <div class="sidebar-section admin-only" data-i18n="configuracion">Configuración</div>
+    <button class="sidebar-link admin-only" data-section="configuracion" onclick="Router.navigate('configuracion')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span data-i18n="configuracion">Configuración</span>
+    </button>
+</aside>
+
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- Main content -->
+<main class="app-main" id="app-main" style="display:none">
+
+    <!-- Dashboard -->
+    <div class="section active" id="sec-dashboard">
+        <div class="dashboard-welcome">
+            <h2 id="welcome-msg"></h2>
+            <p data-i18n="subtitulo_landing">Batucada de Estás, Tomiño</p>
+        </div>
+        <div class="stats-row" id="dashboard-stats"></div>
+        <div class="dashboard-grid">
+            <div class="dashboard-card" id="dashboard-calendar"></div>
+            <div class="dashboard-card" id="dashboard-timeline">
+                <h3 class="dashboard-card-title" data-i18n="proximos_eventos">Próximos eventos</h3>
+                <div id="dashboard-timeline-list"></div>
+            </div>
+            <div class="dashboard-card" id="dashboard-activity">
+                <h3 class="dashboard-card-title" data-i18n="actividade_recente">Actividade recente</h3>
+                <div id="dashboard-activity-list"></div>
+            </div>
+            <div class="dashboard-card admin-only" id="dashboard-actions">
+                <h3 class="dashboard-card-title" data-i18n="accions_rapidas">Accións rápidas</h3>
+                <div id="dashboard-actions-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socios -->
+    <div class="section" id="sec-socios">
+        <div class="section-header">
+            <h2 data-i18n="socios">Socios</h2>
+            <div class="flex gap-sm">
+                <button class="btn btn-sm btn-secondary admin-only" onclick="sociosExport()" data-i18n="exportar_csv">Exportar CSV</button>
+                <button class="btn btn-primary admin-only" onclick="sociosModal()">+ <span data-i18n="socio">Socio/a</span></button>
+            </div>
+        </div>
+        <div class="search-bar">
+            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="socios-search" oninput="sociosRender()">
+        </div>
+        <div class="table-wrap"><table id="socios-table"><thead><tr>
+            <th></th><th data-i18n="username" class="sortable" data-sort="username">Usuario</th><th data-i18n="nome_completo" class="sortable" data-sort="nome_completo">Nome</th>
+            <th data-i18n="instrumento" class="sortable" data-sort="instrumento">Instrumento</th><th data-i18n="rol">Rol</th>
+            <th data-i18n="estado">Estado</th><th data-i18n="accions">Accións</th>
+        </tr></thead><tbody></tbody></table></div>
+        <div id="socios-pagination"></div>
+    </div>
+
+    <!-- Noticias -->
+    <div class="section" id="sec-noticias">
+        <div class="section-header">
+            <h2 data-i18n="noticias">Noticias</h2>
+            <button class="btn btn-primary admin-only" onclick="noticiasModal()">+ <span data-i18n="nova_noticia">Nova noticia</span></button>
+        </div>
+        <div class="card-grid" id="noticias-grid"></div>
+    </div>
+
+    <!-- Bolos -->
+    <div class="section" id="sec-bolos">
+        <div class="section-header">
+            <h2 data-i18n="bolos">Bolos</h2>
+            <div class="flex items-center gap-sm">
+                <div class="view-toggle" id="bolos-view-toggle">
+                    <button class="active" onclick="bolosSetView('list')" data-i18n="vista_lista">Lista</button>
+                    <button onclick="bolosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
+                </div>
+                <button class="btn btn-primary admin-only" onclick="bolosModal()">+ <span data-i18n="novo_bolo">Novo bolo</span></button>
+            </div>
+        </div>
+        <div class="card-grid" id="bolos-grid"></div>
+        <div id="bolos-calendar" style="display:none"></div>
+    </div>
+
+    <!-- Galería -->
+    <div class="section" id="sec-galeria">
+        <div class="section-header">
+            <h2 data-i18n="galeria">Galería</h2>
+            <button class="btn btn-primary admin-only" onclick="galeriaModal()">+ <span data-i18n="novo_album">Novo álbum</span></button>
+        </div>
+        <div class="card-grid" id="galeria-grid"></div>
+    </div>
+
+    <!-- Mensaxería -->
+    <div class="section" id="sec-mensaxeria">
+        <div class="section-header">
+            <h2 data-i18n="mensaxeria">Mensaxería</h2>
+            <button class="btn btn-primary" onclick="mensaxeriaModal()">+ <span data-i18n="nova_mensaxe">Nova mensaxe</span></button>
+        </div>
+        <div class="search-bar">
+            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="mensaxeria-search" oninput="mensaxeriaRender()">
+        </div>
+        <div id="mensaxes-list"></div>
+    </div>
+
+
+    <!-- Propostas -->
+    <div class="section" id="sec-propostas">
+        <div class="section-header">
+            <h2 data-i18n="propostas">Propostas</h2>
+            <button class="btn btn-primary" onclick="propostasModal()">+ <span data-i18n="nova_proposta">Nova proposta</span></button>
+        </div>
+        <div class="card-grid" id="propostas-grid"></div>
+    </div>
+
+    <!-- Actas -->
+    <div class="section" id="sec-actas">
+        <div class="section-header">
+            <h2 data-i18n="actas">Actas</h2>
+            <button class="btn btn-primary admin-only" onclick="actasModal()">+ <span data-i18n="nova_acta">Nova acta</span></button>
+        </div>
+        <div class="card-grid" id="actas-grid"></div>
+    </div>
+
+    <!-- Documentos -->
+    <div class="section" id="sec-documentos">
+        <div class="section-header">
+            <h2 data-i18n="documentos">Documentos</h2>
+            <button class="btn btn-primary admin-only" onclick="documentosModal()">+ <span data-i18n="novo_documento">Novo documento</span></button>
+        </div>
+        <div class="search-bar">
+            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="documentos-search" oninput="documentosRender()">
+        </div>
+        <div class="table-wrap"><table id="documentos-table"><thead><tr>
+            <th data-i18n="titulo">Título</th><th data-i18n="visibilidade">Visibilidade</th>
+            <th data-i18n="data">Data</th><th data-i18n="accions">Accións</th>
+        </tr></thead><tbody></tbody></table></div>
+        <div id="documentos-pagination"></div>
+    </div>
+
+    <!-- Votacións -->
+    <div class="section" id="sec-votacions">
+        <div class="section-header">
+            <h2 data-i18n="votacions">Votacións</h2>
+            <button class="btn btn-primary admin-only" onclick="votacionsModal()">+ <span data-i18n="nova_votacion">Nova votación</span></button>
+        </div>
+        <div class="card-grid" id="votacions-grid"></div>
+    </div>
+
+    <!-- Contabilidade -->
+    <div class="section" id="sec-contabilidade">
+        <div class="section-header">
+            <h2 data-i18n="contabilidade">Contabilidade</h2>
+            <div class="flex gap-sm admin-only">
+                <button class="btn btn-sm btn-secondary" onclick="facturasExport()">CSV <span data-i18n="factura">Facturas</span></button>
+                <button class="btn btn-sm btn-secondary" onclick="gastosExport()">CSV <span data-i18n="gastos_label">Gastos</span></button>
+            </div>
+        </div>
+        <div class="finance-summary" id="finance-summary"></div>
+        <div class="tabs" id="conta-tabs">
+            <button class="tab-btn active" data-tab="facturas" onclick="contaTab('facturas')" data-i18n="factura">Facturas</button>
+            <button class="tab-btn" data-tab="gastos" onclick="contaTab('gastos')" data-i18n="gastos_label">Gastos</button>
+            <button class="tab-btn" data-tab="clientes" onclick="contaTab('clientes')" data-i18n="cliente">Clientes</button>
+            <button class="tab-btn" data-tab="proveedores" onclick="contaTab('proveedores')" data-i18n="proveedor">Provedores</button>
+            <button class="tab-btn" data-tab="resumo" onclick="contaTab('resumo')" data-i18n="resumo">Resumo</button>
+        </div>
+        <div id="conta-content"></div>
+    </div>
+
+
+    <!-- Ensaios -->
+    <div class="section" id="sec-ensaios">
+        <div class="section-header">
+            <h2 data-i18n="ensaios">Ensaios</h2>
+            <div class="flex items-center gap-sm">
+                <button class="btn btn-sm btn-secondary admin-only" onclick="ensaiosAsistenciaResumo()" data-i18n="resumo_asistencia">Resumo asistencia</button>
+                <button class="btn btn-sm btn-secondary admin-only" onclick="ensaiosExportAsistencia()" data-i18n="exportar_csv">Exportar CSV</button>
+                <div class="view-toggle" id="ensaios-view-toggle">
+                    <button class="active" onclick="ensaiosSetView('list')" data-i18n="vista_lista">Lista</button>
+                    <button onclick="ensaiosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
+                </div>
+                <button class="btn btn-primary admin-only" onclick="ensaiosModal()">+ <span data-i18n="novo_ensaio">Novo ensaio</span></button>
+            </div>
+        </div>
+        <div class="card-grid" id="ensaios-grid"></div>
+        <div id="ensaios-calendar" style="display:none"></div>
+    </div>
+
+    <!-- Instrumentos -->
+    <div class="section" id="sec-instrumentos">
+        <div class="section-header">
+            <h2 data-i18n="instrumentos">Instrumentos</h2>
+            <button class="btn btn-primary admin-only" onclick="instrumentosModal()">+ <span data-i18n="novo_instrumento">Novo instrumento</span></button>
+        </div>
+        <div class="table-wrap"><table id="instrumentos-table"><thead><tr>
+            <th></th><th data-i18n="nome">Nome</th><th data-i18n="tipo">Tipo</th>
+            <th data-i18n="estado">Estado</th><th data-i18n="asignado_a">Asignado a</th>
+            <th data-i18n="accions">Accións</th>
+        </tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- Repertorio -->
+    <div class="section" id="sec-repertorio">
+        <div class="section-header">
+            <h2 data-i18n="repertorio">Repertorio</h2>
+            <div>
+                <button class="btn btn-primary admin-only" id="btn-novo-ritmo" onclick="repertorioModal()">+ <span data-i18n="novo_ritmo">Novo ritmo</span></button>
+                <button class="btn btn-primary admin-only" id="btn-nova-setlist" onclick="setlistModal()" style="display:none">+ <span data-i18n="nova_setlist">Nova setlist</span></button>
+            </div>
+        </div>
+        <div class="tabs" id="repertorio-tabs">
+            <button class="tab-btn active" onclick="repertorioTab('ritmos')" data-i18n="repertorio">Repertorio</button>
+            <button class="tab-btn" onclick="repertorioTab('setlists')" data-i18n="setlists">Setlists</button>
+        </div>
+        <div id="repertorio-tab-ritmos">
+            <div class="card-grid" id="repertorio-grid"></div>
+        </div>
+        <div id="repertorio-tab-setlists" style="display:none">
+            <div class="card-grid" id="setlists-grid"></div>
+        </div>
+    </div>
+
+    <!-- Configuración -->
+    <div class="section admin-only" id="sec-configuracion">
+        <div class="section-header">
+            <h2 data-i18n="configuracion">Configuración</h2>
+        </div>
+        <div id="config-form"></div>
+    </div>
+</main>
+
+<!-- Modal container (reusable) -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal-box">
+        <div class="modal-header">
+            <h3 id="modal-title"></h3>
+            <button class="modal-close" onclick="hideModal('modal-overlay')">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-footer" id="modal-footer"></div>
+    </div>
+</div>
+
+<!-- Confirm overlay (for themed confirmAction) -->
+<div class="modal-overlay" id="confirm-overlay">
+    <div class="modal confirm-box" style="max-width:400px"></div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <button class="lightbox-close" onclick="galeriaCloseLightbox()">&times;</button>
+    <button class="lightbox-nav lightbox-prev" onclick="galeriaLightboxNav(-1)">&#10094;</button>
+    <img id="lightbox-img" src="" alt="">
+    <video id="lightbox-video" controls style="display:none;max-width:90vw;max-height:90vh"></video>
+    <iframe id="lightbox-youtube" style="display:none;width:80vw;height:70vh;border:none" allowfullscreen></iframe>
+    <button class="lightbox-nav lightbox-next" onclick="galeriaLightboxNav(1)">&#10095;</button>
+    <div class="lightbox-caption" id="lightbox-caption"></div>
+    <div class="lightbox-counter" id="lightbox-counter"></div>
+</div>
+
+<!-- Scripts -->
+<script src="assets/js/config.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/utils.js"></script>
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/router.js"></script>
+<script src="assets/js/components/modal-confirm.js"></script>
+<script src="assets/js/components/pagination.js"></script>
+<script src="assets/js/components/calendar.js"></script>
+<script src="assets/js/components/charts.js"></script>
+<script src="assets/js/components/export.js"></script>
+<script src="assets/js/modules/socios.js"></script>
+<script src="assets/js/modules/noticias.js"></script>
+<script src="assets/js/modules/bolos.js"></script>
+<script src="assets/js/modules/galeria.js"></script>
+<script src="assets/js/modules/mensaxeria.js"></script>
+<script src="assets/js/modules/propostas.js"></script>
+<script src="assets/js/modules/actas.js"></script>
+<script src="assets/js/modules/documentos.js"></script>
+<script src="assets/js/modules/votacions.js"></script>
+<script src="assets/js/modules/contabilidade.js"></script>
+<script src="assets/js/modules/ensaios.js"></script>
+<script src="assets/js/modules/instrumentos.js"></script>
+<script src="assets/js/modules/repertorio.js"></script>
+<script src="assets/js/modules/configuracion.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

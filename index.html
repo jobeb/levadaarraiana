@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="gl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Levada Arraiana — Batucada de Estás, Tomiño</title>
+    <link rel="icon" href="assets/img/favicon.jpg">
+    <link rel="stylesheet" href="assets/css/variables.css">
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="assets/css/public.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+
+<!-- Public nav -->
+<nav class="pub-nav" id="pub-nav">
+    <div class="logo">
+        <img src="assets/img/logo-white.png" alt="Levada Arraiana" style="height:40px">
+    </div>
+    <button class="pub-nav-toggle" onclick="document.querySelector('.pub-nav-links').classList.toggle('open')">&#9776;</button>
+    <div class="pub-nav-links">
+        <a href="#noticias-pub" data-i18n="noticias">Noticias</a>
+        <a href="#bolos-pub" data-i18n="bolos">Bolos</a>
+        <a href="#galeria-pub" data-i18n="galeria">Galería</a>
+        <a href="#sobre-nos" data-i18n="sobre_nos_landing">Sobre nós</a>
+        <a href="#" class="btn-outline" onclick="showOverlay('login');return false" data-i18n="acceder">Acceder</a>
+        <a href="#" class="btn btn-primary btn-sm" onclick="showOverlay('register');return false" data-i18n="rexistro">Rexistro</a>
+        <div class="lang-selector">
+            <button data-lang="gl" class="active">GL</button>
+            <button data-lang="es">ES</button>
+            <button data-lang="pt">PT</button>
+            <button data-lang="en">EN</button>
+        </div>
+    </div>
+</nav>
+
+<!-- Login overlay -->
+<div id="overlay-login" class="overlay" onclick="if(event.target===this)hideOverlays()">
+    <div class="overlay-card">
+        <button class="overlay-close" onclick="hideOverlays()">&times;</button>
+        <h2 data-i18n="login_titulo">Iniciar sesión</h2>
+        <form class="overlay-form" onsubmit="onLoginSubmit(event)">
+            <div class="form-group">
+                <label data-i18n="username">Usuario</label>
+                <input type="text" id="login-username" class="form-control" autocomplete="username" required>
+            </div>
+            <div class="form-group">
+                <label data-i18n="contrasinal">Contrasinal</label>
+                <div class="pw-wrap">
+                    <input type="password" id="login-password" class="form-control" autocomplete="current-password" required>
+                    <button type="button" class="pw-toggle" onclick="togglePw('login-password', this)">&#128065;</button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" data-i18n="acceder">Acceder</button>
+            <div id="login-error" class="overlay-error"></div>
+        </form>
+        <div class="overlay-footer">
+            <span data-i18n="non_tes_conta">Non tes conta?</span>
+            <a onclick="showOverlay('register')" data-i18n="rexistrarse">Rexistrarse</a>
+        </div>
+    </div>
+</div>
+
+<!-- Register overlay -->
+<div id="overlay-register" class="overlay" onclick="if(event.target===this)hideOverlays()">
+    <div class="overlay-card">
+        <button class="overlay-close" onclick="hideOverlays()">&times;</button>
+        <h2 data-i18n="rexistro_titulo">Crear conta</h2>
+        <form class="overlay-form" onsubmit="onRegisterSubmit(event)">
+            <div class="form-group">
+                <label data-i18n="username">Usuario</label>
+                <input type="text" id="reg-username" class="form-control" autocomplete="username" required>
+            </div>
+            <div class="form-group">
+                <label data-i18n="nome_completo">Nome completo</label>
+                <input type="text" id="reg-nome" class="form-control" autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label data-i18n="email">Email</label>
+                <input type="email" id="reg-email" class="form-control" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label data-i18n="telefono">Teléfono</label>
+                <input type="tel" id="reg-telefono" class="form-control" autocomplete="tel">
+            </div>
+            <div class="form-group">
+                <label data-i18n="instrumento">Instrumento</label>
+                <input type="text" id="reg-instrumento" class="form-control" placeholder="Surdo, Caixa, Repinique...">
+            </div>
+            <div class="form-group">
+                <label data-i18n="contrasinal">Contrasinal</label>
+                <div class="pw-wrap">
+                    <input type="password" id="reg-password" class="form-control" autocomplete="new-password" required>
+                    <button type="button" class="pw-toggle" onclick="togglePw('reg-password', this)">&#128065;</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label data-i18n="repetir_contrasinal">Repetir contrasinal</label>
+                <div class="pw-wrap">
+                    <input type="password" id="reg-password2" class="form-control" autocomplete="new-password" required>
+                    <button type="button" class="pw-toggle" onclick="togglePw('reg-password2', this)">&#128065;</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label data-i18n="foto_perfil">Foto de perfil</label>
+                <div class="foto-row">
+                    <img id="reg-foto-preview" class="foto-preview" alt="">
+                    <input type="file" id="reg-foto" class="form-control" accept="image/*" onchange="previewRegFoto(this)">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" data-i18n="rexistrarse">Rexistrarse</button>
+            <div id="reg-error" class="overlay-error"></div>
+            <div id="reg-success" class="overlay-success"></div>
+        </form>
+        <div class="overlay-footer">
+            <span data-i18n="xa_tes_conta">Xa tes conta?</span>
+            <a onclick="showOverlay('login')" data-i18n="iniciar_sesion">Iniciar sesión</a>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox" onclick="if(event.target===this)closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <button class="lightbox-prev" onclick="lightboxNav(-1)">&#10094;</button>
+    <img id="lightbox-img" src="" alt="">
+    <video id="lightbox-video" controls style="display:none;max-width:90vw;max-height:85vh"></video>
+    <iframe id="lightbox-youtube" style="display:none;width:80vw;height:70vh;border:none" allowfullscreen></iframe>
+    <button class="lightbox-next" onclick="lightboxNav(1)">&#10095;</button>
+</div>
+
+<!-- Content -->
+<div id="pub-content">
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <img src="assets/img/logo-color.png" class="hero-logo" alt="Levada Arraiana">
+            <h1 data-i18n="benvidos">Benvidos á Levada Arraiana</h1>
+            <p data-i18n="subtitulo_landing">Batucada de Estás, Tomiño</p>
+            <a href="#" class="btn btn-primary" onclick="showOverlay('login');return false" data-i18n="acceder">Acceder</a>
+        </div>
+    </section>
+
+    <!-- Noticias -->
+    <section class="pub-section" id="noticias-pub">
+        <h2 data-i18n="ultimas_noticias">Últimas noticias</h2>
+        <div id="pub-noticias-grid" class="pub-card-grid"></div>
+    </section>
+
+    <!-- Bolos -->
+    <section class="pub-section" id="bolos-pub">
+        <h2 data-i18n="proximos_bolos">Próximos bolos</h2>
+        <div id="pub-bolos-grid" class="pub-card-grid"></div>
+    </section>
+
+    <!-- Galería -->
+    <section class="pub-section" id="galeria-pub">
+        <h2 data-i18n="galeria_fotos">Galería de fotos</h2>
+        <div id="pub-galeria-grid" class="pub-card-grid"></div>
+    </section>
+
+    <!-- Sobre nos -->
+    <section class="pub-section" id="sobre-nos">
+        <h2 data-i18n="sobre_nos_landing">Sobre nós</h2>
+        <div id="pub-sobre-nos" class="about-content"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="pub-footer">
+        <div class="pub-footer-grid">
+            <div class="pub-footer-col">
+                <img src="assets/img/logo-white.png" alt="Levada Arraiana" style="height:30px;margin-bottom:8px;display:block">
+                <h4>Levada Arraiana</h4>
+                <p>Batucada de Estás, Tomiño (Galicia)</p>
+            </div>
+            <div class="pub-footer-col">
+                <h4 data-i18n="noticias">Noticias</h4>
+                <a href="#noticias-pub" data-i18n="ultimas_noticias">Últimas noticias</a><br>
+                <a href="#bolos-pub" data-i18n="proximos_bolos">Próximos bolos</a><br>
+                <a href="#galeria-pub" data-i18n="galeria_fotos">Galería de fotos</a>
+            </div>
+            <div class="pub-footer-col">
+                <h4 data-i18n="acceder">Acceder</h4>
+                <a href="#" onclick="showOverlay('login');return false" data-i18n="iniciar_sesion">Iniciar sesión</a><br>
+                <a href="#" onclick="showOverlay('register');return false" data-i18n="rexistrarse">Rexistrarse</a>
+            </div>
+        </div>
+        <div class="pub-footer-bottom">
+            &copy; 2026 Levada Arraiana — Estás, Tomiño (Galicia)
+        </div>
+    </footer>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/utils.js"></script>
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/public.js"></script>
+<script>
+    // ---- Password toggle ----
+    function togglePw(inputId, btn) {
+        const inp = document.getElementById(inputId);
+        if (inp.type === 'password') {
+            inp.type = 'text';
+            btn.innerHTML = '&#128064;';
+        } else {
+            inp.type = 'password';
+            btn.innerHTML = '&#128065;';
+        }
+    }
+
+    // ---- Overlays ----
+    function showOverlay(which) {
+        hideOverlays();
+        const el = document.getElementById('overlay-' + which);
+        if (el) el.classList.add('show');
+    }
+    function hideOverlays() {
+        document.querySelectorAll('.overlay').forEach(o => o.classList.remove('show'));
+    }
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') hideOverlays();
+    });
+
+    // ---- Login ----
+    async function onLoginSubmit(e) {
+        e.preventDefault();
+        const errEl = document.getElementById('login-error');
+        errEl.style.display = 'none';
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+        if (!username || !password) return;
+        try {
+            await doLogin(username, password);
+            window.location.href = 'app.html';
+        } catch (err) {
+            errEl.textContent = err.message || t('erro');
+            errEl.style.display = 'block';
+        }
+    }
+
+    // ---- Register ----
+    let regFotoData = null;
+    function previewRegFoto(input) {
+        const preview = document.getElementById('reg-foto-preview');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                regFotoData = e.target.result.split(',')[1];
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function onRegisterSubmit(e) {
+        e.preventDefault();
+        const errEl = document.getElementById('reg-error');
+        const okEl = document.getElementById('reg-success');
+        errEl.style.display = 'none';
+        okEl.style.display = 'none';
+
+        const pw1 = document.getElementById('reg-password').value;
+        const pw2 = document.getElementById('reg-password2').value;
+        if (pw1 !== pw2) {
+            errEl.textContent = t('contrasinais_non_coinciden');
+            errEl.style.display = 'block';
+            return;
+        }
+
+        const data = {
+            username: document.getElementById('reg-username').value.trim(),
+            password: pw1,
+            nome_completo: document.getElementById('reg-nome').value.trim(),
+            email: document.getElementById('reg-email').value.trim(),
+            telefono: document.getElementById('reg-telefono').value.trim(),
+            instrumento: document.getElementById('reg-instrumento').value.trim(),
+        };
+        if (regFotoData) {
+            data.foto_data = regFotoData;
+            const fileInput = document.getElementById('reg-foto');
+            const ext = fileInput.files[0]?.name.split('.').pop() || 'jpg';
+            data.foto_ext = ext;
+        }
+
+        try {
+            await doRegister(data);
+            okEl.textContent = t('rexistro_ok');
+            okEl.style.display = 'block';
+            e.target.reset();
+            document.getElementById('reg-foto-preview').style.display = 'none';
+            regFotoData = null;
+        } catch (err) {
+            errEl.textContent = err.message || t('erro');
+            errEl.style.display = 'block';
+        }
+    }
+
+    // ---- Lightbox ----
+    let lightboxImages = [];
+    let lightboxIndex = 0;
+
+    function _isVideo(src) { return /\.(mp4|webm|ogg)$/i.test(src); }
+    function _isYoutubeUrl(src) { return src && src.indexOf('youtube.com/embed/') !== -1; }
+    function _showLightboxMedia() {
+        var src = lightboxImages[lightboxIndex];
+        var img = document.getElementById('lightbox-img');
+        var vid = document.getElementById('lightbox-video');
+        var ytIframe = document.getElementById('lightbox-youtube');
+        if (_isYoutubeUrl(src)) {
+            img.style.display = 'none';
+            vid.pause(); vid.style.display = 'none'; vid.removeAttribute('src');
+            if (ytIframe) { ytIframe.src = src + '?autoplay=1'; ytIframe.style.display = ''; }
+        } else if (_isVideo(src)) {
+            img.style.display = 'none';
+            if (ytIframe) { ytIframe.removeAttribute('src'); ytIframe.style.display = 'none'; }
+            vid.src = src;
+            vid.style.display = '';
+        } else {
+            vid.pause(); vid.style.display = 'none'; vid.removeAttribute('src');
+            if (ytIframe) { ytIframe.removeAttribute('src'); ytIframe.style.display = 'none'; }
+            img.src = src;
+            img.style.display = '';
+        }
+    }
+    function openLightbox(images, index) {
+        lightboxImages = images;
+        lightboxIndex = index || 0;
+        _showLightboxMedia();
+        document.getElementById('lightbox').classList.add('show');
+    }
+    function closeLightbox() {
+        var vid = document.getElementById('lightbox-video');
+        var ytIframe = document.getElementById('lightbox-youtube');
+        if (vid) { vid.pause(); vid.removeAttribute('src'); vid.style.display = 'none'; }
+        if (ytIframe) { ytIframe.removeAttribute('src'); ytIframe.style.display = 'none'; }
+        document.getElementById('lightbox').classList.remove('show');
+    }
+    function lightboxNav(dir) {
+        lightboxIndex = (lightboxIndex + dir + lightboxImages.length) % lightboxImages.length;
+        _showLightboxMedia();
+    }
+    document.addEventListener('keydown', e => {
+        if (!document.getElementById('lightbox').classList.contains('show')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') lightboxNav(-1);
+        if (e.key === 'ArrowRight') lightboxNav(1);
+    });
+
+    // ---- Init ----
+    (function init() {
+        initLangSelector();
+        applyLang(AppState.lang);
+        loadPublicContent();
+    })();
+</script>
+</body>
+</html>

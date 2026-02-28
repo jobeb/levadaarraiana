@@ -1,0 +1,64 @@
+/* ============================================================
+   Variables — Tema Levada Arraiana
+   Paleta: batucada/percusión brasileña, tema oscuro
+   ============================================================ */
+:root {
+    /* Base */
+    --bg-dark:       #1a1520;
+    --bg-surface:    #2a2235;
+    --bg-surface-2:  #342b40;
+    --bg-hover:      #3d3350;
+
+    /* Primario: ámbar dorado */
+    --primary:       #e8a832;
+    --primary-hover: #f0b840;
+    --primary-dim:   rgba(232, 168, 50, 0.15);
+
+    /* Secundario: teal/turquesa (banda decorativa do logo) */
+    --secondary:     #2bb5a0;
+    --secondary-hover:#34cdb8;
+
+    /* Acentos */
+    --accent-magenta: #b5287a;
+    --accent-blue:    #4a7db5;
+    --success:       #4caf50;
+    --warning:       #ff9800;
+    --danger:        #ef4444;
+    --info:          #42a5f5;
+
+    /* Texto */
+    --text:          #f0ece4;
+    --text-dim:      #a09aac;
+    --text-muted:    #6d6580;
+
+    /* Bordes */
+    --border:        #3d3350;
+    --border-light:  #4a4060;
+
+    /* Radios */
+    --radius:        8px;
+    --radius-lg:     12px;
+    --radius-sm:     4px;
+
+    /* Sombras */
+    --shadow:        0 2px 8px rgba(0,0,0,0.3);
+    --shadow-lg:     0 8px 32px rgba(0,0,0,0.4);
+
+    /* Espaciado */
+    --gap:           16px;
+    --gap-sm:        8px;
+    --gap-lg:        24px;
+    --gap-xl:        32px;
+
+    /* Sidebar */
+    --sidebar-w:     260px;
+
+    /* Transiciones */
+    --transition:    0.2s ease;
+
+    /* Z-index */
+    --z-sidebar:     100;
+    --z-header:      200;
+    --z-modal:       1000;
+    --z-toast:       2000;
+}

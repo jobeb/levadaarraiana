@@ -1,0 +1,139 @@
+/* ============================================================
+   Responsive — Media queries
+   ============================================================ */
+
+/* ---- Tablet (< 1024px) ---- */
+@media (max-width: 1024px) {
+    .app-sidebar {
+        transform: translateX(-100%);
+    }
+    .app-sidebar.open {
+        transform: translateX(0);
+    }
+    .sidebar-overlay.show {
+        display: block;
+    }
+    .app-main {
+        margin-left: 0;
+    }
+    .hamburger {
+        display: block;
+    }
+    .app-header {
+        right: var(--gap-sm);
+    }
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---- Tablet: hide username text in profile button ---- */
+@media (max-width: 900px) {
+    .header-profile-btn #header-username {
+        display: none;
+    }
+}
+/* ---- Hide lang selector in compact header on narrow screens ---- */
+@media (max-width: 600px) {
+    .app-header .lang-selector {
+        display: none;
+    }
+}
+
+/* ---- Mobile (< 768px) ---- */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2rem;
+    }
+    .hero p {
+        font-size: 1rem;
+    }
+    .overlay-card {
+        padding: var(--gap);
+        max-width: 95%;
+    }
+    .pub-footer-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .pub-nav-links {
+        display: none;
+        position: absolute;
+        top: 64px;
+        left: 0;
+        right: 0;
+        background: var(--bg-surface);
+        flex-direction: column;
+        padding: var(--gap);
+        border-bottom: 1px solid var(--border);
+    }
+    .pub-nav-links.open {
+        display: flex;
+    }
+    .pub-nav-toggle {
+        display: block;
+    }
+    .pub-card-grid {
+        grid-template-columns: 1fr;
+    }
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .app-main {
+        padding: var(--gap);
+    }
+    .modal {
+        max-width: 100%;
+        margin: var(--gap-sm);
+        max-height: 90vh;
+    }
+    table {
+        font-size: 0.8rem;
+    }
+    thead th, tbody td {
+        padding: 8px;
+    }
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+    .photo-editor-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    }
+    .finance-summary {
+        grid-template-columns: 1fr;
+    }
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .dashboard-actions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---- Small mobile (< 480px) ---- */
+@media (max-width: 480px) {
+    .hero {
+        padding: 100px var(--gap) 60px;
+    }
+    .hero h1 {
+        font-size: 1.6rem;
+    }
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+    .tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+    .tab-btn {
+        padding: 8px 14px;
+        font-size: 0.8rem;
+    }
+}

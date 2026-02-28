@@ -1,0 +1,311 @@
+-- ============================================================
+-- Levada Arraiana — Esquema de Base de Datos
+-- BD: levadaarraiana (MySQL / MariaDB)
+-- ============================================================
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- 1. Socios (miembros)
+DROP TABLE IF EXISTS `socios`;
+CREATE TABLE `socios` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) NOT NULL,
+  `nome_completo` varchar(255) NOT NULL DEFAULT '',
+  `dni` varchar(50) NOT NULL DEFAULT '',
+  `email` varchar(255) DEFAULT '',
+  `telefono` varchar(100) NOT NULL DEFAULT '',
+  `instrumento` varchar(100) NOT NULL DEFAULT '',
+  `role` varchar(50) NOT NULL DEFAULT 'Socio',
+  `estado` varchar(50) NOT NULL DEFAULT 'Pendente',
+  `password` varchar(512) NOT NULL DEFAULT '',
+  `foto` varchar(512) NOT NULL DEFAULT '',
+  `data_alta` date DEFAULT NULL,
+  `session_token` varchar(255) DEFAULT NULL,
+  `session_expires` datetime DEFAULT NULL,
+  `ultimo_login` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. Noticias
+DROP TABLE IF EXISTS `noticias`;
+CREATE TABLE `noticias` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(500) NOT NULL DEFAULT '',
+  `texto` longtext DEFAULT NULL,
+  `data` date DEFAULT NULL,
+  `autor` varchar(100) NOT NULL DEFAULT '',
+  `imaxes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`imaxes`)),
+  `estado` varchar(50) NOT NULL DEFAULT 'publicada',
+  `publica` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3. Bolos (actuaciones — unifica eventos + contratos)
+DROP TABLE IF EXISTS `bolos`;
+CREATE TABLE `bolos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(500) NOT NULL DEFAULT '',
+  `descricion` text DEFAULT NULL,
+  `data` date DEFAULT NULL,
+  `hora` varchar(10) NOT NULL DEFAULT '',
+  `lugar` varchar(500) NOT NULL DEFAULT '',
+  `tipo` varchar(50) NOT NULL DEFAULT 'actuacion',
+  `imaxe` varchar(512) NOT NULL DEFAULT '',
+  `cliente_nome` varchar(255) NOT NULL DEFAULT '',
+  `cliente_nif` varchar(50) NOT NULL DEFAULT '',
+  `cliente_telefono` varchar(100) NOT NULL DEFAULT '',
+  `importe` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `notas` text DEFAULT NULL,
+  `contrato_arquivo` varchar(512) NOT NULL DEFAULT '',
+  `estado` varchar(50) NOT NULL DEFAULT 'borrador',
+  `publica` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. Álbumes de fotos
+DROP TABLE IF EXISTS `albums`;
+CREATE TABLE `albums` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(500) NOT NULL DEFAULT '',
+  `descricion` text DEFAULT NULL,
+  `data` date DEFAULT NULL,
+  `portada` varchar(512) NOT NULL DEFAULT '',
+  `fotos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`fotos`)),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5. Propostas
+DROP TABLE IF EXISTS `propostas`;
+CREATE TABLE `propostas` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(500) NOT NULL DEFAULT '',
+  `texto` longtext DEFAULT NULL,
+  `data` date DEFAULT NULL,
+  `autor` varchar(100) NOT NULL DEFAULT '',
+  `autor_nome` varchar(255) NOT NULL DEFAULT '',
+  `ficheiros` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`ficheiros`)),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. Mensaxería interna
+DROP TABLE IF EXISTS `mensaxes`;
+CREATE TABLE `mensaxes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(500) NOT NULL DEFAULT '',
+  `texto` longtext DEFAULT NULL,
+  `data` date DEFAULT NULL,
+  `autor` varchar(100) NOT NULL DEFAULT '',
+  `autor_nome` varchar(255) NOT NULL DEFAULT '',
+  `tipo` varchar(50) NOT NULL DEFAULT 'xeral',
+  `estado` varchar(50) NOT NULL DEFAULT 'enviada',
+  `lidos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`lidos`)),
+  `ficheiros` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`ficheiros`)),
+  `ocultos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`ocultos`)),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. Documentos
+DROP TABLE IF EXISTS `documentos`;
+CREATE TABLE `documentos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(500) NOT NULL DEFAULT '',
+  `descricion` text DEFAULT NULL,
+  `visibilidade` varchar(50) NOT NULL DEFAULT 'todos',
+  `arquivo` varchar(512) NOT NULL DEFAULT '',
+  `arquivo_nome` varchar(255) NOT NULL DEFAULT '',
+  `creado` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. Actas de reuniones
+DROP TABLE IF EXISTS `actas`;
+CREATE TABLE `actas` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(500) NOT NULL DEFAULT '',
+  `data` date DEFAULT NULL,
+  `contido` longtext DEFAULT NULL,
+  `estado` varchar(50) NOT NULL DEFAULT 'borrador',
+  `arquivos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`arquivos`)),
+  `creado` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. Votacións
+DROP TABLE IF EXISTS `votacions`;
+CREATE TABLE `votacions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(500) NOT NULL,
+  `descripcion` text DEFAULT NULL,
+  `opcions` text NOT NULL,
+  `estado` varchar(20) DEFAULT 'aberta',
+  `creado` datetime DEFAULT current_timestamp(),
+  `pechado_en` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 12. Votos
+DROP TABLE IF EXISTS `votos`;
+CREATE TABLE `votos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `votacion_id` int(11) NOT NULL,
+  `socio_id` int(11) NOT NULL,
+  `opcion` varchar(500) NOT NULL,
+  `creado` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_voto` (`votacion_id`, `socio_id`),
+  CONSTRAINT `fk_voto_votacion` FOREIGN KEY (`votacion_id`) REFERENCES `votacions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_voto_socio` FOREIGN KEY (`socio_id`) REFERENCES `socios` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 13. Clientes
+DROP TABLE IF EXISTS `clientes`;
+CREATE TABLE `clientes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) NOT NULL DEFAULT '',
+  `nif` varchar(50) NOT NULL DEFAULT '',
+  `enderezo` varchar(500) NOT NULL DEFAULT '',
+  `email` varchar(255) NOT NULL DEFAULT '',
+  `telefono` varchar(100) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 14. Proveedores
+DROP TABLE IF EXISTS `proveedores`;
+CREATE TABLE `proveedores` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) NOT NULL DEFAULT '',
+  `nif` varchar(50) NOT NULL DEFAULT '',
+  `enderezo` varchar(500) NOT NULL DEFAULT '',
+  `email` varchar(255) NOT NULL DEFAULT '',
+  `telefono` varchar(100) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 15. Facturas
+DROP TABLE IF EXISTS `facturas`;
+CREATE TABLE `facturas` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `numero` varchar(50) NOT NULL DEFAULT '',
+  `data` date DEFAULT NULL,
+  `cliente_nome` varchar(255) NOT NULL DEFAULT '',
+  `cliente_nif` varchar(50) NOT NULL DEFAULT '',
+  `cliente_enderezo` varchar(500) NOT NULL DEFAULT '',
+  `lineas` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`lineas`)),
+  `notas` text DEFAULT NULL,
+  `estado` varchar(50) NOT NULL DEFAULT 'pendente',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 16. Gastos
+DROP TABLE IF EXISTS `gastos`;
+CREATE TABLE `gastos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `data` date DEFAULT NULL,
+  `concepto` varchar(500) NOT NULL DEFAULT '',
+  `importe` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `iva` decimal(5,2) NOT NULL DEFAULT 21.00,
+  `categoria` varchar(100) NOT NULL DEFAULT '',
+  `notas` text DEFAULT NULL,
+  `adxunto` varchar(512) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 17. Ensayos
+DROP TABLE IF EXISTS `ensaios`;
+CREATE TABLE `ensaios` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `data` date DEFAULT NULL,
+  `hora_inicio` varchar(10) NOT NULL DEFAULT '',
+  `hora_fin` varchar(10) NOT NULL DEFAULT '',
+  `lugar` varchar(500) NOT NULL DEFAULT '',
+  `notas` text DEFAULT NULL,
+  `estado` varchar(50) NOT NULL DEFAULT 'programado',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 19. Asistencia a ensayos
+DROP TABLE IF EXISTS `asistencia`;
+CREATE TABLE `asistencia` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ensaio_id` int(11) NOT NULL,
+  `socio_id` int(11) NOT NULL,
+  `estado` varchar(50) NOT NULL DEFAULT 'confirmado',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_asistencia` (`ensaio_id`, `socio_id`),
+  CONSTRAINT `fk_asist_ensaio` FOREIGN KEY (`ensaio_id`) REFERENCES `ensaios` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_asist_socio` FOREIGN KEY (`socio_id`) REFERENCES `socios` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 20. Instrumentos
+DROP TABLE IF EXISTS `instrumentos`;
+CREATE TABLE `instrumentos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) NOT NULL DEFAULT '',
+  `tipo` varchar(100) NOT NULL DEFAULT '',
+  `numero_serie` varchar(255) NOT NULL DEFAULT '',
+  `estado` varchar(50) NOT NULL DEFAULT 'bo',
+  `asignado_a` int(11) DEFAULT NULL,
+  `notas` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_instrum_socio` FOREIGN KEY (`asignado_a`) REFERENCES `socios` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 21. Repertorio (ritmos/canciones)
+DROP TABLE IF EXISTS `repertorio`;
+CREATE TABLE `repertorio` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) NOT NULL DEFAULT '',
+  `tipo` varchar(100) NOT NULL DEFAULT '',
+  `tempo_bpm` int(11) DEFAULT NULL,
+  `dificultade` varchar(50) NOT NULL DEFAULT 'media',
+  `notas` text DEFAULT NULL,
+  `arquivo_audio` varchar(512) NOT NULL DEFAULT '',
+  `arquivo_partitura` varchar(512) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 22. Configuración (singleton)
+DROP TABLE IF EXISTS `config`;
+CREATE TABLE `config` (
+  `id` int(11) NOT NULL DEFAULT 1,
+  `nome_asociacion` varchar(500) NOT NULL DEFAULT 'Levada Arraiana',
+  `smtp_host` varchar(255) NOT NULL DEFAULT '',
+  `smtp_port` int(11) NOT NULL DEFAULT 587,
+  `smtp_user` varchar(255) NOT NULL DEFAULT '',
+  `smtp_pass` varchar(255) NOT NULL DEFAULT '',
+  `smtp_from` varchar(255) NOT NULL DEFAULT '',
+  `smtp_cifrado` varchar(10) NOT NULL DEFAULT 'TLS',
+  `email_dest` varchar(255) NOT NULL DEFAULT '',
+  `fiscal_nome` varchar(255) DEFAULT '',
+  `fiscal_nif` varchar(50) DEFAULT '',
+  `fiscal_enderezo` varchar(255) DEFAULT '',
+  `fiscal_cp` varchar(10) DEFAULT '',
+  `fiscal_localidade` varchar(100) DEFAULT '',
+  `fiscal_provincia` varchar(100) DEFAULT '',
+  `fiscal_telefono` varchar(30) DEFAULT '',
+  `fiscal_email` varchar(255) DEFAULT '',
+  `sobre_nos_gl` text DEFAULT NULL,
+  `sobre_nos_es` text DEFAULT NULL,
+  `sobre_nos_pt` text DEFAULT NULL,
+  `sobre_nos_en` text DEFAULT NULL,
+  `youtube_client_id` varchar(512) DEFAULT '',
+  `youtube_client_secret` varchar(512) DEFAULT '',
+  `gate_password` varchar(255) NOT NULL DEFAULT 'levada2026',
+  PRIMARY KEY (`id`),
+  CONSTRAINT `config_singleton` CHECK (`id` = 1)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert default config row
+INSERT INTO `config` (`id`, `nome_asociacion`, `gate_password`, `sobre_nos_gl`, `sobre_nos_es`, `sobre_nos_pt`, `sobre_nos_en`) VALUES (
+  1,
+  'Levada Arraiana',
+  'levada2026',
+  'A Levada Arraiana é un grupo de batucada con sede en Estás, Tomiño (Pontevedra), na fronteira entre Galicia e Portugal. Nacemos da paixón polo ritmo e pola cultura de percusión brasileira, adaptándoa ao noso contexto galego.\n\nOs nosos instrumentos — surdos, caixas, repiniques, tamborins, agogôs, ganzás e apitos — crean unha enerxía colectiva que fai vibrar rúas, festas e festivais. Ensaiamos regularmente para manter un repertorio vivo e en constante evolución.\n\nSe che gusta a percusión e queres formar parte dunha comunidade musical aberta e participativa, a Levada Arraiana agárdache. Non precisas experiencia previa — só ganas de tocar!',
+  'Levada Arraiana es un grupo de batucada con sede en Estás, Tomiño (Pontevedra), en la frontera entre Galicia y Portugal. Nacimos de la pasión por el ritmo y por la cultura de percusión brasileña, adaptándola a nuestro contexto gallego.\n\nNuestros instrumentos — surdos, cajas, repiniques, tamborines, agogôs, ganzás y apitos — crean una energía colectiva que hace vibrar calles, fiestas y festivales. Ensayamos regularmente para mantener un repertorio vivo y en constante evolución.\n\nSi te gusta la percusión y quieres formar parte de una comunidad musical abierta y participativa, Levada Arraiana te espera. No necesitas experiencia previa — ¡solo ganas de tocar!',
+  'A Levada Arraiana é um grupo de batucada com sede em Estás, Tomiño (Pontevedra), na fronteira entre a Galiza e Portugal. Nascemos da paixão pelo ritmo e pela cultura de percussão brasileira, adaptando-a ao nosso contexto galego.\n\nOs nossos instrumentos — surdos, caixas, repiniques, tamborins, agogôs, ganzás e apitos — criam uma energia coletiva que faz vibrar ruas, festas e festivais. Ensaiamos regularmente para manter um repertório vivo e em constante evolução.\n\nSe gostas de percussão e queres fazer parte de uma comunidade musical aberta e participativa, a Levada Arraiana espera por ti. Não precisas de experiência prévia — só vontade de tocar!',
+  'Levada Arraiana is a batucada group based in Estás, Tomiño (Pontevedra), on the border between Galicia and Portugal. We were born from a passion for rhythm and Brazilian percussion culture, adapting it to our Galician context.\n\nOur instruments — surdos, snare drums, repiniques, tamborims, agogôs, ganzás and whistles — create a collective energy that makes streets, festivals and celebrations come alive. We rehearse regularly to keep our repertoire fresh and constantly evolving.\n\nIf you love percussion and want to be part of an open and participatory musical community, Levada Arraiana is waiting for you. No previous experience needed — just the desire to play!'
+);
+
+SET FOREIGN_KEY_CHECKS = 1;

@@ -1,0 +1,16 @@
+# Uploads (user-generated content)
+uploads/
+
+# Media / Drive / External content
+LevadaDrive/
+LevadaInstagram/
+Chat de WhatsApp*
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Claude Code project files
+.claude/
