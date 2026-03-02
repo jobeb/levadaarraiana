@@ -405,6 +405,7 @@ var _landingSecNames = {
     galeria: 'Galeria',
     instrumentos: 'Instrumentos',
     sobre_nos: 'Sobre nos',
+    unirse: 'Queres tocar con nos?',
     contacto: 'Contacto'
 };
 
@@ -431,10 +432,13 @@ function _renderLandingTab(seccions) {
         var hasImg = !!s.bg_imaxe;
         var hasVid = !!s.bg_video;
 
-        html += '<div class="card landing-sec-card" draggable="true" data-sec-id="' + s.id + '" style="margin-bottom:16px;padding:16px">' +
+        html += '<div class="card landing-sec-card" draggable="true" data-sec-id="' + s.id + '" style="margin-bottom:16px;padding:16px' + (s.activa === false ? ';opacity:0.5' : '') + '">' +
             '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:grab">' +
                 '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>' +
-                '<h4 style="margin:0;color:var(--primary)">' + esc(name) + '</h4>' +
+                '<h4 style="margin:0;color:var(--primary);flex:1">' + esc(name) + '</h4>' +
+                '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;color:var(--text-muted)">' +
+                    '<input type="checkbox" id="landing-activa-' + s.id + '"' + (s.activa !== false ? ' checked' : '') + '> ' + t('seccion_activa') +
+                '</label>' +
             '</div>';
 
         // Preview
@@ -471,6 +475,12 @@ function _renderLandingTab(seccions) {
                 '<label>' + t('parallax') + '</label>' +
                 '<label style="display:flex;align-items:center;gap:6px;cursor:pointer">' +
                     '<input type="checkbox" id="landing-parallax-' + s.id + '"' + (s.parallax ? ' checked' : '') + '> ' + t('parallax') +
+                '</label>' +
+            '</div>' +
+            '<div class="form-group" style="flex:0 0 auto">' +
+                '<label>' + t('divisor_debaixo') + '</label>' +
+                '<label style="display:flex;align-items:center;gap:6px;cursor:pointer">' +
+                    '<input type="checkbox" id="landing-divisor-' + s.id + '"' + (s.divisor ? ' checked' : '') + '> ' + t('divisor_debaixo') +
                 '</label>' +
             '</div>' +
             '<div class="form-group" style="flex:1;min-width:150px">' +
@@ -596,9 +606,17 @@ async function _landingSaveSec(secId) {
     var corInput = $('#landing-cor-' + secId);
     body.bg_cor = corInput ? corInput.value : '';
 
+    // Activa
+    var activaInput = $('#landing-activa-' + secId);
+    body.activa = activaInput ? activaInput.checked : true;
+
     // Parallax
     var parInput = $('#landing-parallax-' + secId);
     body.parallax = parInput ? parInput.checked : false;
+
+    // Divisor
+    var divInput = $('#landing-divisor-' + secId);
+    body.divisor = divInput ? divInput.checked : false;
 
     // Overlay opacity
     var opaInput = $('#landing-opa-' + secId);

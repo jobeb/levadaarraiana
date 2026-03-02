@@ -14,7 +14,7 @@ function handle_landing($method, $uri, $input) {
     // GET /landing-seccions — público
     if ($method === 'GET' && $uri === '/landing-seccions') {
         $rows = $db->query("SELECT * FROM landing_seccions ORDER BY orden ASC")->fetchAll(PDO::FETCH_ASSOC);
-        $rows = fix_rows($rows, [], ['parallax'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
+        $rows = fix_rows($rows, [], ['parallax', 'activa', 'divisor'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
         send_json($rows);
     }
 
@@ -28,7 +28,7 @@ function handle_landing($method, $uri, $input) {
             $stmt->execute([$i, $id]);
         }
         $rows = $db->query("SELECT * FROM landing_seccions ORDER BY orden ASC")->fetchAll(PDO::FETCH_ASSOC);
-        $rows = fix_rows($rows, [], ['parallax'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
+        $rows = fix_rows($rows, [], ['parallax', 'activa', 'divisor'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
         send_json($rows);
     }
 
@@ -98,6 +98,14 @@ function handle_landing($method, $uri, $input) {
             $updates[] = "parallax = ?";
             $params[] = $input['parallax'] ? 1 : 0;
         }
+        if (array_key_exists('activa', $input)) {
+            $updates[] = "activa = ?";
+            $params[] = $input['activa'] ? 1 : 0;
+        }
+        if (array_key_exists('divisor', $input)) {
+            $updates[] = "divisor = ?";
+            $params[] = $input['divisor'] ? 1 : 0;
+        }
         if (array_key_exists('overlay_opacidade', $input)) {
             $updates[] = "overlay_opacidade = ?";
             $params[] = floatval($input['overlay_opacidade']);
@@ -143,7 +151,7 @@ function handle_landing($method, $uri, $input) {
         // Return updated row
         $stmt = $db->prepare("SELECT * FROM landing_seccions WHERE id = ?");
         $stmt->execute([$secId]);
-        $row = fix_row($stmt->fetch(PDO::FETCH_ASSOC), [], ['parallax'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
+        $row = fix_row($stmt->fetch(PDO::FETCH_ASSOC), [], ['parallax', 'activa', 'divisor'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
         send_json($row);
     }
 

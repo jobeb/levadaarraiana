@@ -41,8 +41,12 @@
 [data-landing-section].hero > .hero-scroll-indicator {
     z-index: 3;
 }
-/* Hide original hero pattern overlay when custom bg is set */
+/* Hide original pseudo-element overlays when landing config provides custom bg */
 .hero.hero-custom-bg::before {
+    display: none;
+}
+[data-landing-section] .cta-section.cta-custom-bg::before,
+[data-landing-section] .cta-section.cta-custom-bg::after {
     display: none;
 }
 /* Mobile: disable background-attachment:fixed (not well supported) */
@@ -254,6 +258,7 @@
 .pub-nav .logo img {
     height: 42px;
     width: 42px;
+    flex-shrink: 0;
     border-radius: 50%;
     transition: all 0.3s ease;
     box-shadow: 0 0 0 2px rgba(232, 168, 50, 0.2);
@@ -354,10 +359,10 @@
 .geo-divider {
     width: 100%;
     height: 80px;
-    background: url('../img/pattern-levada.jpg') no-repeat center;
+    background: url('../img/pattern-levada.jpg') no-repeat bottom;
     background-size: cover;
     overflow: hidden;
-    background-position: 0px -230px;
+    background-position: 0px 0px;
     position: relative;
 }
 .geo-divider::after {
@@ -764,7 +769,6 @@
 
 /* Alternate section backgrounds */
 .pub-section-alt {
-    background: var(--bg-surface);
     padding: 100px var(--gap-lg);
     position: relative;
 }
@@ -1284,8 +1288,6 @@
     text-align: center;
     position: relative;
     overflow: hidden;
-    background: url('../img/pattern-levada.jpg') repeat center;
-    background-size: 1000px auto;
 }
 .cta-section::before {
     content: '';
@@ -1332,14 +1334,11 @@
     transform: translateY(-3px);
 }
 /* CTA variant — blue (contratar) */
-.cta-section-alt {
-    background: linear-gradient(135deg, #003d6a, #005f97);
-}
 .cta-section-alt::before {
     background: none;
 }
 .cta-section-alt::after {
-    background: radial-gradient(ellipse at center, rgba(0, 95, 151, 0.15) 0%, transparent 70%);
+    background: none;
 }
 .cta-section-alt .btn {
     box-shadow: 0 4px 20px rgba(0, 95, 151, 0.4);

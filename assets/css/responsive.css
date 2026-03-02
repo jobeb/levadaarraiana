@@ -39,6 +39,48 @@
 }
 /* ---- Lang selector is now inside profile dropdown, no need to hide ---- */
 
+/* ---- Nav collapse (< 1100px) ---- */
+@media (max-width: 1100px) {
+    .pub-nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(12, 14, 20, 0.98);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: var(--gap);
+        gap: 4px;
+        border-bottom: 1px solid rgba(232, 168, 50, 0.1);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    .pub-nav-links.open {
+        display: flex;
+    }
+    .pub-nav-links a:not(.btn):not(.btn-outline) {
+        padding: 12px 16px;
+        border-radius: var(--radius);
+        font-size: 0.95rem;
+    }
+    .pub-nav-links a:not(.btn):not(.btn-outline)::after {
+        display: none;
+    }
+    .pub-nav-links a:not(.btn):not(.btn-outline):hover,
+    .pub-nav-links a:not(.btn):not(.btn-outline).active {
+        background: rgba(232, 168, 50, 0.12);
+    }
+    .pub-nav-links .lang-selector {
+        padding-top: var(--gap-sm);
+        margin-top: var(--gap-sm);
+        border-top: 1px solid var(--border);
+    }
+    .pub-nav-toggle {
+        display: flex;
+    }
+}
+
 /* ---- Mobile (< 768px) ---- */
 @media (max-width: 768px) {
     .hero {
@@ -90,44 +132,6 @@
     }
     .pub-footer-col .footer-desc {
         max-width: 100%;
-    }
-    .pub-nav-links {
-        display: none;
-        position: absolute;
-        top: 68px;
-        left: 0;
-        right: 0;
-        background: rgba(12, 14, 20, 0.98);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        flex-direction: column;
-        padding: var(--gap);
-        gap: 4px;
-        border-bottom: 1px solid rgba(232, 168, 50, 0.1);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-    }
-    .pub-nav-links.open {
-        display: flex;
-    }
-    .pub-nav-links a:not(.btn):not(.btn-outline) {
-        padding: 12px 16px;
-        border-radius: var(--radius);
-        font-size: 0.95rem;
-    }
-    .pub-nav-links a:not(.btn):not(.btn-outline)::after {
-        display: none;
-    }
-    .pub-nav-links a:not(.btn):not(.btn-outline):hover,
-    .pub-nav-links a:not(.btn):not(.btn-outline).active {
-        background: rgba(232, 168, 50, 0.12);
-    }
-    .pub-nav-links .lang-selector {
-        padding-top: var(--gap-sm);
-        margin-top: var(--gap-sm);
-        border-top: 1px solid var(--border);
-    }
-    .pub-nav-toggle {
-        display: flex;
     }
     .pub-card-grid {
         grid-template-columns: 1fr;

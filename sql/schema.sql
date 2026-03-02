@@ -312,12 +312,14 @@ CREATE TABLE `landing_seccions` (
   `bg_size` VARCHAR(50) NOT NULL DEFAULT 'cover',
   `bg_repeat` VARCHAR(20) NOT NULL DEFAULT 'no-repeat',
   `bg_position` VARCHAR(50) NOT NULL DEFAULT 'center',
+  `activa` TINYINT(1) NOT NULL DEFAULT 1,
+  `divisor` TINYINT(1) NOT NULL DEFAULT 0,
   `orden` INT NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO landing_seccions (id, orden) VALUES
   ('hero', 0),('noticias', 1),('bolos', 2),('bolos_pasados', 3),
-  ('presuposto', 4),('galeria', 5),('instrumentos', 6),('sobre_nos', 7),('contacto', 8);
+  ('presuposto', 4),('galeria', 5),('instrumentos', 6),('sobre_nos', 7),('unirse', 8),('contacto', 9);
 
 -- 25. Solicitudes de contratacion de bolos
 DROP TABLE IF EXISTS `solicitudes_bolos`;

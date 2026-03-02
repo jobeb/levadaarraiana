@@ -538,13 +538,25 @@ async function _applyLandingBackgrounds() {
     try {
         var seccions = await api('/landing-seccions').catch(function() { return []; });
 
-        // Reorder sections in DOM based on API order
+        // Reorder sections in DOM based on API order + insert dividers
         var parent = document.getElementById('pub-content');
         if (parent) {
+            // Remove any existing dynamic dividers
+            parent.querySelectorAll('.geo-divider-dynamic').forEach(function(d) { d.remove(); });
             var footer = parent.querySelector('footer');
             seccions.forEach(function(s) {
                 var el = document.querySelector('[data-landing-section="' + s.id + '"]');
-                if (el && el !== parent.firstElementChild) parent.insertBefore(el, footer);
+                if (!el) return;
+                // Hide/show based on activa flag
+                if (s.activa === false) { el.style.display = 'none'; return; }
+                el.style.display = '';
+                if (el !== parent.firstElementChild) parent.insertBefore(el, footer);
+                // Insert divider after this section if configured
+                if (s.divisor) {
+                    var div = document.createElement('div');
+                    div.className = 'geo-divider geo-divider-dynamic';
+                    el.after(div);
+                }
             });
         }
 
@@ -598,6 +610,11 @@ async function _applyLandingBackgrounds() {
             // For hero: hide original ::before when any custom bg is set
             if (s.id === 'hero' && (s.bg_imaxe || s.bg_video || s.bg_cor)) {
                 el.classList.add('hero-custom-bg');
+            }
+            // For CTA sections: hide ::before/::after when custom bg is set
+            if (s.bg_imaxe || s.bg_video || s.bg_cor) {
+                var cta = el.querySelector('.cta-section');
+                if (cta) cta.classList.add('cta-custom-bg');
             }
         });
     } catch (e) { /* ignore */ }

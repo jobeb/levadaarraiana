@@ -427,6 +427,8 @@ const TRANSLATIONS = {
     fondo_cor:          { gl:'Cor de fondo', es:'Color de fondo', pt:'Cor de fundo', en:'Background color' },
     parallax:           { gl:'Efecto parallax', es:'Efecto parallax', pt:'Efeito parallax', en:'Parallax effect' },
     overlay_opacidade:  { gl:'Opacidade do overlay', es:'Opacidad del overlay', pt:'Opacidade do overlay', en:'Overlay opacity' },
+    seccion_activa:     { gl:'Activa', es:'Activa', pt:'Ativa', en:'Active' },
+    divisor_debaixo:    { gl:'Divisor debaixo', es:'Divisor debajo', pt:'Divisor abaixo', en:'Divider below' },
     bg_tamano:          { gl:'Tamano do fondo', es:'Tamano del fondo', pt:'Tamanho do fundo', en:'Background size' },
     bg_tamano_custom:   { gl:'Ancho (px)', es:'Ancho (px)', pt:'Largura (px)', en:'Width (px)' },
     personalizado:      { gl:'Personalizado', es:'Personalizado', pt:'Personalizado', en:'Custom' },
