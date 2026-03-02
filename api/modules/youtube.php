@@ -261,7 +261,8 @@ function _youtube_disconnect() {
 function _youtube_redirect_uri() {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    return $protocol . '://' . $host . '/Levadaarraiana/api/youtube/callback';
+    $base = dirname(dirname($_SERVER['SCRIPT_NAME'])); // e.g. /Levadaarraiana or empty
+    return $protocol . '://' . $host . rtrim($base, '/') . '/api/youtube/callback';
 }
 
 function _youtube_get_valid_token($db) {
