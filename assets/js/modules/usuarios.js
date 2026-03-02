@@ -1,42 +1,42 @@
 /**
  * Usuarios — Users management module
  */
-var _sociosPager = new Paginator('socios-pagination', { perPage: 15, onChange: function() { sociosRender(); } });
-var _sociosSortCol = null;
-var _sociosSortAsc = true;
-var _sociosView = 'cards';
+var _usuariosPager = new Paginator('usuarios-pagination', { perPage: 15, onChange: function() { usuariosRender(); } });
+var _usuariosSortCol = null;
+var _usuariosSortAsc = true;
+var _usuariosView = 'cards';
 
-async function sociosLoad() {
+async function usuariosLoad() {
     try {
-        AppState.socios = await api('/socios');
+        AppState.usuarios = await api('/usuarios');
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
-        AppState.socios = [];
+        AppState.usuarios = [];
     }
-    sociosRender();
+    usuariosRender();
 }
 
-function sociosSetView(view) {
-    _sociosView = view;
-    var btns = $$('#socios-view-toggle button');
+function usuariosSetView(view) {
+    _usuariosView = view;
+    var btns = $$('#usuarios-view-toggle button');
     btns.forEach(function(b, i) { b.classList.toggle('active', (i === 0 && view === 'table') || (i === 1 && view === 'cards')); });
-    var tableWrap = $('#socios-table').parentElement;
+    var tableWrap = $('#usuarios-table').parentElement;
     tableWrap.style.display = view === 'table' ? '' : 'none';
-    $('#socios-pagination').style.display = view === 'table' ? '' : 'none';
-    $('#socios-cards').style.display = view === 'cards' ? '' : 'none';
-    sociosRender();
+    $('#usuarios-pagination').style.display = view === 'table' ? '' : 'none';
+    $('#usuarios-cards').style.display = view === 'cards' ? '' : 'none';
+    usuariosRender();
 }
 
-function sociosRender() {
-    var tbody = $('#socios-table tbody');
+function usuariosRender() {
+    var tbody = $('#usuarios-table tbody');
     if (!tbody) return;
 
-    var search = ($('#socios-search') || {}).value || '';
+    var search = ($('#usuarios-search') || {}).value || '';
     var term = search.toLowerCase();
-    var list = AppState.socios || [];
+    var list = AppState.usuarios || [];
 
     // Role filter
-    var roleFilter = ($('#socios-role-filter') || {}).value || '';
+    var roleFilter = ($('#usuarios-role-filter') || {}).value || '';
     if (roleFilter) {
         list = list.filter(function(s) { return s.role === roleFilter; });
     }
@@ -51,12 +51,12 @@ function sociosRender() {
     }
 
     // Sort
-    if (_sociosSortCol) {
+    if (_usuariosSortCol) {
         list = list.slice().sort(function(a, b) {
-            var va = (a[_sociosSortCol] || '').toString().toLowerCase();
-            var vb = (b[_sociosSortCol] || '').toString().toLowerCase();
-            if (va < vb) return _sociosSortAsc ? -1 : 1;
-            if (va > vb) return _sociosSortAsc ? 1 : -1;
+            var va = (a[_usuariosSortCol] || '').toString().toLowerCase();
+            var vb = (b[_usuariosSortCol] || '').toString().toLowerCase();
+            if (va < vb) return _usuariosSortAsc ? -1 : 1;
+            if (va > vb) return _usuariosSortAsc ? 1 : -1;
             return 0;
         });
     }
@@ -64,9 +64,9 @@ function sociosRender() {
     var isAdmin = AppState.isAdmin();
 
     // Cards view
-    if (_sociosView === 'cards') {
+    if (_usuariosView === 'cards') {
         if (list.length === 0) {
-            $('#socios-cards').innerHTML = '<p class="text-center text-muted">' + t('sen_resultados') + '</p>';
+            $('#usuarios-cards').innerHTML = '<p class="text-center text-muted">' + t('sen_resultados') + '</p>';
             return;
         }
         var cardsHtml = '';
@@ -86,22 +86,21 @@ function sociosRender() {
             }
 
             var estadoBadge = '';
-            if (s.estado === 'Aprobado') {
-                estadoBadge = '<span class="badge badge-success">' + t('aprobado') + '</span>';
-            } else if (s.estado === 'Pendente') {
-                estadoBadge = '<span class="badge badge-warning">' + t('pendente') + '</span>';
-            } else if (s.estado === 'Rexeitado') {
-                estadoBadge = '<span class="badge badge-danger">' + t('rexeitado') + '</span>';
+            if (s.estado === 'Desactivado') {
+                estadoBadge = '<span class="badge badge-danger">' + t('desactivado') + '</span>';
+            } else {
+                estadoBadge = '<span class="badge badge-success">' + t('activo') + '</span>';
             }
 
             var actions = '';
             if (isAdmin) {
-                actions += '<button class="btn-icon" onclick="sociosModal(AppState.socios.find(x=>x.id==' + s.id + '))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
-                actions += '<button class="btn-icon btn-danger" onclick="sociosDelete(' + s.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>';
-                if (s.estado === 'Pendente') {
-                    actions += '<button class="btn btn-sm btn-success" onclick="sociosEstado(' + s.id + ',\'Aprobado\')">' + t('aprobar') + '</button>';
-                    actions += '<button class="btn btn-sm btn-danger" onclick="sociosEstado(' + s.id + ',\'Rexeitado\')">' + t('rexeitar') + '</button>';
+                actions += '<button class="btn-icon" onclick="usuariosModal(AppState.usuarios.find(x=>x.id==' + s.id + '))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
+                if (s.estado === 'Desactivado') {
+                    actions += '<button class="btn-icon btn-success" onclick="usuariosEstado(' + s.id + ',\'Activo\')" title="' + t('activar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>';
+                } else {
+                    actions += '<button class="btn-icon btn-danger" onclick="usuariosEstado(' + s.id + ',\'Desactivado\')" title="' + t('desactivar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>';
                 }
+                actions += '<button class="btn-icon btn-danger" onclick="usuariosDelete(' + s.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>';
             }
 
             cardsHtml += '<div class="user-card">' +
@@ -113,20 +112,20 @@ function sociosRender() {
                 (actions ? '<div class="user-card-actions">' + actions + '</div>' : '') +
                 '</div>';
         });
-        $('#socios-cards').innerHTML = cardsHtml;
+        $('#usuarios-cards').innerHTML = cardsHtml;
         return;
     }
 
     // Table view
     if (list.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center">' + t('sen_resultados') + '</td></tr>';
-        _sociosPager.setTotal(0);
-        _sociosPager.render();
+        _usuariosPager.setTotal(0);
+        _usuariosPager.render();
         return;
     }
 
     // Paginate
-    list = _sociosPager.slice(list);
+    list = _usuariosPager.slice(list);
 
     var html = '';
 
@@ -146,24 +145,21 @@ function sociosRender() {
         }
 
         var estadoBadge = '';
-        if (s.estado === 'Aprobado') {
-            estadoBadge = '<span class="badge badge-success">' + t('aprobado') + '</span>';
-        } else if (s.estado === 'Pendente') {
-            estadoBadge = '<span class="badge badge-warning">' + t('pendente') + '</span>';
-        } else if (s.estado === 'Rexeitado') {
-            estadoBadge = '<span class="badge badge-danger">' + t('rexeitado') + '</span>';
+        if (s.estado === 'Desactivado') {
+            estadoBadge = '<span class="badge badge-danger">' + t('desactivado') + '</span>';
         } else {
-            estadoBadge = '<span class="badge">' + esc(s.estado || '') + '</span>';
+            estadoBadge = '<span class="badge badge-success">' + t('activo') + '</span>';
         }
 
         var actions = '';
         if (isAdmin) {
-            actions += '<button class="btn-icon" onclick="sociosModal(AppState.socios.find(x=>x.id==' + s.id + '))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
-            actions += '<button class="btn-icon btn-danger" onclick="sociosDelete(' + s.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>';
-            if (s.estado === 'Pendente') {
-                actions += '<button class="btn btn-sm btn-success" onclick="sociosEstado(' + s.id + ',\'Aprobado\')">' + t('aprobar') + '</button>';
-                actions += '<button class="btn btn-sm btn-danger" onclick="sociosEstado(' + s.id + ',\'Rexeitado\')">' + t('rexeitar') + '</button>';
+            actions += '<button class="btn-icon" onclick="usuariosModal(AppState.usuarios.find(x=>x.id==' + s.id + '))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
+            if (s.estado === 'Desactivado') {
+                actions += '<button class="btn-icon btn-success" onclick="usuariosEstado(' + s.id + ',\'Activo\')" title="' + t('activar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>';
+            } else {
+                actions += '<button class="btn-icon btn-danger" onclick="usuariosEstado(' + s.id + ',\'Desactivado\')" title="' + t('desactivar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>';
             }
+            actions += '<button class="btn-icon btn-danger" onclick="usuariosDelete(' + s.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>';
         }
 
         html += '<tr>' +
@@ -178,30 +174,30 @@ function sociosRender() {
     });
 
     tbody.innerHTML = html;
-    _sociosPager.render();
+    _usuariosPager.render();
 
     // Bind sort headers
-    $$('#socios-table th.sortable').forEach(function(th) {
+    $$('#usuarios-table th.sortable').forEach(function(th) {
         th.style.cursor = 'pointer';
         th.onclick = function() {
             var col = th.dataset.sort;
-            if (_sociosSortCol === col) {
-                _sociosSortAsc = !_sociosSortAsc;
+            if (_usuariosSortCol === col) {
+                _usuariosSortAsc = !_usuariosSortAsc;
             } else {
-                _sociosSortCol = col;
-                _sociosSortAsc = true;
+                _usuariosSortCol = col;
+                _usuariosSortAsc = true;
             }
-            sociosRender();
+            usuariosRender();
         };
         // Sort indicator
-        if (_sociosSortCol === th.dataset.sort) {
-            th.textContent = t(th.getAttribute('data-i18n')) + (_sociosSortAsc ? ' \u25B2' : ' \u25BC');
+        if (_usuariosSortCol === th.dataset.sort) {
+            th.textContent = t(th.getAttribute('data-i18n')) + (_usuariosSortAsc ? ' \u25B2' : ' \u25BC');
         }
     });
 }
 
-function sociosModal(socio) {
-    var isEdit = socio && socio.id;
+function usuariosModal(usuario) {
+    var isEdit = usuario && usuario.id;
     var title = isEdit ? t('editar') + ' ' + t('usuario') : t('engadir') + ' ' + t('usuario');
 
     $('#modal-title').textContent = title;
@@ -210,62 +206,62 @@ function sociosModal(socio) {
     var roles = ['Usuario', 'Socio', 'Admin'];
 
     var instOptions = instrumentos.map(function(i) {
-        var sel = (socio && socio.instrumento === i) ? ' selected' : '';
+        var sel = (usuario && usuario.instrumento === i) ? ' selected' : '';
         return '<option value="' + i + '"' + sel + '>' + i.charAt(0).toUpperCase() + i.slice(1) + '</option>';
     }).join('');
 
     var roleOptions = roles.map(function(r) {
-        var sel = (socio && socio.role === r) ? ' selected' : '';
+        var sel = (usuario && usuario.role === r) ? ' selected' : '';
         return '<option value="' + r + '"' + sel + '>' + r + '</option>';
     }).join('');
 
     $('#modal-body').innerHTML =
-        '<input type="hidden" id="socio-id" value="' + (isEdit ? socio.id : '') + '">' +
+        '<input type="hidden" id="usuario-id" value="' + (isEdit ? usuario.id : '') + '">' +
         '<div class="form-group">' +
             '<label class="required">' + t('username') + '</label>' +
-            '<input type="text" class="form-control" id="socio-username" value="' + esc(isEdit ? socio.username : '') + '"' + (isEdit ? ' readonly' : '') + '>' +
+            '<input type="text" class="form-control" id="usuario-username" value="' + esc(isEdit ? usuario.username : '') + '"' + (isEdit ? ' readonly' : '') + '>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('nome_completo') + '</label>' +
-            '<input type="text" class="form-control" id="socio-nome" value="' + esc(isEdit ? socio.nome_completo : '') + '">' +
+            '<input type="text" class="form-control" id="usuario-nome" value="' + esc(isEdit ? usuario.nome_completo : '') + '">' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('dni') + '</label>' +
-            '<input type="text" class="form-control" id="socio-dni" value="' + esc(isEdit ? socio.dni || '' : '') + '">' +
+            '<input type="text" class="form-control" id="usuario-dni" value="' + esc(isEdit ? usuario.dni || '' : '') + '">' +
         '</div>' +
         '<div class="form-group">' +
             '<label class="required">' + t('email') + '</label>' +
-            '<input type="email" class="form-control" id="socio-email" value="' + esc(isEdit ? socio.email || '' : '') + '">' +
+            '<input type="email" class="form-control" id="usuario-email" value="' + esc(isEdit ? usuario.email || '' : '') + '">' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('telefono') + '</label>' +
-            '<input type="text" class="form-control" id="socio-telefono" value="' + esc(isEdit ? socio.telefono || '' : '') + '">' +
+            '<input type="text" class="form-control" id="usuario-telefono" value="' + esc(isEdit ? usuario.telefono || '' : '') + '">' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('instrumento') + '</label>' +
-            '<select class="form-control" id="socio-instrumento"><option value="">--</option>' + instOptions + '</select>' +
+            '<select class="form-control" id="usuario-instrumento"><option value="">--</option>' + instOptions + '</select>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('rol') + '</label>' +
-            '<select class="form-control" id="socio-role">' + roleOptions + '</select>' +
+            '<select class="form-control" id="usuario-role">' + roleOptions + '</select>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('fotos') + '</label>' +
-            '<input type="file" class="form-control" id="socio-foto" accept="image/*" style="display:none">' +
-            '<input type="hidden" id="socio-foto-remove" value="">' +
+            '<input type="file" class="form-control" id="usuario-foto" accept="image/*" style="display:none">' +
+            '<input type="hidden" id="usuario-foto-remove" value="">' +
             '<div class="avatar-picker">' +
-                '<div class="avatar-picker-preview" id="socio-foto-preview">' +
-                    (isEdit && socio.foto
-                        ? '<img src="' + esc(uploadUrl(socio.foto)) + '" alt="">'
-                        : '<span class="avatar-picker-placeholder">' + esc(((socio && socio.username) || '?')[0].toUpperCase()) + '</span>') +
+                '<div class="avatar-picker-preview" id="usuario-foto-preview">' +
+                    (isEdit && usuario.foto
+                        ? '<img src="' + esc(uploadUrl(usuario.foto)) + '" alt="">'
+                        : '<span class="avatar-picker-placeholder">' + esc(((usuario && usuario.username) || '?')[0].toUpperCase()) + '</span>') +
                 '</div>' +
                 '<div class="avatar-picker-actions">' +
-                    '<button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById(\'socio-foto\').click()">' +
+                    '<button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById(\'usuario-foto\').click()">' +
                         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> ' +
                         t('seleccionar') +
                     '</button>' +
-                    '<button type="button" class="btn btn-sm btn-danger" id="socio-foto-remove-btn" onclick="sociosRemoveFoto()"' +
-                        (isEdit && socio.foto ? '' : ' style="display:none"') + '>' +
+                    '<button type="button" class="btn btn-sm btn-danger" id="usuario-foto-remove-btn" onclick="usuariosRemoveFoto()"' +
+                        (isEdit && usuario.foto ? '' : ' style="display:none"') + '>' +
                         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> ' +
                         t('eliminar_foto') +
                     '</button>' +
@@ -277,106 +273,106 @@ function sociosModal(socio) {
         $('#modal-body').innerHTML +=
             '<div class="form-group">' +
                 '<label class="required">' + t('contrasinal') + '</label>' +
-                '<input type="password" class="form-control" id="socio-pass">' +
+                '<input type="password" class="form-control" id="usuario-pass">' +
             '</div>';
     }
 
     $('#modal-footer').innerHTML =
         '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
-        '<button class="btn btn-primary" onclick="sociosSave()">' + t('gardar') + '</button>';
+        '<button class="btn btn-primary" onclick="usuariosSave()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');
 
     // File input preview
-    $('#socio-foto').onchange = function() {
+    $('#usuario-foto').onchange = function() {
         var file = this.files[0];
         if (!file) return;
         var reader = new FileReader();
         reader.onload = function(e) {
-            $('#socio-foto-preview').innerHTML = '<img src="' + e.target.result + '" alt="">';
-            $('#socio-foto-remove-btn').style.display = '';
-            $('#socio-foto-remove').value = '';
+            $('#usuario-foto-preview').innerHTML = '<img src="' + e.target.result + '" alt="">';
+            $('#usuario-foto-remove-btn').style.display = '';
+            $('#usuario-foto-remove').value = '';
         };
         reader.readAsDataURL(file);
     };
 }
 
-function sociosRemoveFoto() {
-    $('#socio-foto-preview').innerHTML = '<span class="avatar-picker-placeholder">?</span>';
-    $('#socio-foto').value = '';
-    $('#socio-foto-remove').value = '1';
-    $('#socio-foto-remove-btn').style.display = 'none';
+function usuariosRemoveFoto() {
+    $('#usuario-foto-preview').innerHTML = '<span class="avatar-picker-placeholder">?</span>';
+    $('#usuario-foto').value = '';
+    $('#usuario-foto-remove').value = '1';
+    $('#usuario-foto-remove-btn').style.display = 'none';
 }
 
-async function sociosSave() {
-    var id = ($('#socio-id') || {}).value;
+async function usuariosSave() {
+    var id = ($('#usuario-id') || {}).value;
     var isEdit = !!id;
 
     var body = {
-        username: ($('#socio-username') || {}).value || '',
-        nome_completo: ($('#socio-nome') || {}).value || '',
-        dni: ($('#socio-dni') || {}).value || '',
-        email: ($('#socio-email') || {}).value || '',
-        telefono: ($('#socio-telefono') || {}).value || '',
-        instrumento: ($('#socio-instrumento') || {}).value || '',
-        role: ($('#socio-role') || {}).value || 'Socio'
+        username: ($('#usuario-username') || {}).value || '',
+        nome_completo: ($('#usuario-nome') || {}).value || '',
+        dni: ($('#usuario-dni') || {}).value || '',
+        email: ($('#usuario-email') || {}).value || '',
+        telefono: ($('#usuario-telefono') || {}).value || '',
+        instrumento: ($('#usuario-instrumento') || {}).value || '',
+        role: ($('#usuario-role') || {}).value || 'Socio'
     };
 
     if (!isEdit) {
-        body.password = ($('#socio-pass') || {}).value || '';
+        body.password = ($('#usuario-pass') || {}).value || '';
     }
 
-    var fotoInput = $('#socio-foto');
+    var fotoInput = $('#usuario-foto');
     if (fotoInput && fotoInput.files && fotoInput.files.length > 0) {
         var foto = await imageToBase64(fotoInput.files[0]);
         body.foto_data = foto.data;
         body.foto_ext = 'jpg';
-    } else if (($('#socio-foto-remove') || {}).value === '1') {
+    } else if (($('#usuario-foto-remove') || {}).value === '1') {
         body.foto = '';
     }
 
     try {
         if (isEdit) {
-            await api('/socios/' + id, { method: 'PUT', body: body });
+            await api('/usuarios/' + id, { method: 'PUT', body: body });
         } else {
-            await api('/socios', { method: 'POST', body: body });
+            await api('/usuarios', { method: 'POST', body: body });
         }
         hideModal('modal-overlay');
         toast(t('exito'), 'success');
-        sociosLoad();
+        usuariosLoad();
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }
 }
 
-async function sociosDelete(id) {
+async function usuariosDelete(id) {
     if (!await confirmAction(t('confirmar_eliminar'), {danger:true})) return;
     try {
-        await api('/socios/' + id, { method: 'DELETE' });
+        await api('/usuarios/' + id, { method: 'DELETE' });
         toast(t('exito'), 'success');
-        sociosLoad();
+        usuariosLoad();
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }
 }
 
-function sociosExport(format) {
+function usuariosExport(format) {
     var headers = [t('username'), t('nome_completo'), t('email'), t('telefono'), t('instrumento'), t('rol'), t('estado')];
-    var rows = (AppState.socios || []).map(function(s) {
+    var rows = (AppState.usuarios || []).map(function(s) {
         return [s.username, s.nome_completo, s.email || '', s.telefono || '', s.instrumento || '', s.role, s.estado];
     });
     if (format === 'pdf') {
-        exportPDF(t('socios'), headers, rows);
+        exportPDF(t('usuarios'), headers, rows);
     } else {
-        exportCSV('socios.csv', headers, rows);
+        exportCSV('usuarios.csv', headers, rows);
     }
 }
 
-async function sociosEstado(id, estado) {
+async function usuariosEstado(id, estado) {
     try {
-        await api('/socios/' + id + '/estado', { method: 'PUT', body: { estado: estado } });
+        await api('/usuarios/' + id + '/estado', { method: 'PUT', body: { estado: estado } });
         toast(t('exito'), 'success');
-        sociosLoad();
+        usuariosLoad();
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }

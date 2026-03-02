@@ -165,6 +165,7 @@ function _pubExpandSection(gridId, secId) {
         grid.innerHTML = items.length ? items.map(function(b) { return _renderBoloCard(b); }).join('')
             : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
     } else if (secId === 'galeria') {
+        _pubRenderFotosDestacadas(_pubData._allAlbums || []);
         var items = _pubData._allAlbums || [];
         var _pubIsYT = function(s) { return s && s.indexOf('youtube.com/embed/') !== -1; };
         var _pubYTThumb = function(s) { var m = s.match(/youtube\.com\/embed\/([^?&#]+)/); return m ? 'https://img.youtube.com/vi/' + m[1] + '/hqdefault.jpg' : ''; };
@@ -429,6 +430,71 @@ function _pubUpdateToggleCount(type, id) {
     }
 }
 
+// ---- Featured photos helper ----
+function _pubRenderFotosDestacadas(albums) {
+    var container = document.getElementById('pub-fotos-destacadas');
+    if (!container) return;
+    var favFotos = [];
+    (albums || []).forEach(function(a) {
+        (a.fotos || []).forEach(function(f) {
+            if (f.destacada) {
+                favFotos.push({ src: uploadUrl(typeof f === 'string' ? f : (f.path || '')), titulo: f.titulo || '', alt: f.alt || '' });
+            }
+        });
+    });
+    if (favFotos.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    // Shuffle (Fisher-Yates)
+    for (var s = favFotos.length - 1; s > 0; s--) {
+        var j = Math.floor(Math.random() * (s + 1));
+        var tmp = favFotos[s]; favFotos[s] = favFotos[j]; favFotos[j] = tmp;
+    }
+    var favUrls = favFotos.map(function(f) { return f.src; });
+    container.innerHTML = '<h3 class="pub-fotos-destacadas-title reveal">' + t('fotos_destacadas') + '</h3>' +
+        '<div class="pub-fotos-destacadas stagger-children">' +
+        favFotos.map(function(f, i) {
+            var angle = Math.round(Math.random() * 8 - 4);
+            var sizes = ['size-xl','size-sm','size-lg','size-md','size-xl','size-sm','size-wide'];
+            var sizeClass = sizes[Math.floor(Math.random() * sizes.length)];
+            var frames = ['frame-polaroid','frame-clean','frame-tape','frame-tape2','frame-tape3','frame-rounded','frame-thin','frame-shadow','frame-vintage','frame-torn'];
+            var frameClass = frames[Math.floor(Math.random() * frames.length)];
+            var m = Math.round(Math.random() * 24 - 10);
+            var y = Math.round(Math.random() * 44 - 22);
+            // Generar variables aleatorias para cintas (posicion en borde la fija el CSS)
+            var tapeColors = [
+                ['#ffebb0c0','#ffe18ca0'],  // amarillo
+                ['#c8e1ffb3','#b4d2f58d'],  // azul
+                ['#d2ffd2b3','#b9f0b98d']   // verde
+            ];
+            var tapeVars = '';
+            for (var ti = 1; ti <= 3; ti++) {
+                tapeVars += ';--t' + ti + '-pos:' + Math.round(Math.random() * 50 + 15) + '%';
+                tapeVars += ';--t' + ti + '-rot:' + Math.round(Math.random() * 30 - 15) + 'deg';
+                tapeVars += ';--t' + ti + '-w:' + Math.round(Math.random() * 30 + 40) + 'px';
+                var col = tapeColors[Math.floor(Math.random() * tapeColors.length)];
+                tapeVars += ';--t' + ti + '-ca:' + col[0] + ';--t' + ti + '-cb:' + col[1];
+            }
+            var tape3Extra = (frameClass === 'frame-tape3') ? '<span class="tape-3rd"></span>' : '';
+            return '<div class="pub-foto-destacada ' + sizeClass + ' ' + frameClass + '" style="--rot:' + angle + 'deg;--m:' + m + 'px;--y:' + y + 'px' + tapeVars + '" onclick="openLightbox([' +
+                favUrls.map(function(u) { return "'" + u + "'"; }).join(',') + '],' + i + ')">' +
+                tape3Extra +
+                '<img src="' + esc(f.src) + '" alt="' + esc(f.alt || f.titulo) + '" loading="lazy">' +
+                (f.titulo ? '<span class="pub-foto-titulo">' + esc(f.titulo) + '</span>' : '') +
+            '</div>';
+        }).join('') + '</div>';
+    // Register reveal observer on dynamically created elements
+    var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+    container.querySelectorAll('.reveal, .stagger-children').forEach(function(el) {
+        obs.observe(el);
+    });
+}
+
 // Landing config keyed by section id (populated by _applyLandingBackgrounds)
 var _landingCfg = {};
 
@@ -517,6 +583,7 @@ async function _pubRefreshLang() {
 
     // Galeria
     var allAlb = _pubData._allAlbums || [];
+    _pubRenderFotosDestacadas(allAlb);
     var maxGal = _pubMaxItems('galeria');
     var pubAlb = (maxGal > 0) ? allAlb.slice(0, maxGal) : allAlb;
     var gg = document.getElementById('pub-galeria-grid');
@@ -627,6 +694,10 @@ async function loadPublicContent() {
 
             const allAlbums = albums.slice().reverse();
             _pubData._allAlbums = allAlbums;
+
+            // Featured photos grid above albums
+            _pubRenderFotosDestacadas(allAlbums);
+
             var maxGal = _pubMaxItems('galeria');
             const shownAlbums = (maxGal > 0) ? allAlbums.slice(0, maxGal) : allAlbums;
 

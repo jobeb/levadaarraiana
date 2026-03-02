@@ -82,7 +82,7 @@ function handle_votacions($method, $uri, $input) {
             $stmt = $db->prepare(
                 "SELECT v.*, s.nome_completo AS socio_nome
                  FROM votos v
-                 LEFT JOIN socios s ON s.id = v.socio_id
+                 LEFT JOIN usuarios s ON s.id = v.socio_id
                  WHERE v.votacion_id = ?
                  ORDER BY v.creado ASC"
             );

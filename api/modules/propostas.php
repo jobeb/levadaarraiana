@@ -41,7 +41,7 @@ function handle_propostas($method, $uri, $input) {
         $proposta_id = (int)$m[1];
         $stmt = $db->prepare(
             "SELECT pv.*, s.nome_completo FROM propostas_votos pv
-             LEFT JOIN socios s ON s.id = pv.socio_id
+             LEFT JOIN usuarios s ON s.id = pv.socio_id
              WHERE pv.proposta_id = ?"
         );
         $stmt->execute([$proposta_id]);

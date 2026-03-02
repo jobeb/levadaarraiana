@@ -34,7 +34,7 @@ try {
     // Map URI to module
     $routes = [
         '/arquivos'      => 'arquivos',
-        '/socios'        => 'socios',
+        '/usuarios'      => 'usuarios',
         '/noticias'      => 'noticias',
         '/bolos'         => 'bolos',
         '/albums'        => 'albums',
@@ -53,6 +53,7 @@ try {
         '/comentarios'   => 'comentarios',
         '/landing-seccions' => 'landing',
         '/solicitude'    => 'solicitude',
+        '/solicitudes-bolos' => 'solicitudes_bolos',
         '/backup'        => 'backup',
         '/youtube'       => 'youtube',
     ];

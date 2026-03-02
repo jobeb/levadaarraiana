@@ -38,7 +38,7 @@ function handle_comentarios($method, $uri, $input) {
             $stmt = $db->prepare(
                 "SELECT c.*, s.nome_completo AS autor_nome, s.foto AS autor_foto
                  FROM comentarios c
-                 JOIN socios s ON s.id = c.autor_id
+                 JOIN usuarios s ON s.id = c.autor_id
                  WHERE c.item_type = ? AND c.item_id = ? AND c.estado = 'aprobado'
                  ORDER BY c.creado ASC"
             );
@@ -55,7 +55,7 @@ function handle_comentarios($method, $uri, $input) {
             $stmt = $db->prepare(
                 "SELECT c.*, s.nome_completo AS autor_nome, s.foto AS autor_foto
                  FROM comentarios c
-                 JOIN socios s ON s.id = c.autor_id
+                 JOIN usuarios s ON s.id = c.autor_id
                  WHERE c.item_type = ? AND c.estado = 'aprobado'
                  ORDER BY c.creado ASC"
             );
@@ -70,7 +70,7 @@ function handle_comentarios($method, $uri, $input) {
             $stmt = $db->prepare(
                 "SELECT c.*, s.nome_completo AS autor_nome, s.foto AS autor_foto
                  FROM comentarios c
-                 JOIN socios s ON s.id = c.autor_id
+                 JOIN usuarios s ON s.id = c.autor_id
                  WHERE c.estado = ?
                  ORDER BY c.creado DESC"
             );
@@ -79,7 +79,7 @@ function handle_comentarios($method, $uri, $input) {
             $stmt = $db->query(
                 "SELECT c.*, s.nome_completo AS autor_nome, s.foto AS autor_foto
                  FROM comentarios c
-                 JOIN socios s ON s.id = c.autor_id
+                 JOIN usuarios s ON s.id = c.autor_id
                  ORDER BY c.creado DESC"
             );
         }

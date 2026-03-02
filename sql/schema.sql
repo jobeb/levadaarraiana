@@ -6,9 +6,9 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- 1. Socios (miembros)
-DROP TABLE IF EXISTS `socios`;
-CREATE TABLE `socios` (
+-- 1. Usuarios (miembros)
+DROP TABLE IF EXISTS `usuarios`;
+CREATE TABLE `usuarios` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(100) NOT NULL,
   `nome_completo` varchar(255) NOT NULL DEFAULT '',
@@ -17,7 +17,7 @@ CREATE TABLE `socios` (
   `telefono` varchar(100) NOT NULL DEFAULT '',
   `instrumento` varchar(100) NOT NULL DEFAULT '',
   `role` varchar(50) NOT NULL DEFAULT 'Usuario',
-  `estado` varchar(50) NOT NULL DEFAULT 'Pendente',
+  `estado` varchar(50) NOT NULL DEFAULT 'Activo',
   `password` varchar(512) NOT NULL DEFAULT '',
   `foto` varchar(512) NOT NULL DEFAULT '',
   `data_alta` date DEFAULT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE `votos` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_voto` (`votacion_id`, `socio_id`, `opcion`),
   CONSTRAINT `fk_voto_votacion` FOREIGN KEY (`votacion_id`) REFERENCES `votacions` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_voto_socio` FOREIGN KEY (`socio_id`) REFERENCES `socios` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_voto_usuario` FOREIGN KEY (`socio_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 13. Ensayos
@@ -180,7 +180,7 @@ CREATE TABLE `asistencia` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_asistencia` (`ensaio_id`, `socio_id`),
   CONSTRAINT `fk_asist_ensaio` FOREIGN KEY (`ensaio_id`) REFERENCES `ensaios` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_asist_socio` FOREIGN KEY (`socio_id`) REFERENCES `socios` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_asist_usuario` FOREIGN KEY (`socio_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 20. Instrumentos
@@ -198,7 +198,7 @@ CREATE TABLE `instrumentos` (
   `historial_mantemento` JSON DEFAULT NULL,
   `i18n` JSON DEFAULT NULL,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_instrum_socio` FOREIGN KEY (`asignado_a`) REFERENCES `socios` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_instrum_usuario` FOREIGN KEY (`asignado_a`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 21. Repertorio (ritmos/canciones)
@@ -293,7 +293,7 @@ CREATE TABLE `comentarios` (
   KEY `idx_item` (`item_type`, `item_id`),
   KEY `idx_parent` (`parent_id`),
   CONSTRAINT `fk_comentario_autor` FOREIGN KEY (`autor_id`)
-    REFERENCES `socios`(`id`) ON DELETE CASCADE,
+    REFERENCES `usuarios`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_comentario_parent` FOREIGN KEY (`parent_id`)
     REFERENCES `comentarios`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -313,5 +313,21 @@ CREATE TABLE `landing_seccions` (
 INSERT INTO landing_seccions (id) VALUES
   ('hero'),('noticias'),('bolos'),('bolos_pasados'),
   ('galeria'),('instrumentos'),('sobre_nos');
+
+-- 25. Solicitudes de contratacion de bolos
+DROP TABLE IF EXISTS `solicitudes_bolos`;
+CREATE TABLE `solicitudes_bolos` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `nome` VARCHAR(255) NOT NULL DEFAULT '',
+  `email` VARCHAR(255) NOT NULL DEFAULT '',
+  `telefono` VARCHAR(100) NOT NULL DEFAULT '',
+  `data_evento` DATE DEFAULT NULL,
+  `lugar` VARCHAR(500) NOT NULL DEFAULT '',
+  `tipo` VARCHAR(100) NOT NULL DEFAULT '',
+  `descricion` TEXT DEFAULT NULL,
+  `estado` VARCHAR(50) NOT NULL DEFAULT 'pendente',
+  `notas` TEXT DEFAULT NULL,
+  `creado` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

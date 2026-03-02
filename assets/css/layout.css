@@ -282,12 +282,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--gap) var(--gap);
-    border-bottom: 1px solid var(--border);
-    margin-bottom: var(--gap-sm);
+    padding: 0;
+    margin: 0;
+    border: none;
 }
 .sidebar-logo img {
-    height: 56px;
+    height: 150px;
     width: auto;
     border-radius: var(--radius);
     transition: opacity var(--transition);

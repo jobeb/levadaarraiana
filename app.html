@@ -136,8 +136,8 @@
     <button class="sidebar-link active" data-section="dashboard" onclick="Router.navigate('dashboard')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span data-i18n="dashboard">Inicio</span>
     </button>
-    <button class="sidebar-link" data-section="socios" onclick="Router.navigate('socios')">
-        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span data-i18n="socios">Socios</span>
+    <button class="sidebar-link" data-section="usuarios" onclick="Router.navigate('usuarios')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span data-i18n="usuarios">Usuarios</span>
     </button>
     <button class="sidebar-link" data-section="noticias" onclick="Router.navigate('noticias')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span><span data-i18n="noticias">Noticias</span>
@@ -150,8 +150,8 @@
     </button>
 
     <!-- Comunicación -->
-    <div class="sidebar-section" data-i18n="sec_comunicacion">Comunicación</div>
-    <button class="sidebar-link" data-section="propostas" onclick="Router.navigate('propostas')">
+    <div class="sidebar-section socio-only" data-i18n="sec_comunicacion">Comunicación</div>
+    <button class="sidebar-link socio-only" data-section="propostas" onclick="Router.navigate('propostas')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span><span data-i18n="propostas">Propostas</span>
     </button>
     <button class="sidebar-link socio-only" data-section="comentarios" onclick="Router.navigate('comentarios')">
@@ -159,11 +159,11 @@
     </button>
 
     <!-- Administración -->
-    <div class="sidebar-section" data-i18n="sec_administracion">Administración</div>
-    <button class="sidebar-link" data-section="actas" onclick="Router.navigate('actas')">
+    <div class="sidebar-section socio-only" data-i18n="sec_administracion">Administración</div>
+    <button class="sidebar-link socio-only" data-section="actas" onclick="Router.navigate('actas')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span><span data-i18n="actas">Actas</span>
     </button>
-    <button class="sidebar-link" data-section="documentos" onclick="Router.navigate('documentos')">
+    <button class="sidebar-link socio-only" data-section="documentos" onclick="Router.navigate('documentos')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span data-i18n="documentos">Documentos</span>
     </button>
     <button class="sidebar-link socio-only" data-section="votacions" onclick="Router.navigate('votacions')">
@@ -219,37 +219,37 @@
         </div>
     </div>
 
-    <!-- Socios -->
-    <div class="section" id="sec-socios">
-        <div class="section-header"><h2 data-i18n="socios">Usuarios</h2></div>
+    <!-- Usuarios -->
+    <div class="section" id="sec-usuarios">
+        <div class="section-header"><h2 data-i18n="usuarios">Usuarios</h2></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
-            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="socios-search" oninput="sociosRender()" style="max-width:260px">
-            <select class="form-control" id="socios-role-filter" style="max-width:160px" onchange="sociosRender()">
+            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="usuarios-search" oninput="usuariosRender()" style="max-width:260px">
+            <select class="form-control" id="usuarios-role-filter" style="max-width:160px" onchange="usuariosRender()">
                 <option value="" data-i18n="todos">Todos</option>
                 <option value="Admin">Admin</option>
                 <option value="Socio" data-i18n="socio">Socio</option>
                 <option value="Usuario" data-i18n="usuario">Usuario</option>
             </select>
-            <div class="view-toggle" id="socios-view-toggle">
-                <button onclick="sociosSetView('table')" data-i18n="vista_tabla">Tabla</button>
-                <button class="active" onclick="sociosSetView('cards')" data-i18n="vista_cards">Tarjetas</button>
+            <div class="view-toggle" id="usuarios-view-toggle">
+                <button onclick="usuariosSetView('table')" data-i18n="vista_tabla">Tabla</button>
+                <button class="active" onclick="usuariosSetView('cards')" data-i18n="vista_cards">Tarjetas</button>
             </div>
             <div class="export-dropdown admin-only" style="margin-left:auto">
                 <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
                 <div class="export-dropdown-menu">
-                    <button onclick="sociosExport('csv')">CSV</button>
-                    <button onclick="sociosExport('pdf')">PDF</button>
+                    <button onclick="usuariosExport('csv')">CSV</button>
+                    <button onclick="usuariosExport('pdf')">PDF</button>
                 </div>
             </div>
-            <button class="btn btn-primary admin-only" onclick="sociosModal()">+ <span data-i18n="usuario">Usuario</span></button>
+            <button class="btn btn-primary admin-only" onclick="usuariosModal()">+ <span data-i18n="usuario">Usuario</span></button>
         </div>
-        <div class="table-wrap" style="display:none"><table id="socios-table"><thead><tr>
+        <div class="table-wrap" style="display:none"><table id="usuarios-table"><thead><tr>
             <th></th><th data-i18n="username" class="sortable" data-sort="username">Usuario</th><th data-i18n="nome_completo" class="sortable" data-sort="nome_completo">Nome</th>
             <th data-i18n="instrumento" class="sortable" data-sort="instrumento">Instrumento</th><th data-i18n="rol">Rol</th>
             <th data-i18n="estado">Estado</th><th data-i18n="accions">Accións</th>
         </tr></thead><tbody></tbody></table></div>
-        <div id="socios-pagination" style="display:none"></div>
-        <div class="card-grid" id="socios-cards"></div>
+        <div id="usuarios-pagination" style="display:none"></div>
+        <div class="card-grid" id="usuarios-cards"></div>
     </div>
 
     <!-- Noticias -->
@@ -275,6 +275,7 @@
             <div class="view-toggle" id="bolos-view-toggle">
                 <button class="active" onclick="bolosSetView('list')" data-i18n="vista_lista">Lista</button>
                 <button onclick="bolosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
+                <button class="socio-only" onclick="bolosSetView('solicitudes')" data-i18n="solicitudes">Solicitudes</button>
             </div>
             <div class="export-dropdown socio-only" style="margin-left:auto">
                 <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
@@ -287,6 +288,7 @@
         </div>
         <div class="card-grid" id="bolos-grid"></div>
         <div id="bolos-calendar" style="display:none"></div>
+        <div id="bolos-solicitudes" style="display:none"></div>
     </div>
 
     <!-- Galería -->
@@ -299,7 +301,7 @@
     </div>
 
     <!-- Propostas -->
-    <div class="section" id="sec-propostas">
+    <div class="section socio-only" id="sec-propostas">
         <div class="section-header">
             <h2 data-i18n="propostas">Propostas</h2>
         </div>
@@ -329,7 +331,7 @@
     </div>
 
     <!-- Actas -->
-    <div class="section" id="sec-actas">
+    <div class="section socio-only" id="sec-actas">
         <div class="section-header"><h2 data-i18n="actas">Actas</h2></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
             <input type="text" class="form-control" id="actas-search" data-i18n-placeholder="buscar" placeholder="Buscar..." style="max-width:260px" oninput="actasRender()">
@@ -356,7 +358,7 @@
     </div>
 
     <!-- Documentos (file browser) -->
-    <div class="section" id="sec-documentos">
+    <div class="section socio-only" id="sec-documentos">
         <div class="section-header"><h2 data-i18n="documentos">Documentos</h2></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
             <input type="text" class="form-control" data-i18n-placeholder="buscar" id="documentos-search" oninput="documentosRender()" style="max-width:260px">
@@ -436,9 +438,9 @@
         <div class="section-header"><h2 data-i18n="ensaios">Ensaios</h2></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
             <div class="view-toggle" id="ensaios-view-toggle">
-                <button class="active" onclick="ensaiosSetView('list')" data-i18n="vista_lista">Lista</button>
+                <button class="socio-only" onclick="ensaiosSetView('list')" data-i18n="vista_lista">Lista</button>
                 <button onclick="ensaiosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
-                <button onclick="ensaiosSetView('notas')" data-i18n="notas">Notas</button>
+                <button class="socio-only" onclick="ensaiosSetView('notas')" data-i18n="notas">Notas</button>
             </div>
             <button class="btn btn-sm btn-secondary socio-only" onclick="ensaiosAsistenciaResumo()" data-i18n="resumo_asistencia" style="margin-left:auto">Resumo asistencia</button>
             <div class="export-dropdown socio-only">

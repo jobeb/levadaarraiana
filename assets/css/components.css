@@ -64,6 +64,12 @@
     background: var(--bg-hover);
     color: var(--text);
 }
+.btn-icon.btn-danger:hover {
+    color: var(--danger);
+}
+.btn-icon.btn-success:hover {
+    color: var(--accent-green);
+}
 
 /* ---- Cards ---- */
 .card {

@@ -17,10 +17,19 @@ var _bolosCalendar = new CalendarWidget('bolos-calendar', {
 function bolosSetView(view) {
     _bolosView = view;
     var btns = $$('#bolos-view-toggle button');
-    btns.forEach(function(b, i) { b.classList.toggle('active', (i === 0 && view === 'list') || (i === 1 && view === 'calendar')); });
+    btns.forEach(function(b, i) {
+        b.classList.toggle('active',
+            (i === 0 && view === 'list') ||
+            (i === 1 && view === 'calendar') ||
+            (i === 2 && view === 'solicitudes')
+        );
+    });
     $('#bolos-grid').style.display = view === 'list' ? '' : 'none';
     $('#bolos-calendar').style.display = view === 'calendar' ? '' : 'none';
+    var solEl = $('#bolos-solicitudes');
+    if (solEl) solEl.style.display = view === 'solicitudes' ? '' : 'none';
     if (view === 'calendar') bolosRenderCalendar();
+    if (view === 'solicitudes') bolosSolicitudesLoad();
 }
 
 function bolosRenderCalendar() {
@@ -138,28 +147,29 @@ function bolosRender() {
 
 function bolosModal(item) {
     var isEdit = item && item.id;
+    var hasData = !!item;
     var title = isEdit ? t('editar') + ' ' + t('bolo') : t('novo_bolo');
 
     $('#modal-title').textContent = title;
 
     var tipoOptions = ['actuacion', 'festival', 'taller'].map(function(tp) {
-        var sel = (isEdit && item.tipo === tp) ? ' selected' : '';
+        var sel = (hasData && item.tipo === tp) ? ' selected' : '';
         return '<option value="' + tp + '"' + sel + '>' + t(tp) + '</option>';
     }).join('');
 
     var estadoOptions = ['borrador', 'confirmado', 'asinado', 'completado', 'cancelado'].map(function(e) {
-        var sel = (isEdit && item.estado === e) ? ' selected' : '';
+        var sel = (hasData && item.estado === e) ? ' selected' : '';
         return '<option value="' + e + '"' + sel + '>' + t(e) + '</option>';
     }).join('');
 
-    var publicaChecked = (isEdit && item.publica) ? ' checked' : '';
+    var publicaChecked = (hasData && item.publica) ? ' checked' : '';
 
     $('#modal-body').innerHTML =
         '<input type="hidden" id="bolo-id" value="' + (isEdit ? item.id : '') + '">' +
         _renderModalLangBar() +
         '<div class="form-group">' +
             '<label class="required">' + t('titulo') + '</label>' +
-            '<input type="text" class="form-control" id="bolo-titulo" value="' + esc(isEdit ? item.titulo : '') + '">' +
+            '<input type="text" class="form-control" id="bolo-titulo" value="' + esc(hasData ? item.titulo || '' : '') + '">' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('descricion') + '</label>' +
@@ -168,16 +178,16 @@ function bolosModal(item) {
         '<div class="form-row">' +
             '<div class="form-group" style="flex:1">' +
                 '<label>' + t('data') + '</label>' +
-                '<input type="date" class="form-control" id="bolo-data" value="' + (isEdit ? item.data || today() : today()) + '">' +
+                '<input type="date" class="form-control" id="bolo-data" value="' + (hasData ? item.data || today() : today()) + '">' +
             '</div>' +
             '<div class="form-group" style="flex:1">' +
                 '<label>' + t('hora') + '</label>' +
-                '<input type="time" class="form-control" id="bolo-hora" value="' + (isEdit ? item.hora || '' : '') + '">' +
+                '<input type="time" class="form-control" id="bolo-hora" value="' + (hasData ? item.hora || '' : '') + '">' +
             '</div>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('lugar') + '</label>' +
-            '<input type="text" class="form-control" id="bolo-lugar" value="' + esc(isEdit ? item.lugar || '' : '') + '">' +
+            '<input type="text" class="form-control" id="bolo-lugar" value="' + esc(hasData ? item.lugar || '' : '') + '">' +
         '</div>' +
         '<div class="form-row">' +
             '<div class="form-group" style="flex:1">' +
@@ -201,26 +211,26 @@ function bolosModal(item) {
         '<div class="form-row">' +
             '<div class="form-group" style="flex:1">' +
                 '<label>' + t('cliente') + ' (' + t('nome') + ')</label>' +
-                '<input type="text" class="form-control" id="bolo-cliente-nome" value="' + esc(isEdit ? item.cliente_nome || '' : '') + '">' +
+                '<input type="text" class="form-control" id="bolo-cliente-nome" value="' + esc(hasData ? item.cliente_nome || '' : '') + '">' +
             '</div>' +
             '<div class="form-group" style="flex:1">' +
                 '<label>' + t('nif') + '</label>' +
-                '<input type="text" class="form-control" id="bolo-cliente-nif" value="' + esc(isEdit ? item.cliente_nif || '' : '') + '">' +
+                '<input type="text" class="form-control" id="bolo-cliente-nif" value="' + esc(hasData ? item.cliente_nif || '' : '') + '">' +
             '</div>' +
         '</div>' +
         '<div class="form-row">' +
             '<div class="form-group" style="flex:1">' +
                 '<label>' + t('telefono') + '</label>' +
-                '<input type="text" class="form-control" id="bolo-cliente-telefono" value="' + esc(isEdit ? item.cliente_telefono || '' : '') + '">' +
+                '<input type="text" class="form-control" id="bolo-cliente-telefono" value="' + esc(hasData ? item.cliente_telefono || '' : '') + '">' +
             '</div>' +
             '<div class="form-group" style="flex:1">' +
                 '<label>' + t('importe') + '</label>' +
-                '<input type="number" class="form-control" id="bolo-importe" step="0.01" min="0" value="' + (isEdit ? item.importe || '' : '') + '">' +
+                '<input type="number" class="form-control" id="bolo-importe" step="0.01" min="0" value="' + (hasData ? item.importe || '' : '') + '">' +
             '</div>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('notas') + '</label>' +
-            '<textarea class="form-control" id="bolo-notas" rows="2">' + esc(isEdit ? item.notas || '' : '') + '</textarea>' +
+            '<textarea class="form-control" id="bolo-notas" rows="2">' + esc(hasData ? item.notas || '' : '') + '</textarea>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('contrato') + ' (' + t('ficheiros') + ')</label>' +
@@ -228,7 +238,7 @@ function bolosModal(item) {
             (isEdit && item.contrato_arquivo ? '<p style="margin-top:4px"><a href="' + esc(uploadUrl(item.contrato_arquivo)) + '" target="_blank">' + esc(item.contrato_arquivo) + '</a></p>' : '') +
         '</div>';
 
-    initRichTextEditor('bolo-descricion-editor', isEdit ? item.descricion || '' : '', { uploadDir: 'bolos' });
+    initRichTextEditor('bolo-descricion-editor', hasData ? item.descricion || '' : '', { uploadDir: 'bolos' });
 
     _initModalI18n([
         { key: 'titulo', inputId: 'bolo-titulo', type: 'input' },
@@ -316,4 +326,150 @@ async function bolosDelete(id) {
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }
+}
+
+/* ==========================================================
+   Solicitudes de contratacion
+   ========================================================== */
+var _solicitudesBolos = [];
+
+async function bolosSolicitudesLoad() {
+    try {
+        _solicitudesBolos = await api('/solicitudes-bolos');
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+        _solicitudesBolos = [];
+    }
+    bolosSolicitudesRender();
+}
+
+function bolosSolicitudesRender() {
+    var container = $('#bolos-solicitudes');
+    if (!container) return;
+
+    if (_solicitudesBolos.length === 0) {
+        container.innerHTML = '<p class="text-center">' + t('sen_resultados') + '</p>';
+        return;
+    }
+
+    var html = '<div class="card-grid">';
+    _solicitudesBolos.forEach(function(s) {
+        var estadoBadge = '';
+        switch (s.estado) {
+            case 'pendente':
+                estadoBadge = '<span class="badge badge-warning">' + t('sol_pendente') + '</span>';
+                break;
+            case 'contactado':
+                estadoBadge = '<span class="badge badge-primary">' + t('sol_contactado') + '</span>';
+                break;
+            case 'aceptado':
+                estadoBadge = '<span class="badge badge-success">' + t('sol_aceptado') + '</span>';
+                break;
+            case 'rexeitado':
+                estadoBadge = '<span class="badge badge-danger">' + t('sol_rexeitado') + '</span>';
+                break;
+            default:
+                estadoBadge = '<span class="badge">' + esc(s.estado) + '</span>';
+        }
+
+        var tipoBadge = '';
+        if (s.tipo) {
+            var tipoKey = s.tipo === 'outro' ? 'outro' : s.tipo;
+            tipoBadge = ' <span class="badge">' + (TRANSLATIONS[tipoKey] ? t(tipoKey) : esc(s.tipo)) + '</span>';
+        }
+
+        var metaHtml = '';
+        if (s.data_evento) metaHtml += '<span>' + t('data') + ': ' + formatDate(s.data_evento) + '</span>';
+        if (s.lugar) metaHtml += '<span>' + esc(s.lugar) + '</span>';
+        metaHtml += '<span>' + esc(s.email) + '</span>';
+        if (s.telefono) metaHtml += '<span>' + esc(s.telefono) + '</span>';
+
+        var estadoSelect =
+            '<select class="form-control" style="max-width:160px;display:inline-block" onchange="bolosSolCambiarEstado(' + s.id + ', this.value)">' +
+                '<option value="pendente"' + (s.estado === 'pendente' ? ' selected' : '') + '>' + t('sol_pendente') + '</option>' +
+                '<option value="contactado"' + (s.estado === 'contactado' ? ' selected' : '') + '>' + t('sol_contactado') + '</option>' +
+                '<option value="aceptado"' + (s.estado === 'aceptado' ? ' selected' : '') + '>' + t('sol_aceptado') + '</option>' +
+                '<option value="rexeitado"' + (s.estado === 'rexeitado' ? ' selected' : '') + '>' + t('sol_rexeitado') + '</option>' +
+            '</select>';
+
+        var actions = '';
+        actions += '<button class="btn-icon" onclick="bolosSolConverter(' + s.id + ')" title="' + t('sol_converter_bolo') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>';
+        actions += '<button class="btn-icon btn-danger" onclick="bolosSolDelete(' + s.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>';
+
+        html += '<div class="card">' +
+            '<div class="card-body">' +
+                '<h3 class="card-title">' + esc(s.nome) + '</h3>' +
+                '<div class="card-meta">' + metaHtml + '</div>' +
+                (s.descricion ? '<p class="card-text">' + esc(truncate(s.descricion, 150)) + '</p>' : '') +
+                '<div class="card-badges">' + estadoBadge + tipoBadge + '</div>' +
+                '<div style="margin-top:8px">' + estadoSelect + '</div>' +
+                '<div class="form-group" style="margin-top:8px">' +
+                    '<textarea class="form-control" rows="2" placeholder="' + t('notas') + '" onblur="bolosSolGuardarNotas(' + s.id + ', this)">' + esc(s.notas || '') + '</textarea>' +
+                '</div>' +
+                '<div style="font-size:0.8rem;color:var(--text-dim);margin-top:4px">' + formatDate(s.creado) + '</div>' +
+                '<div class="card-actions">' + actions + '</div>' +
+            '</div>' +
+            '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+async function bolosSolCambiarEstado(id, estado) {
+    try {
+        await api('/solicitudes-bolos/' + id, { method: 'PUT', body: { estado: estado } });
+        var sol = _solicitudesBolos.find(function(s) { return s.id == id; });
+        if (sol) sol.estado = estado;
+        toast(t('exito'), 'success');
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+async function bolosSolGuardarNotas(id, textarea) {
+    var notas = textarea.value.trim();
+    try {
+        await api('/solicitudes-bolos/' + id, { method: 'PUT', body: { notas: notas } });
+        var sol = _solicitudesBolos.find(function(s) { return s.id == id; });
+        if (sol) sol.notas = notas;
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+async function bolosSolDelete(id) {
+    if (!await confirmAction(t('confirmar_eliminar'), { danger: true })) return;
+    try {
+        await api('/solicitudes-bolos/' + id, { method: 'DELETE' });
+        toast(t('exito'), 'success');
+        bolosSolicitudesLoad();
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+function bolosSolConverter(id) {
+    var sol = _solicitudesBolos.find(function(s) { return s.id == id; });
+    if (!sol) return;
+
+    // Open bolos modal with prefilled data from the solicitude
+    var prefill = {
+        titulo: '',
+        descricion: sol.descricion || '',
+        data: sol.data_evento || today(),
+        hora: '',
+        lugar: sol.lugar || '',
+        tipo: sol.tipo || 'actuacion',
+        estado: 'borrador',
+        publica: false,
+        cliente_nome: sol.nome || '',
+        cliente_nif: '',
+        cliente_telefono: sol.telefono || '',
+        importe: 0,
+        notas: (sol.notas ? sol.notas + '\n' : '') + 'Email: ' + (sol.email || ''),
+        imaxe: '',
+        contrato_arquivo: ''
+    };
+
+    bolosModal(prefill);
 }

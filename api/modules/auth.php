@@ -11,15 +11,15 @@ function handle_auth($uri, $method, $input) {
             send_json(['error' => 'Faltan credenciais'], 400);
         }
 
-        $stmt = get_db()->prepare("SELECT * FROM socios WHERE username = ?");
+        $stmt = get_db()->prepare("SELECT * FROM usuarios WHERE username = ?");
         $stmt->execute([$username]);
         $user = $stmt->fetch();
 
         if (!$user || !verify_password($password, $user['password'])) {
             send_json(['error' => 'Credenciais incorrectas'], 401);
         }
-        if ($user['estado'] !== 'Aprobado') {
-            send_json(['error' => 'Conta pendente de aprobación'], 403);
+        if ($user['estado'] === 'Desactivado') {
+            send_json(['error' => 'Conta desactivada'], 403);
         }
 
         // Generate session token
@@ -27,7 +27,7 @@ function handle_auth($uri, $method, $input) {
         $expires = date('Y-m-d H:i:s', time() + SESSION_DURATION);
 
         $stmt = get_db()->prepare(
-            "UPDATE socios SET session_token=?, session_expires=?, ultimo_login=NOW() WHERE id=?"
+            "UPDATE usuarios SET session_token=?, session_expires=?, ultimo_login=NOW() WHERE id=?"
         );
         $stmt->execute([$token, $expires, $user['id']]);
 
@@ -49,7 +49,7 @@ function handle_auth($uri, $method, $input) {
         }
 
         // Check unique username
-        $stmt = get_db()->prepare("SELECT id FROM socios WHERE username = ?");
+        $stmt = get_db()->prepare("SELECT id FROM usuarios WHERE username = ?");
         $stmt->execute([$username]);
         if ($stmt->fetch()) {
             send_json(['error' => 'O username xa existe'], 409);
@@ -57,8 +57,8 @@ function handle_auth($uri, $method, $input) {
 
         $hashed = hash_password($password);
         $stmt   = get_db()->prepare(
-            "INSERT INTO socios (username, nome_completo, email, telefono, instrumento, password, role, data_alta, estado)
-             VALUES (?, ?, ?, ?, ?, ?, 'Usuario', CURDATE(), 'Pendente')"
+            "INSERT INTO usuarios (username, nome_completo, email, telefono, instrumento, password, role, data_alta, estado)
+             VALUES (?, ?, ?, ?, ?, ?, 'Usuario', CURDATE(), 'Activo')"
         );
         $stmt->execute([$username, $nome, $email, $telefono, $instrumento, $hashed]);
         $id = (int)get_db()->lastInsertId();
@@ -66,8 +66,8 @@ function handle_auth($uri, $method, $input) {
         // Foto de perfil (base64)
         if (!empty($input['foto_data'])) {
             $ext = $input['foto_ext'] ?? 'jpg';
-            $path = process_and_save_image('fotos', "socio_{$id}.{$ext}", $input['foto_data'], 'avatar');
-            get_db()->prepare("UPDATE socios SET foto = ? WHERE id = ?")->execute([$path, $id]);
+            $path = process_and_save_image('fotos', "usuario_{$id}.{$ext}", $input['foto_data'], 'avatar');
+            get_db()->prepare("UPDATE usuarios SET foto = ? WHERE id = ?")->execute([$path, $id]);
         }
 
         send_json(['ok' => true, 'id' => $id], 201);
@@ -81,12 +81,12 @@ function handle_auth($uri, $method, $input) {
         }
 
         // Find user by username or email
-        $stmt = get_db()->prepare("SELECT id, username, email, estado FROM socios WHERE username = ? OR email = ?");
+        $stmt = get_db()->prepare("SELECT id, username, email, estado FROM usuarios WHERE username = ? OR email = ?");
         $stmt->execute([$identifier, $identifier]);
         $user = $stmt->fetch();
 
         // Always respond with success to prevent user enumeration
-        if (!$user || empty($user['email']) || $user['estado'] !== 'Aprobado') {
+        if (!$user || empty($user['email']) || $user['estado'] === 'Desactivado') {
             send_json(['ok' => true]);
         }
 
@@ -94,7 +94,7 @@ function handle_auth($uri, $method, $input) {
         $token = bin2hex(random_bytes(32));
         $expires = date('Y-m-d H:i:s', time() + 3600);
 
-        $stmt = get_db()->prepare("UPDATE socios SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?");
+        $stmt = get_db()->prepare("UPDATE usuarios SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?");
         $stmt->execute([$token, $expires, $user['id']]);
 
         // Build reset URL
@@ -137,7 +137,7 @@ function handle_auth($uri, $method, $input) {
         }
 
         $stmt = get_db()->prepare(
-            "SELECT id FROM socios WHERE password_reset_token = ? AND password_reset_expires > NOW() AND estado = 'Aprobado'"
+            "SELECT id FROM usuarios WHERE password_reset_token = ? AND password_reset_expires > NOW() AND estado != 'Desactivado'"
         );
         $stmt->execute([$token]);
         $user = $stmt->fetch();
@@ -149,7 +149,7 @@ function handle_auth($uri, $method, $input) {
         // Update password and clear token
         $hashed = hash_password($password);
         $stmt = get_db()->prepare(
-            "UPDATE socios SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?"
+            "UPDATE usuarios SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?"
         );
         $stmt->execute([$hashed, $user['id']]);
 
@@ -159,7 +159,7 @@ function handle_auth($uri, $method, $input) {
     if ($uri === '/logout' && $method === 'POST') {
         $user = get_session_user();
         if ($user) {
-            $stmt = get_db()->prepare("UPDATE socios SET session_token=NULL, session_expires=NULL WHERE id=?");
+            $stmt = get_db()->prepare("UPDATE usuarios SET session_token=NULL, session_expires=NULL WHERE id=?");
             $stmt->execute([$user['id']]);
         }
         send_json(['ok' => true]);

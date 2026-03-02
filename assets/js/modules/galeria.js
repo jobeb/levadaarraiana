@@ -28,6 +28,10 @@ function _fotoAlt(foto) {
     return (foto && typeof foto === 'object' && foto.alt) || '';
 }
 
+function _fotoDestacada(foto) {
+    return (foto && typeof foto === 'object' && foto.destacada) ? true : false;
+}
+
 function _isYoutubeUrl(src) {
     return src && src.indexOf('youtube.com/embed/') !== -1;
 }
@@ -292,6 +296,7 @@ function galeriaModal(album) {
                 path: _fotoPath(foto),
                 titulo: _fotoTitulo(foto),
                 alt: _fotoAlt(foto),
+                destacada: _fotoDestacada(foto),
                 _data: null,
                 _ext: null,
                 _nome: null,
@@ -390,6 +395,7 @@ function _renderEditorGrid() {
         }
 
         var isCover = _editorPortada && foto.path && foto.path === _editorPortada;
+        var isFav = foto.destacada;
         var isSelected = idx === _editorSelectedIdx;
         var isVideo = foto._objectUrl && foto._isVideo;
 
@@ -407,6 +413,7 @@ function _renderEditorGrid() {
             '<div class="photo-editor-thumb" onclick="_photoSelect(' + idx + ')">' + thumbHtml + '</div>' +
             '<div class="photo-editor-actions">' +
                 '<button type="button" class="cover-btn' + (isCover ? ' active' : '') + '" onclick="_photoSetCover(' + idx + ')" title="' + t('definir_portada') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>' +
+                '<button type="button" class="fav-btn' + (isFav ? ' active' : '') + '" onclick="_photoToggleFav(' + idx + ')" title="' + t('fotos_destacadas') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="' + (isFav ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></button>' +
                 '<button type="button" class="delete-btn" onclick="_photoRemove(' + idx + ')" title="' + t('eliminar_foto') + '">&times;</button>' +
             '</div>' +
             (foto.titulo ? '<div class="photo-editor-caption">' + esc(foto.titulo) + '</div>' : '') +
@@ -474,6 +481,15 @@ function _photoSetCover(idx) {
     _renderEditorGrid();
 }
 
+// ---- Toggle favorite ----
+
+function _photoToggleFav(idx) {
+    var foto = _editorPhotos[idx];
+    if (!foto) return;
+    foto.destacada = !foto.destacada;
+    _renderEditorGrid();
+}
+
 // ---- Remove photo ----
 
 function _photoRemove(idx) {
@@ -520,7 +536,7 @@ async function _handleNewPhotos(files) {
                 if (ytResult.youtube_url) {
                     _editorPhotos.push({
                         path: ytResult.youtube_url,
-                        titulo: '', alt: '',
+                        titulo: '', alt: '', destacada: false,
                         _data: null, _ext: null, _nome: null, _objectUrl: null
                     });
                     toast('Vídeo subido a YouTube', 'success');
@@ -531,7 +547,7 @@ async function _handleNewPhotos(files) {
                 var objUrl = URL.createObjectURL(file);
                 _editorPhotos.push({
                     path: '',
-                    titulo: '', alt: '',
+                    titulo: '', alt: '', destacada: false,
                     _data: b64fallback.data, _ext: ext, _nome: file.name,
                     _objectUrl: objUrl, _isVideo: true
                 });
@@ -541,7 +557,7 @@ async function _handleNewPhotos(files) {
             var objUrl2 = URL.createObjectURL(file);
             _editorPhotos.push({
                 path: '',
-                titulo: '', alt: '',
+                titulo: '', alt: '', destacada: false,
                 _data: b64.data, _ext: ext, _nome: file.name,
                 _objectUrl: objUrl2
             });
@@ -629,14 +645,16 @@ async function galeriaSave() {
                     ext: p._ext || 'jpg',
                     nome: p._nome || ('foto_' + i + '.' + (p._ext || 'jpg')),
                     titulo: p.titulo || '',
-                    alt: p.alt || ''
+                    alt: p.alt || '',
+                    destacada: p.destacada || false
                 });
             } else if (p.path) {
                 // Existing photo or YouTube URL: send path + metadata
                 fotos.push({
                     path: p.path,
                     titulo: p.titulo || '',
-                    alt: p.alt || ''
+                    alt: p.alt || '',
+                    destacada: p.destacada || false
                 });
             }
         }

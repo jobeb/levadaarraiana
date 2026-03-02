@@ -17,7 +17,7 @@ function handle_backup($method, $uri, $input) {
 
     $db = get_db();
     $tables = [
-        'socios', 'noticias', 'bolos', 'albums', 'propostas',
+        'usuarios', 'noticias', 'bolos', 'albums', 'propostas',
         'documentos', 'actas',
         'votacions', 'votos', 'propostas_votos',
         'ensaios', 'asistencia', 'instrumentos',

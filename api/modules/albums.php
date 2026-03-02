@@ -19,9 +19,10 @@ function normalize_fotos($fotos) {
             $out[] = ['path' => $f, 'titulo' => '', 'alt' => ''];
         } elseif (is_array($f) && !empty($f['path'])) {
             $out[] = [
-                'path'   => $f['path'],
-                'titulo' => $f['titulo'] ?? '',
-                'alt'    => $f['alt'] ?? '',
+                'path'      => $f['path'],
+                'titulo'    => $f['titulo'] ?? '',
+                'alt'       => $f['alt'] ?? '',
+                'destacada' => !empty($f['destacada']),
             ];
         }
     }
@@ -92,14 +93,14 @@ function handle_albums($method, $uri, $input) {
             foreach ($input['fotos'] as $i => $foto) {
                 if (is_string($foto)) {
                     // Legacy string format
-                    $fotos[] = ['path' => $foto, 'titulo' => '', 'alt' => ''];
+                    $fotos[] = ['path' => $foto, 'titulo' => '', 'alt' => '', 'destacada' => false];
                 } elseif (!empty($foto['data'])) {
                     $ext  = $foto['ext'] ?? 'jpg';
                     $nome = $foto['nome'] ?? "foto_{$i}.{$ext}";
                     $path = process_and_save_image("albums/{$id}", $nome, $foto['data'], 'gallery');
-                    $fotos[] = ['path' => $path, 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? ''];
+                    $fotos[] = ['path' => $path, 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? '', 'destacada' => !empty($foto['destacada'])];
                 } elseif (!empty($foto['path'])) {
-                    $fotos[] = ['path' => $foto['path'], 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? ''];
+                    $fotos[] = ['path' => $foto['path'], 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? '', 'destacada' => !empty($foto['destacada'])];
                 }
             }
             $db->prepare("UPDATE albums SET fotos = ? WHERE id = ?")
@@ -159,14 +160,14 @@ function handle_albums($method, $uri, $input) {
             $fotos = [];
             foreach ($input['fotos'] as $i => $foto) {
                 if (is_string($foto)) {
-                    $fotos[] = ['path' => $foto, 'titulo' => '', 'alt' => ''];
+                    $fotos[] = ['path' => $foto, 'titulo' => '', 'alt' => '', 'destacada' => false];
                 } elseif (!empty($foto['data'])) {
                     $ext  = $foto['ext'] ?? 'jpg';
                     $nome = $foto['nome'] ?? "foto_{$i}.{$ext}";
                     $path = process_and_save_image("albums/{$id}", $nome, $foto['data'], 'gallery');
-                    $fotos[] = ['path' => $path, 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? ''];
+                    $fotos[] = ['path' => $path, 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? '', 'destacada' => !empty($foto['destacada'])];
                 } elseif (!empty($foto['path'])) {
-                    $fotos[] = ['path' => $foto['path'], 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? ''];
+                    $fotos[] = ['path' => $foto['path'], 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? '', 'destacada' => !empty($foto['destacada'])];
                 }
             }
             $fields[] = "fotos = ?";

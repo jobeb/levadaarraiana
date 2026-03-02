@@ -32,7 +32,7 @@ const TRANSLATIONS = {
     login_titulo:       { gl:'Iniciar sesión', es:'Iniciar sesión', pt:'Iniciar sessão', en:'Log in' },
     rexistro_titulo:    { gl:'Crear conta', es:'Crear cuenta', pt:'Criar conta', en:'Create account' },
     rexistro_ok:        { gl:'Rexistro correcto! Agarda aprobación.', es:'Registro correcto. Espera aprobación.', pt:'Registo correto! Aguarde aprovação.', en:'Registered! Wait for approval.' },
-    login_pendente:     { gl:'A túa conta está pendente de aprobación', es:'Tu cuenta está pendiente de aprobación', pt:'A sua conta está pendente de aprovação', en:'Your account is pending approval' },
+    login_desactivado:  { gl:'A túa conta está desactivada', es:'Tu cuenta está desactivada', pt:'A sua conta está desativada', en:'Your account is disabled' },
     repetir_contrasinal:{ gl:'Repetir contrasinal', es:'Repetir contraseña', pt:'Repetir senha', en:'Repeat password' },
     contrasinais_non_coinciden: { gl:'Os contrasinais non coinciden', es:'Las contraseñas no coinciden', pt:'As senhas não coincidem', en:'Passwords do not match' },
     foto_perfil:        { gl:'Foto de perfil', es:'Foto de perfil', pt:'Foto de perfil', en:'Profile photo' },
@@ -59,7 +59,7 @@ const TRANSLATIONS = {
 
     // ---- Sidebar ----
     dashboard:          { gl:'Inicio', es:'Inicio', pt:'Início', en:'Home' },
-    socios:             { gl:'Usuarios', es:'Usuarios', pt:'Utilizadores', en:'Users' },
+    usuarios:           { gl:'Usuarios', es:'Usuarios', pt:'Utilizadores', en:'Users' },
     noticias:           { gl:'Noticias', es:'Noticias', pt:'Notícias', en:'News' },
     bolos:              { gl:'Bolos', es:'Bolos', pt:'Bolos', en:'Gigs' },
     bolo:               { gl:'Bolo', es:'Bolo', pt:'Bolo', en:'Gig' },
@@ -79,7 +79,7 @@ const TRANSLATIONS = {
     sec_administracion: { gl:'Administración', es:'Administración', pt:'Administração', en:'Administration' },
     sec_musica:         { gl:'Música', es:'Música', pt:'Música', en:'Music' },
 
-    // ---- Socios ----
+    // ---- Usuarios ----
     socio:              { gl:'Socio/a', es:'Socio/a', pt:'Sócio/a', en:'Member' },
     instrumento:        { gl:'Instrumento', es:'Instrumento', pt:'Instrumento', en:'Instrument' },
     rol:                { gl:'Rol', es:'Rol', pt:'Papel', en:'Role' },
@@ -88,11 +88,10 @@ const TRANSLATIONS = {
     telefono:           { gl:'Teléfono', es:'Teléfono', pt:'Telefone', en:'Phone' },
     dni:                { gl:'DNI', es:'DNI', pt:'NIF', en:'ID' },
     data_alta:          { gl:'Data alta', es:'Fecha alta', pt:'Data registo', en:'Join date' },
-    pendente:           { gl:'Pendente', es:'Pendiente', pt:'Pendente', en:'Pending' },
-    aprobado:           { gl:'Aprobado', es:'Aprobado', pt:'Aprovado', en:'Approved' },
-    rexeitado:          { gl:'Rexeitado', es:'Rechazado', pt:'Rejeitado', en:'Rejected' },
-    aprobar:            { gl:'Aprobar', es:'Aprobar', pt:'Aprovar', en:'Approve' },
-    rexeitar:           { gl:'Rexeitar', es:'Rechazar', pt:'Rejeitar', en:'Reject' },
+    activo:             { gl:'Activo', es:'Activo', pt:'Ativo', en:'Active' },
+    desactivado:        { gl:'Desactivado', es:'Desactivado', pt:'Desativado', en:'Disabled' },
+    activar:            { gl:'Activar', es:'Activar', pt:'Ativar', en:'Activate' },
+    desactivar:         { gl:'Desactivar', es:'Desactivar', pt:'Desativar', en:'Disable' },
     admin:              { gl:'Admin', es:'Admin', pt:'Admin', en:'Admin' },
     usuario:            { gl:'Usuario/a', es:'Usuario/a', pt:'Utilizador/a', en:'User' },
 
@@ -121,6 +120,7 @@ const TRANSLATIONS = {
 
     // ---- Galería ----
     album:              { gl:'Álbum', es:'Álbum', pt:'Álbum', en:'Album' },
+    albums:             { gl:'Álbums', es:'Álbumes', pt:'Álbuns', en:'Albums' },
     fotos:              { gl:'Fotos', es:'Fotos', pt:'Fotos', en:'Photos' },
     novo_album:         { gl:'Novo álbum', es:'Nuevo álbum', pt:'Novo álbum', en:'New album' },
     portada:            { gl:'Portada', es:'Portada', pt:'Capa', en:'Cover' },
@@ -229,6 +229,7 @@ const TRANSLATIONS = {
     acceder_panel:      { gl:'Acceder ao panel', es:'Acceder al panel', pt:'Aceder ao painel', en:'Access panel' },
     ultimas_noticias:   { gl:'Últimas noticias', es:'Últimas noticias', pt:'Últimas notícias', en:'Latest news' },
     galeria_fotos:      { gl:'Galería de fotos', es:'Galería de fotos', pt:'Galeria de fotos', en:'Photo gallery' },
+    fotos_destacadas:   { gl:'Fotos destacadas', es:'Fotos destacadas', pt:'Fotos em destaque', en:'Featured photos' },
     sobre_nos_landing:  { gl:'Sobre nós', es:'Sobre nosotros', pt:'Sobre nós', en:'About us' },
 
     // ---- Backup ----
@@ -401,6 +402,7 @@ const TRANSLATIONS = {
     comentario_opcional:    { gl:'Comentario (opcional)', es:'Comentario (opcional)', pt:'Comentário (opcional)', en:'Comment (optional)' },
     enviar_solicitude:      { gl:'Enviar solicitude', es:'Enviar solicitud', pt:'Enviar pedido', en:'Send request' },
     solicitude_info_usuario:{ gl:'Os teus datos enviaranse xunto coa solicitude', es:'Tus datos se enviarán junto con la solicitud', pt:'Os teus dados serão enviados com o pedido', en:'Your data will be sent with the request' },
+    xa_formas_parte:        { gl:'Xa formas parte da batucada!', es:'Ya formas parte de la batucada!', pt:'Ja fazes parte da batucada!', en:'You are already part of the batucada!' },
     ir_ao_panel:            { gl:'Ir ao panel', es:'Ir al panel', pt:'Ir ao painel', en:'Go to panel' },
 
     // ---- Forgot / Reset password ----
@@ -429,6 +431,27 @@ const TRANSLATIONS = {
     // ---- Traduccions i18n ----
     traduccions:        { gl:'Traducións', es:'Traducciones', pt:'Traduções', en:'Translations' },
     campo_opcional:     { gl:'Campo opcional', es:'Campo opcional', pt:'Campo opcional', en:'Optional field' },
+
+    // ---- Solicitudes de contratacion ----
+    contratar_titulo:   { gl:'Presuposto sen compromiso', es:'Presupuesto sin compromiso', pt:'Orcamento sem compromisso', en:'No-obligation quote' },
+    contratar_texto:    { gl:'Queres que a Levada Arraiana toque no teu evento? Contanos que tes en mente e contactarémoste.', es:'Quieres que Levada Arraiana toque en tu evento? Cuéntanos qué tienes en mente y te contactaremos.', pt:'Queres que a Levada Arraiana toque no teu evento? Conta-nos o que tens em mente e entraremos em contacto.', en:'Want Levada Arraiana to play at your event? Tell us what you have in mind and we will get in touch.' },
+    contratar_btn:      { gl:'Pedir presuposto', es:'Pedir presupuesto', pt:'Pedir orcamento', en:'Request a quote' },
+    contratar_enviada:  { gl:'Solicitude de contratacion enviada correctamente!', es:'Solicitud de contratacion enviada correctamente!', pt:'Pedido de contratacao enviado com sucesso!', en:'Booking request sent successfully!' },
+    data_evento_desexada: { gl:'Data desexada do evento', es:'Fecha deseada del evento', pt:'Data desejada do evento', en:'Desired event date' },
+    lugar_evento:       { gl:'Lugar do evento', es:'Lugar del evento', pt:'Local do evento', en:'Event location' },
+    tipo_evento:        { gl:'Tipo de evento', es:'Tipo de evento', pt:'Tipo de evento', en:'Event type' },
+    outro:              { gl:'Outro', es:'Otro', pt:'Outro', en:'Other' },
+    selecciona_tipo:    { gl:'Selecciona un tipo', es:'Selecciona un tipo', pt:'Seleciona um tipo', en:'Select a type' },
+    descricion_evento:  { gl:'Descricion do evento', es:'Descripcion del evento', pt:'Descricao do evento', en:'Event description' },
+    descricion_evento_placeholder: { gl:'Cóntanos sobre o teu evento...', es:'Cuéntanos sobre tu evento...', pt:'Conta-nos sobre o teu evento...', en:'Tell us about your event...' },
+    solicitudes:        { gl:'Solicitudes', es:'Solicitudes', pt:'Pedidos', en:'Requests' },
+    sol_pendente:       { gl:'Pendente', es:'Pendiente', pt:'Pendente', en:'Pending' },
+    sol_contactado:     { gl:'Contactado', es:'Contactado', pt:'Contactado', en:'Contacted' },
+    sol_aceptado:       { gl:'Aceptado', es:'Aceptado', pt:'Aceite', en:'Accepted' },
+    sol_rexeitado:      { gl:'Rexeitado', es:'Rechazado', pt:'Rejeitado', en:'Rejected' },
+    sol_converter_bolo: { gl:'Converter en bolo', es:'Convertir en bolo', pt:'Converter em bolo', en:'Convert to gig' },
+    cliente:            { gl:'Cliente', es:'Cliente', pt:'Cliente', en:'Client' },
+    importe:            { gl:'Importe', es:'Importe', pt:'Montante', en:'Amount' },
 };
 
 function t(key) {

@@ -4,7 +4,7 @@
 
 /* ---- Section header colored accents (panel) ---- */
 #sec-dashboard .section-header h2::after,
-#sec-socios .section-header h2::after    { content: ''; display: block; width: 40px; height: 3px; border-radius: 2px; margin-top: 6px; background: var(--secondary); }
+#sec-usuarios .section-header h2::after    { content: ''; display: block; width: 40px; height: 3px; border-radius: 2px; margin-top: 6px; background: var(--secondary); }
 #sec-noticias .section-header h2::after  { content: ''; display: block; width: 40px; height: 3px; border-radius: 2px; margin-top: 6px; background: var(--primary); }
 #sec-bolos .section-header h2::after     { content: ''; display: block; width: 40px; height: 3px; border-radius: 2px; margin-top: 6px; background: var(--accent-magenta); }
 #sec-galeria .section-header h2::after   { content: ''; display: block; width: 40px; height: 3px; border-radius: 2px; margin-top: 6px; background: var(--secondary); }
@@ -473,6 +473,7 @@ th.sortable:hover { color: var(--primary); }
 }
 .photo-editor-actions button:hover { color: var(--text); }
 .photo-editor-actions .cover-btn.active { color: var(--primary); }
+.photo-editor-actions .fav-btn.active { color: var(--danger); }
 .photo-editor-actions .delete-btn:hover { color: var(--danger); }
 .photo-editor-caption {
     padding: 0 4px 4px;
@@ -512,7 +513,7 @@ th.sortable:hover { color: var(--primary); }
     text-shadow: 0 1px 4px rgba(0,0,0,0.7);
 }
 
-/* ---- User cards (socios cards view) ---- */
+/* ---- User cards (usuarios cards view) ---- */
 .user-card {
     background: var(--bg-surface);
     border: 1px solid var(--border);

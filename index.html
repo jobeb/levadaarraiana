@@ -142,6 +142,15 @@
     </div>
 </div>
 
+<!-- Contratar overlay -->
+<div id="overlay-contratar" class="overlay" onclick="if(event.target===this)hideOverlays()">
+    <div class="overlay-card">
+        <button class="overlay-close" onclick="hideOverlays()">&times;</button>
+        <h2 data-i18n="contratar_titulo">Presuposto sen compromiso</h2>
+        <div id="contratar-overlay-content"></div>
+    </div>
+</div>
+
 <!-- Forgot password overlay -->
 <div id="overlay-forgot" class="overlay" onclick="if(event.target===this)hideOverlays()">
     <div class="overlay-card">
@@ -259,10 +268,21 @@
     </section>
     </div>
 
+    <!-- CTA: Contratar -->
+    <section class="cta-section cta-section-alt">
+        <div class="cta-inner reveal-scale">
+            <h2 data-i18n="contratar_titulo">Presuposto sen compromiso</h2>
+            <p data-i18n="contratar_texto">Queres que a Levada Arraiana toque no teu evento? Contanos que tes en mente e contactarémoste.</p>
+            <a href="#" class="btn btn-primary" onclick="showContratarOverlay();return false" data-i18n="contratar_btn">Pedir presuposto</a>
+        </div>
+    </section>
+
     <!-- Galeria -->
     <div data-landing-section="galeria">
     <section class="pub-section" id="galeria-pub">
         <h2 class="reveal"><span data-i18n="galeria_fotos">Galeria de fotos</span></h2>
+        <div id="pub-fotos-destacadas"></div>
+        <h3 class="pub-fotos-destacadas-title reveal" data-i18n="albums">Álbums</h3>
         <div id="pub-galeria-grid" class="pub-card-grid stagger-children reveal"></div>
     </section>
     </div>
@@ -526,13 +546,13 @@
             // Active nav link tracking
             var current = '';
             sections.forEach(function(section) {
-                var top = section.offsetTop - 120;
-                if (y >= top) current = section.id;
+                var rect = section.getBoundingClientRect();
+                if (rect.top <= 150) current = section.id;
             });
             navLinks.forEach(function(link) {
                 link.classList.remove('active');
                 var href = link.getAttribute('href');
-                if (href && href === '#' + current) {
+                if (current && href && href === '#' + current) {
                     link.classList.add('active');
                 }
             });
@@ -572,23 +592,9 @@
         hideOverlays();
         var container = document.getElementById('join-overlay-content');
         if (AppState.user && AppState.token) {
-            var u = AppState.user;
             container.innerHTML =
-                '<p class="join-user-hint">' + t('solicitude_info_usuario') + '</p>' +
-                '<div class="join-user-info">' +
-                    '<p><strong>' + t('nome') + ':</strong> ' + esc(u.nome_completo || u.username) + '</p>' +
-                    '<p><strong>' + t('email') + ':</strong> ' + esc(u.email || '-') + '</p>' +
-                    '<p><strong>' + t('telefono') + ':</strong> ' + esc(u.telefono || '-') + '</p>' +
-                    '<p><strong>' + t('instrumento') + ':</strong> ' + esc(u.instrumento || '-') + '</p>' +
-                '</div>' +
-                '<form class="overlay-form" onsubmit="submitJoinRequest(event)">' +
-                    '<div class="form-group">' +
-                        '<label>' + t('comentario_opcional') + '</label>' +
-                        '<textarea id="join-comentario" class="form-control" rows="3"></textarea>' +
-                    '</div>' +
-                    '<button type="submit" class="btn btn-primary">' + t('enviar_solicitude') + '</button>' +
-                    '<div id="join-error" class="overlay-error"></div>' +
-                '</form>';
+                '<p class="join-user-hint" style="text-align:center;font-size:1.1rem;margin:var(--gap-lg) 0">' + t('xa_formas_parte') + '</p>' +
+                '<div style="text-align:center"><a href="app.html" class="btn btn-primary">' + t('ir_ao_panel') + '</a></div>';
         } else {
             container.innerHTML =
                 '<form class="overlay-form" onsubmit="submitJoinRequest(event)">' +
@@ -635,6 +641,68 @@
             await api('/solicitude', { method: 'POST', body: body });
             hideOverlays();
             toast(t('solicitude_enviada'), 'success');
+        } catch (err) {
+            errEl.textContent = err.message || t('erro');
+            errEl.style.display = 'block';
+        }
+    }
+
+    // ---- Contratar overlay ----
+    function showContratarOverlay() {
+        hideOverlays();
+        var container = document.getElementById('contratar-overlay-content');
+        container.innerHTML =
+            '<form class="overlay-form" onsubmit="submitContratarRequest(event)">' +
+                '<div class="form-group">' +
+                    '<label>' + t('nome') + ' *</label>' +
+                    '<input type="text" id="contratar-nome" class="form-control" required>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label>' + t('email') + ' *</label>' +
+                    '<input type="email" id="contratar-email" class="form-control" required>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label>' + t('telefono') + '</label>' +
+                    '<input type="tel" id="contratar-telefono" class="form-control">' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label>' + t('data_evento_desexada') + '</label>' +
+                    '<input type="date" id="contratar-data" class="form-control">' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label>' + t('lugar_evento') + '</label>' +
+                    '<input type="text" id="contratar-lugar" class="form-control">' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label>' + t('descricion_evento') + '</label>' +
+                    '<textarea id="contratar-descricion" class="form-control" rows="3" placeholder="' + t('descricion_evento_placeholder') + '"></textarea>' +
+                '</div>' +
+                '<button type="submit" class="btn btn-primary">' + t('contratar_btn') + '</button>' +
+                '<div id="contratar-error" class="overlay-error"></div>' +
+            '</form>';
+        document.getElementById('overlay-contratar').classList.add('show');
+    }
+
+    async function submitContratarRequest(e) {
+        e.preventDefault();
+        var errEl = document.getElementById('contratar-error');
+        errEl.style.display = 'none';
+
+        var body = {
+            nome: (document.getElementById('contratar-nome').value || '').trim(),
+            email: (document.getElementById('contratar-email').value || '').trim(),
+            telefono: (document.getElementById('contratar-telefono').value || '').trim(),
+            data_evento: (document.getElementById('contratar-data').value || '').trim(),
+            lugar: (document.getElementById('contratar-lugar').value || '').trim(),
+            descricion: (document.getElementById('contratar-descricion').value || '').trim()
+        };
+
+        if (!body.nome || !body.email) return;
+
+        try {
+            await api('/solicitudes-bolos', { method: 'POST', body: body });
+            hideOverlays();
+            toast(t('contratar_enviada'), 'success');
         } catch (err) {
             errEl.textContent = err.message || t('erro');
             errEl.style.display = 'block';

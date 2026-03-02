@@ -101,7 +101,7 @@ function initApp() {
 
     // Register routes
     Router.register('dashboard', loadDashboard);
-    Router.register('socios', sociosLoad);
+    Router.register('usuarios', usuariosLoad);
     Router.register('noticias', noticiasLoad);
     Router.register('bolos', bolosLoad);
     Router.register('galeria', galeriaLoad);
@@ -127,22 +127,22 @@ async function loadDashboard() {
     var statsEl = document.getElementById('dashboard-stats');
     try {
         var results = await Promise.all([
-            api('/socios').catch(function() { return []; }),
+            api('/usuarios').catch(function() { return []; }),
             api('/noticias').catch(function() { return []; }),
             api('/bolos').catch(function() { return []; }),
             api('/ensaios').catch(function() { return []; }),
             api('/votacions').catch(function() { return []; }),
             api('/config').catch(function() { return {}; }),
         ]);
-        var socios = results[0], noticias = results[1], bolos = results[2], ensaios = results[3], votacions = results[4];
+        var usuarios = results[0], noticias = results[1], bolos = results[2], ensaios = results[3], votacions = results[4];
         AppState.config = results[5] || {};
-        var aprobados = socios.filter(function(s) { return s.estado === 'Aprobado'; }).length;
+        var activos = usuarios.filter(function(s) { return s.estado !== 'Desactivado'; }).length;
         var hoxe = today();
         var proxBol = bolos.filter(function(b) { return b.data >= hoxe; }).length;
         var pastBol = bolos.filter(function(b) { return b.data < hoxe; }).length;
         var proxEns = ensaios.filter(function(e) { return e.data >= hoxe && e.estado === 'programado'; }).length;
         statsEl.innerHTML =
-            '<div class="stat-card stat-blue"><div class="stat-value">' + aprobados + '</div><div class="stat-label">' + t('socios') + '</div></div>' +
+            '<div class="stat-card stat-blue"><div class="stat-value">' + activos + '</div><div class="stat-label">' + t('usuarios') + '</div></div>' +
             '<div class="stat-card stat-gold"><div class="stat-value">' + noticias.length + '</div><div class="stat-label">' + t('noticias') + '</div></div>' +
             '<div class="stat-card stat-red"><div class="stat-value">' + proxBol + '</div><div class="stat-label">' + t('proximos_bolos') + '</div></div>' +
             '<div class="stat-card stat-magenta"><div class="stat-value">' + pastBol + '</div><div class="stat-label">' + t('bolos_realizados') + '</div></div>' +
@@ -206,9 +206,8 @@ function _renderDashboardCalendar(ensaios, bolos, noticias, votacions) {
         }
     });
     _dashboardCal.setEvents(events);
-    _dashboardCal.render();
 
-    // Legend inside calendar container — store data so render() can re-append it
+    // Set legend BEFORE render() so it appends it once
     _dashboardCal._legendHtml =
         '<div class="cal-legend" id="dashboard-cal-legend">' +
         '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.ensaios + '"></span>' + t('ensaios') + '</span>' +
@@ -216,7 +215,8 @@ function _renderDashboardCalendar(ensaios, bolos, noticias, votacions) {
         '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.noticias + '"></span>' + t('noticias') + '</span>' +
         '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.votacions + '"></span>' + t('votacions') + '</span>' +
         '</div>';
-    calContainer.insertAdjacentHTML('beforeend', _dashboardCal._legendHtml);
+
+    _dashboardCal.render();
 }
 
 var _calPopupOutsideHandler = null;
@@ -275,23 +275,34 @@ function _showCalendarDayPopup(date, events) {
     });
     html += '</div></div>';
 
-    cell.style.position = 'relative';
-    cell.insertAdjacentHTML('beforeend', html);
+    // Append popup to body with fixed positioning to avoid overflow clipping
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    var popup = wrapper.firstElementChild;
+    document.body.appendChild(popup);
 
-    // Adjust popup position if it overflows the viewport
-    var popup = cell.querySelector('.cal-day-popup');
-    if (popup) {
-        var rect = popup.getBoundingClientRect();
-        if (rect.right > window.innerWidth - 8) {
-            popup.style.left = 'auto';
-            popup.style.right = '0';
-            popup.style.transform = 'none';
-        }
-        if (rect.left < 8) {
-            popup.style.left = '0';
-            popup.style.right = 'auto';
-            popup.style.transform = 'none';
-        }
+    // Position below the cell using fixed coordinates
+    var cellRect = cell.getBoundingClientRect();
+    popup.style.position = 'fixed';
+    popup.style.top = cellRect.bottom + 'px';
+    popup.style.left = (cellRect.left + cellRect.width / 2) + 'px';
+    popup.style.transform = 'translateX(-50%)';
+
+    // Adjust if overflows viewport
+    var popRect = popup.getBoundingClientRect();
+    if (popRect.right > window.innerWidth - 8) {
+        popup.style.left = 'auto';
+        popup.style.right = '8px';
+        popup.style.transform = 'none';
+    }
+    if (popRect.left < 8) {
+        popup.style.left = '8px';
+        popup.style.right = 'auto';
+        popup.style.transform = 'none';
+    }
+    // If overflows bottom, show above the cell
+    if (popRect.bottom > window.innerHeight - 8) {
+        popup.style.top = (cellRect.top - popRect.height) + 'px';
     }
 
     // Close popup when clicking outside
@@ -479,7 +490,7 @@ async function saveProfile() {
     }
 
     try {
-        var updated = await api('/socios/me', { method: 'PUT', body: body });
+        var updated = await api('/usuarios/me', { method: 'PUT', body: body });
         // Update session with new data
         updated.token = AppState.token;
         AppState.setUser(updated);

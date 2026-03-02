@@ -1,6 +1,6 @@
 <?php
 /**
- * Script one-shot: Crear socios a partir dos participantes do chat de WhatsApp.
+ * Script one-shot: Crear usuarios a partir dos participantes do chat de WhatsApp.
  * Executar unha soa vez: php insert_socios_whatsapp.php
  * ou abrir no navegador: http://localhost/Levadaarraiana/sql/insert_socios_whatsapp.php
  */
@@ -45,19 +45,19 @@ $participants = [
 
 // ---- Insert ----
 $stmt = $db->prepare("
-    INSERT INTO socios (username, nome_completo, password, estado, role, data_alta)
-    VALUES (:username, :nome_completo, :password, 'Aprobado', 'Socio', CURDATE())
+    INSERT INTO usuarios (username, nome_completo, password, estado, role, data_alta)
+    VALUES (:username, :nome_completo, :password, 'Activo', 'Socio', CURDATE())
 ");
 
 $inserted = 0;
 $skipped = 0;
 
 echo "<pre>\n";
-echo "=== Inserindo socios de WhatsApp ===\n\n";
+echo "=== Inserindo usuarios de WhatsApp ===\n\n";
 
 foreach ($participants as $p) {
     // Check if username already exists
-    $exists = $db->prepare("SELECT id FROM socios WHERE username = ?");
+    $exists = $db->prepare("SELECT id FROM usuarios WHERE username = ?");
     $exists->execute([$p['username']]);
     if ($exists->fetch()) {
         echo "SKIP: {$p['username']} (xa existe)\n";

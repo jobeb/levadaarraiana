@@ -33,7 +33,7 @@ function get_session_user() {
     if (empty($token)) return null;
 
     $stmt = get_db()->prepare(
-        "SELECT * FROM socios WHERE session_token = ? AND session_expires > NOW() AND estado = 'Aprobado'"
+        "SELECT * FROM usuarios WHERE session_token = ? AND session_expires > NOW() AND estado != 'Desactivado'"
     );
     $stmt->execute([$token]);
     $user = $stmt->fetch();

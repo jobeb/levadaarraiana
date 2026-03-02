@@ -113,6 +113,11 @@ async function ensaiosLoad() {
         toast(t('erro') + ': ' + e.message, 'error');
         AppState.ensaios = AppState.ensaios || [];
     }
+    // Usuario role: force calendar view only
+    if (!AppState.isSocio() && _ensaiosView !== 'calendar') {
+        ensaiosSetView('calendar');
+        return;
+    }
     ensaiosRender();
     if (_ensaiosView === 'calendar') ensaiosRenderCalendar();
     if (_ensaiosView === 'notas') ensaiosRenderNotas();
@@ -486,16 +491,16 @@ async function ensaiosDelete(id) {
 async function ensaiosAsistencia(id) {
     $('#modal-title').textContent = t('asistencia');
 
-    // Load socios if not cached
-    if (!AppState.socios || AppState.socios.length === 0) {
+    // Load usuarios if not cached
+    if (!AppState.usuarios || AppState.usuarios.length === 0) {
         try {
-            AppState.socios = await api('/socios');
+            AppState.usuarios = await api('/usuarios');
         } catch (e) {
-            AppState.socios = [];
+            AppState.usuarios = [];
         }
     }
 
-    var socios = (AppState.socios || []).filter(function(s) { return s.estado === 'Aprobado'; });
+    var socios = (AppState.usuarios || []).filter(function(s) { return s.estado === 'Activo'; });
 
     // Load existing attendance
     var asistencia = [];

@@ -22,7 +22,7 @@ function handle_ensaios($method, $uri, $input) {
                         SUM(CASE WHEN a.estado = 'confirmado' THEN 1 ELSE 0 END) AS confirmados,
                         SUM(CASE WHEN a.estado = 'ausente' THEN 1 ELSE 0 END) AS ausentes,
                         SUM(CASE WHEN a.estado = 'xustificado' THEN 1 ELSE 0 END) AS xustificados
-                 FROM socios s
+                 FROM usuarios s
                  LEFT JOIN asistencia a ON a.socio_id = s.id
                  LEFT JOIN ensaios e ON e.id = a.ensaio_id AND e.estado = 'realizado'
                  WHERE s.estado = 'Aprobado'
@@ -32,7 +32,7 @@ function handle_ensaios($method, $uri, $input) {
             send_json($rows);
         }
 
-        // GET /asistencia/ID — get attendance for ensaio ID (join with socios for nome)
+        // GET /asistencia/ID — get attendance for ensaio ID (join with usuarios for nome)
         if ($method === 'GET') {
             require_auth();
             $ensaio_id = null;
@@ -44,7 +44,7 @@ function handle_ensaios($method, $uri, $input) {
             $stmt = $db->prepare(
                 "SELECT a.*, s.nome_completo AS socio_nome
                  FROM asistencia a
-                 LEFT JOIN socios s ON s.id = a.socio_id
+                 LEFT JOIN usuarios s ON s.id = a.socio_id
                  WHERE a.ensaio_id = ?
                  ORDER BY s.nome_completo ASC"
             );

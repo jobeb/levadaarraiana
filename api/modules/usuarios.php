@@ -1,25 +1,25 @@
 <?php
 /**
- * Módulo Socios — CRUD
+ * Módulo Usuarios — CRUD
  * Levada Arraiana
  */
-if (basename($_SERVER['SCRIPT_FILENAME']) === 'socios.php') {
+if (basename($_SERVER['SCRIPT_FILENAME']) === 'usuarios.php') {
     http_response_code(403);
     exit('Forbidden');
 }
 
-function handle_socios($method, $uri, $input) {
+function handle_usuarios($method, $uri, $input) {
     $db = get_db();
 
-    // GET /socios/me → datos propios
-    if ($uri === '/socios/me' && $method === 'GET') {
+    // GET /usuarios/me → datos propios
+    if ($uri === '/usuarios/me' && $method === 'GET') {
         $user = require_auth();
         unset($user['password'], $user['session_token'], $user['session_expires']);
         send_json(fix_row($user));
     }
 
-    // PUT /socios/me → actualizar perfil propio
-    if ($uri === '/socios/me' && $method === 'PUT') {
+    // PUT /usuarios/me → actualizar perfil propio
+    if ($uri === '/usuarios/me' && $method === 'PUT') {
         $user = require_auth();
         $id = $user['id'];
 
@@ -37,7 +37,7 @@ function handle_socios($method, $uri, $input) {
         // Foto base64
         if (!empty($input['foto_data'])) {
             $ext = $input['foto_ext'] ?? 'jpg';
-            $path = process_and_save_image('fotos', "socio_{$id}.{$ext}", $input['foto_data'], 'avatar');
+            $path = process_and_save_image('fotos', "usuario_{$id}.{$ext}", $input['foto_data'], 'avatar');
             $fields[] = "foto = ?";
             $params[] = $path;
         }
@@ -56,11 +56,11 @@ function handle_socios($method, $uri, $input) {
         }
 
         $params[] = $id;
-        $sql = "UPDATE socios SET " . implode(', ', $fields) . " WHERE id = ?";
+        $sql = "UPDATE usuarios SET " . implode(', ', $fields) . " WHERE id = ?";
         $db->prepare($sql)->execute($params);
 
         // Return updated user data
-        $stmt = $db->prepare("SELECT * FROM socios WHERE id = ?");
+        $stmt = $db->prepare("SELECT * FROM usuarios WHERE id = ?");
         $stmt->execute([$id]);
         $updated = $stmt->fetch();
         unset($updated['password'], $updated['session_token'], $updated['session_expires']);
@@ -68,28 +68,27 @@ function handle_socios($method, $uri, $input) {
         send_json($updated);
     }
 
-    // PUT /socios/ID/estado → cambiar estado (Aprobado/Rexeitado)
-    if (preg_match('#^/socios/(\d+)/estado$#', $uri, $m)) {
+    // PUT /usuarios/ID/estado → cambiar estado (Activo/Desactivado)
+    if (preg_match('#^/usuarios/(\d+)/estado$#', $uri, $m)) {
         if ($method !== 'PUT') send_json(['error' => 'Método non permitido'], 405);
         require_admin();
         $id     = (int)$m[1];
         $estado = $input['estado'] ?? '';
-        if (!in_array($estado, ['Aprobado', 'Rexeitado'])) {
-            send_json(['error' => 'Estado non válido. Usa Aprobado ou Rexeitado'], 400);
+        if (!in_array($estado, ['Activo', 'Desactivado'])) {
+            send_json(['error' => 'Estado non válido. Usa Activo ou Desactivado'], 400);
         }
-        $stmt = $db->prepare("UPDATE socios SET estado = ? WHERE id = ?");
+        $stmt = $db->prepare("UPDATE usuarios SET estado = ? WHERE id = ?");
         $stmt->execute([$estado, $id]);
         if ($stmt->rowCount() === 0) {
-            send_json(['error' => 'Socio non atopado'], 404);
+            send_json(['error' => 'Usuario non atopado'], 404);
         }
         send_json(['ok' => true, 'id' => $id, 'estado' => $estado]);
     }
 
-    // GET /socios → listar todos
-    if ($uri === '/socios' && $method === 'GET') {
+    // GET /usuarios → listar todos
+    if ($uri === '/usuarios' && $method === 'GET') {
         require_auth();
-        $rows = $db->query("SELECT * FROM socios ORDER BY id")->fetchAll();
-        // Quitar password e datos de sesión
+        $rows = $db->query("SELECT * FROM usuarios ORDER BY id")->fetchAll();
         foreach ($rows as &$row) {
             unset($row['password'], $row['session_token'], $row['session_expires']);
         }
@@ -98,20 +97,20 @@ function handle_socios($method, $uri, $input) {
         send_json($rows);
     }
 
-    // GET /socios/ID → un socio
-    if (preg_match('#^/socios/(\d+)$#', $uri, $m) && $method === 'GET') {
+    // GET /usuarios/ID → un usuario
+    if (preg_match('#^/usuarios/(\d+)$#', $uri, $m) && $method === 'GET') {
         require_auth();
-        $stmt = $db->prepare("SELECT * FROM socios WHERE id = ?");
+        $stmt = $db->prepare("SELECT * FROM usuarios WHERE id = ?");
         $stmt->execute([(int)$m[1]]);
         $row = $stmt->fetch();
-        if (!$row) send_json(['error' => 'Socio non atopado'], 404);
+        if (!$row) send_json(['error' => 'Usuario non atopado'], 404);
         unset($row['password'], $row['session_token'], $row['session_expires']);
         $row = fix_row($row);
         send_json($row);
     }
 
-    // POST /socios → crear
-    if ($uri === '/socios' && $method === 'POST') {
+    // POST /usuarios → crear
+    if ($uri === '/usuarios' && $method === 'POST') {
         require_admin();
         $username = trim($input['username'] ?? '');
         $password = $input['password'] ?? '';
@@ -120,7 +119,7 @@ function handle_socios($method, $uri, $input) {
         }
 
         // Comprobar username único
-        $check = $db->prepare("SELECT id FROM socios WHERE username = ?");
+        $check = $db->prepare("SELECT id FROM usuarios WHERE username = ?");
         $check->execute([$username]);
         if ($check->fetch()) {
             send_json(['error' => 'O username xa existe'], 409);
@@ -128,7 +127,7 @@ function handle_socios($method, $uri, $input) {
 
         $hashed = hash_password($password);
         $stmt = $db->prepare(
-            "INSERT INTO socios (username, nome_completo, dni, email, telefono, instrumento, role, estado, password, foto, data_alta)
+            "INSERT INTO usuarios (username, nome_completo, dni, email, telefono, instrumento, role, estado, password, foto, data_alta)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE())"
         );
         $stmt->execute([
@@ -139,22 +138,31 @@ function handle_socios($method, $uri, $input) {
             trim($input['telefono'] ?? ''),
             trim($input['instrumento'] ?? ''),
             $input['role'] ?? 'Usuario',
-            $input['estado'] ?? 'Pendente',
+            $input['estado'] ?? 'Activo',
             $hashed,
-            $input['foto'] ?? null,
+            null,
         ]);
-        send_json(['ok' => true, 'id' => (int)$db->lastInsertId()], 201);
+        $newId = (int)$db->lastInsertId();
+
+        // Procesar foto base64 despois de ter o ID
+        if (!empty($input['foto_data'])) {
+            $ext = $input['foto_ext'] ?? 'jpg';
+            $foto_path = process_and_save_image('fotos', "foto_{$newId}.{$ext}", $input['foto_data'], 'avatar');
+            $db->prepare("UPDATE usuarios SET foto = ? WHERE id = ?")->execute([$foto_path, $newId]);
+        }
+
+        send_json(['ok' => true, 'id' => $newId], 201);
     }
 
-    // PUT /socios/ID → actualizar
-    if (preg_match('#^/socios/(\d+)$#', $uri, $m) && $method === 'PUT') {
+    // PUT /usuarios/ID → actualizar
+    if (preg_match('#^/usuarios/(\d+)$#', $uri, $m) && $method === 'PUT') {
         require_admin();
         $id = (int)$m[1];
 
         // Comprobar que existe
-        $check = $db->prepare("SELECT id FROM socios WHERE id = ?");
+        $check = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
         $check->execute([$id]);
-        if (!$check->fetch()) send_json(['error' => 'Socio non atopado'], 404);
+        if (!$check->fetch()) send_json(['error' => 'Usuario non atopado'], 404);
 
         // Foto base64
         $foto_path = $input['foto'] ?? null;
@@ -190,23 +198,23 @@ function handle_socios($method, $uri, $input) {
         }
 
         $params[] = $id;
-        $sql = "UPDATE socios SET " . implode(', ', $fields) . " WHERE id = ?";
+        $sql = "UPDATE usuarios SET " . implode(', ', $fields) . " WHERE id = ?";
         $db->prepare($sql)->execute($params);
 
         send_json(['ok' => true, 'id' => $id]);
     }
 
-    // DELETE /socios/ID → eliminar
-    if (preg_match('#^/socios/(\d+)$#', $uri, $m) && $method === 'DELETE') {
+    // DELETE /usuarios/ID → eliminar
+    if (preg_match('#^/usuarios/(\d+)$#', $uri, $m) && $method === 'DELETE') {
         require_admin();
         $id   = (int)$m[1];
-        $stmt = $db->prepare("DELETE FROM socios WHERE id = ?");
+        $stmt = $db->prepare("DELETE FROM usuarios WHERE id = ?");
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) {
-            send_json(['error' => 'Socio non atopado'], 404);
+            send_json(['error' => 'Usuario non atopado'], 404);
         }
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Ruta de socios non atopada'], 404);
+    send_json(['error' => 'Ruta de usuarios non atopada'], 404);
 }

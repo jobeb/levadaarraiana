@@ -7,7 +7,7 @@ const AppState = {
     lang: localStorage.getItem('lang') || CONFIG.DEFAULT_LANG,
 
     // Data cache
-    socios: [],
+    usuarios: [],
     noticias: [],
     bolos: [],
     albums: [],
