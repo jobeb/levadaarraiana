@@ -699,6 +699,8 @@ async function _pubRefreshLang() {
         var txt = cfg[key] || cfg['sobre_nos_gl'] || '';
         var sn = document.getElementById('pub-sobre-nos');
         if (sn) sn.innerHTML = nl2br(txt);
+        // Re-render legal pages in new language
+        _renderLegalPages(cfg);
     } catch (e) {}
 }
 
@@ -813,6 +815,9 @@ async function loadPublicContent() {
             const sn = document.getElementById('pub-sobre-nos');
             if (sn) sn.innerHTML = nl2br(txt);
 
+            // Legal pages
+            _renderLegalPages(cfg);
+
             // Contacto: email y telefono from config
             var emailEl = document.getElementById('contacto-email');
             if (emailEl && cfg.email_dest) {
@@ -831,6 +836,80 @@ async function loadPublicContent() {
     } catch (err) {
         console.error('Error loading public content:', err);
     }
+}
+
+// ---- Legal pages rendering ----
+function _renderLegalPages(cfg) {
+    var titular = cfg.fiscal_nome || cfg.nome_asociacion || 'Levada Arraiana';
+    var nif = cfg.fiscal_nif || '';
+    var enderezo = cfg.fiscal_enderezo || '';
+    var email = cfg.email_dest || '';
+
+    // Aviso Legal
+    var aviso = document.getElementById('legal-aviso-content');
+    if (aviso) {
+        aviso.innerHTML =
+            '<p>' + t('legal_aviso_p1') + '</p>' +
+            '<p><strong>' + t('legal_titular') + ':</strong> ' + esc(titular) + '</p>' +
+            (nif ? '<p><strong>' + t('legal_nif') + ':</strong> ' + esc(nif) + '</p>' : '') +
+            (enderezo ? '<p><strong>' + t('legal_enderezo') + ':</strong> ' + esc(enderezo) + '</p>' : '') +
+            (email ? '<p><strong>' + t('legal_email_contacto') + ':</strong> ' + esc(email) + '</p>' : '') +
+            '<h3>' + t('legal_prop_intelectual') + '</h3>' +
+            '<p>' + t('legal_aviso_prop_p1') + '</p>' +
+            '<h3>' + t('legal_lei_aplicable') + '</h3>' +
+            '<p>' + t('legal_aviso_lei_p1') + '</p>';
+    }
+
+    // Politica de Privacidade
+    var priv = document.getElementById('legal-privacidade-content');
+    if (priv) {
+        priv.innerHTML =
+            '<p>' + t('legal_privacidade_intro') + '</p>' +
+            '<h3>' + t('legal_titular') + '</h3>' +
+            '<p><strong>' + esc(titular) + '</strong>' +
+            (nif ? ' — ' + t('legal_nif') + ': ' + esc(nif) : '') +
+            (email ? '<br>' + t('legal_email_contacto') + ': ' + esc(email) : '') + '</p>' +
+            '<h3>' + t('legal_finalidade') + '</h3>' +
+            '<p>' + t('legal_privacidade_finalidade_p1') + '</p>' +
+            '<h3>' + t('legal_datos_recollidos') + '</h3>' +
+            '<p>' + t('legal_privacidade_datos_p1') + '</p>' +
+            '<h3>' + t('legal_base_legal') + '</h3>' +
+            '<p>' + t('legal_privacidade_base_p1') + '</p>' +
+            '<h3>' + t('legal_dereitos') + '</h3>' +
+            '<p>' + t('legal_privacidade_dereitos_p1') + '</p>' +
+            '<h3>' + t('legal_retencion') + '</h3>' +
+            '<p>' + t('legal_privacidade_retencion_p1') + '</p>';
+    }
+
+    // Politica de Cookies
+    var cook = document.getElementById('legal-cookies-content');
+    if (cook) {
+        cook.innerHTML =
+            '<p>' + t('legal_cookies_intro') + '</p>' +
+            '<h3>' + t('legal_que_almacenamos') + '</h3>' +
+            '<ul>' + t('legal_cookies_list') + '</ul>' +
+            '<h3>' + t('legal_terceiros') + '</h3>' +
+            '<p>' + t('legal_cookies_terceiros_p1') + '</p>';
+    }
+}
+
+// ---- Cookie banner ----
+function initCookieBanner() {
+    if (localStorage.getItem('cookieConsent')) return;
+    var banner = document.getElementById('cookie-banner');
+    if (banner) banner.style.display = '';
+}
+
+function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'accepted');
+    var banner = document.getElementById('cookie-banner');
+    if (banner) banner.style.display = 'none';
+}
+
+function rejectCookies() {
+    localStorage.setItem('cookieConsent', 'rejected');
+    var banner = document.getElementById('cookie-banner');
+    if (banner) banner.style.display = 'none';
 }
 
 // ---- Contacto form ----

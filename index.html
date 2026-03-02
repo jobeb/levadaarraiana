@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="assets/css/variables.css?v=2">
     <link rel="stylesheet" href="assets/css/base.css?v=2">
     <link rel="stylesheet" href="assets/css/components.css?v=2">
-    <link rel="stylesheet" href="assets/css/public.css?v=4">
-    <link rel="stylesheet" href="assets/css/responsive.css?v=3">
+    <link rel="stylesheet" href="assets/css/public.css?v=5">
+    <link rel="stylesheet" href="assets/css/responsive.css?v=4">
 </head>
 <body>
 
@@ -201,6 +201,33 @@
     </div>
 </div>
 
+<!-- Aviso Legal -->
+<div id="overlay-aviso-legal" class="overlay" onclick="if(event.target===this)hideOverlays()">
+  <div class="overlay-card overlay-legal">
+    <button class="overlay-close" onclick="hideOverlays()">&times;</button>
+    <h2 data-i18n="aviso_legal">Aviso Legal</h2>
+    <div id="legal-aviso-content"></div>
+  </div>
+</div>
+
+<!-- Politica de Privacidade -->
+<div id="overlay-privacidade" class="overlay" onclick="if(event.target===this)hideOverlays()">
+  <div class="overlay-card overlay-legal">
+    <button class="overlay-close" onclick="hideOverlays()">&times;</button>
+    <h2 data-i18n="politica_privacidade">Politica de Privacidade</h2>
+    <div id="legal-privacidade-content"></div>
+  </div>
+</div>
+
+<!-- Politica de Cookies -->
+<div id="overlay-cookies" class="overlay" onclick="if(event.target===this)hideOverlays()">
+  <div class="overlay-card overlay-legal">
+    <button class="overlay-close" onclick="hideOverlays()">&times;</button>
+    <h2 data-i18n="politica_cookies">Politica de Cookies</h2>
+    <div id="legal-cookies-content"></div>
+  </div>
+</div>
+
 <!-- Lightbox -->
 <div id="lightbox" class="lightbox" onclick="if(event.target===this)closeLightbox()">
     <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
@@ -376,6 +403,11 @@
                 <a href="#galeria-pub" data-i18n="galeria_fotos">Galeria de fotos</a><br>
                 <a href="#instrumentos-pub" data-i18n="instrumentos">Instrumentos</a><br>
                 <a href="#contacto-pub" data-i18n="contacto">Contacto</a>
+                <br>
+                <h4 data-i18n="legal">Legal</h4>
+                <a href="#" onclick="showOverlay('aviso-legal');return false" data-i18n="aviso_legal">Aviso Legal</a><br>
+                <a href="#" onclick="showOverlay('privacidade');return false" data-i18n="politica_privacidade">Politica de Privacidade</a><br>
+                <a href="#" onclick="showOverlay('cookies');return false" data-i18n="politica_cookies">Politica de Cookies</a>
             </div>
             <div class="pub-footer-col">
                 <h4 data-i18n="acceder">Acceder</h4>
@@ -399,12 +431,21 @@
     </footer>
 </div>
 
+<div id="cookie-banner" class="cookie-banner" style="display:none">
+  <span data-i18n="cookie_texto">Este sitio usa almacenamento local para funcionar correctamente.</span>
+  <span class="cookie-banner-btns">
+    <a href="#" onclick="showOverlay('cookies');return false" data-i18n="mais_info">Mais info</a>
+    <button class="btn btn-sm" onclick="acceptCookies()" data-i18n="aceptar">Aceptar</button>
+    <button class="btn btn-sm btn-outline" onclick="rejectCookies()" data-i18n="rexeitar">Rexeitar</button>
+  </span>
+</div>
+
 <script src="assets/js/config.js?v=2"></script>
 <script src="assets/js/state.js?v=2"></script>
 <script src="assets/js/utils.js?v=2"></script>
-<script src="assets/js/i18n.js?v=5"></script>
+<script src="assets/js/i18n.js?v=6"></script>
 <script src="assets/js/auth.js?v=2"></script>
-<script src="assets/js/public.js?v=5"></script>
+<script src="assets/js/public.js?v=6"></script>
 <script>
     // ---- Mobile nav toggle ----
     function togglePubNav() {
@@ -861,6 +902,7 @@
         applyLang(AppState.lang);
         detectSession();
         checkResetToken();
+        initCookieBanner();
         loadPublicContent();
     })();
 </script>

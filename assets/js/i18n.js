@@ -476,6 +476,107 @@ const TRANSLATIONS = {
     importe:            { gl:'Importe', es:'Importe', pt:'Montante', en:'Amount' },
     orden_gardado:      { gl:'Orde gardada', es:'Orden guardado', pt:'Ordem salva', en:'Order saved' },
     max_fotos_destacadas:{ gl:'Max. fotos destacadas', es:'Max. fotos destacadas', pt:'Max. fotos em destaque', en:'Max. featured photos' },
+
+    // ---- Legal / Cookies ----
+    legal:              { gl:'Legal', es:'Legal', pt:'Legal', en:'Legal' },
+    aviso_legal:        { gl:'Aviso Legal', es:'Aviso Legal', pt:'Aviso Legal', en:'Legal Notice' },
+    politica_privacidade:{ gl:'Politica de Privacidade', es:'Politica de Privacidad', pt:'Politica de Privacidade', en:'Privacy Policy' },
+    politica_cookies:   { gl:'Politica de Cookies', es:'Politica de Cookies', pt:'Politica de Cookies', en:'Cookie Policy' },
+    cookie_texto:       { gl:'Este sitio usa almacenamento local para funcionar correctamente.', es:'Este sitio usa almacenamiento local para funcionar correctamente.', pt:'Este site usa armazenamento local para funcionar corretamente.', en:'This site uses local storage to work properly.' },
+    aceptar:            { gl:'Aceptar', es:'Aceptar', pt:'Aceitar', en:'Accept' },
+    rexeitar:           { gl:'Rexeitar', es:'Rechazar', pt:'Rejeitar', en:'Reject' },
+    mais_info:          { gl:'Mais info', es:'Mas info', pt:'Mais info', en:'More info' },
+    legal_titular:      { gl:'Titular', es:'Titular', pt:'Titular', en:'Owner' },
+    legal_nif:          { gl:'NIF', es:'NIF', pt:'NIF', en:'Tax ID' },
+    legal_enderezo:     { gl:'Enderezo', es:'Direccion', pt:'Endereco', en:'Address' },
+    legal_email_contacto:{ gl:'Email de contacto', es:'Email de contacto', pt:'Email de contacto', en:'Contact email' },
+    legal_prop_intelectual:{ gl:'Propiedade intelectual', es:'Propiedad intelectual', pt:'Propriedade intelectual', en:'Intellectual property' },
+    legal_lei_aplicable:{ gl:'Lei aplicable', es:'Ley aplicable', pt:'Lei aplicavel', en:'Applicable law' },
+    legal_finalidade:   { gl:'Finalidade', es:'Finalidad', pt:'Finalidade', en:'Purpose' },
+    legal_datos_recollidos:{ gl:'Datos recollidos', es:'Datos recogidos', pt:'Dados recolhidos', en:'Data collected' },
+    legal_base_legal:   { gl:'Base legal', es:'Base legal', pt:'Base legal', en:'Legal basis' },
+    legal_dereitos:     { gl:'Os teus dereitos', es:'Tus derechos', pt:'Os teus direitos', en:'Your rights' },
+    legal_retencion:    { gl:'Retencion de datos', es:'Retencion de datos', pt:'Retencao de dados', en:'Data retention' },
+    legal_que_almacenamos:{ gl:'Que almacenamos', es:'Que almacenamos', pt:'O que armazenamos', en:'What we store' },
+    legal_terceiros:    { gl:'Cookies de terceiros', es:'Cookies de terceros', pt:'Cookies de terceiros', en:'Third-party cookies' },
+
+    // Aviso Legal paragraphs
+    legal_aviso_p1: {
+        gl:'En cumprimento da Lei 34/2002, de Servizos da Sociedade da Informacion e Comercio Electronico (LSSI-CE), informase dos seguintes datos do titular deste sitio web:',
+        es:'En cumplimiento de la Ley 34/2002, de Servicios de la Sociedad de la Informacion y Comercio Electronico (LSSI-CE), se informa de los siguientes datos del titular de este sitio web:',
+        pt:'Em cumprimento da Lei 34/2002, de Servicos da Sociedade da Informacao e Comercio Eletronico (LSSI-CE), informam-se os seguintes dados do titular deste site:',
+        en:'In compliance with Law 34/2002 on Information Society Services and Electronic Commerce (LSSI-CE), the following data of the owner of this website is provided:'
+    },
+    legal_aviso_prop_p1: {
+        gl:'Todos os contidos deste sitio web (textos, imaxes, logotipos, deseño e codigo fonte) son propiedade do titular ou dos seus lexitimos propietarios. Queda prohibida a reproducion total ou parcial sen autorizacion expresa.',
+        es:'Todos los contenidos de este sitio web (textos, imagenes, logotipos, diseno y codigo fuente) son propiedad del titular o de sus legitimos propietarios. Queda prohibida la reproduccion total o parcial sin autorizacion expresa.',
+        pt:'Todos os conteudos deste site (textos, imagens, logotipos, design e codigo fonte) sao propriedade do titular ou dos seus legitimos proprietarios. E proibida a reproducao total ou parcial sem autorizacao expressa.',
+        en:'All content on this website (texts, images, logos, design and source code) is the property of the owner or their legitimate owners. Total or partial reproduction without express authorization is prohibited.'
+    },
+    legal_aviso_lei_p1: {
+        gl:'Este sitio web rexese pola lexislacion espanola. Para calquera controversia derivada do uso deste sitio, as partes someteranse aos xulgados e tribunais do domicilio do titular.',
+        es:'Este sitio web se rige por la legislacion espanola. Para cualquier controversia derivada del uso de este sitio, las partes se someteran a los juzgados y tribunales del domicilio del titular.',
+        pt:'Este site rege-se pela legislacao espanhola. Para qualquer controversia derivada do uso deste site, as partes submeter-se-ao aos tribunais do domicilio do titular.',
+        en:'This website is governed by Spanish law. For any dispute arising from the use of this site, the parties shall submit to the courts of the owner\'s domicile.'
+    },
+
+    // Privacy Policy paragraphs
+    legal_privacidade_intro: {
+        gl:'En cumprimento do Regulamento Xeral de Proteccion de Datos (RXPD/RGPD) e a Lei Organica 3/2018 de Proteccion de Datos e Garantia dos Dereitos Dixitais (LOPDGDD), informamoste sobre o tratamento dos teus datos persoais:',
+        es:'En cumplimiento del Reglamento General de Proteccion de Datos (RGPD) y la Ley Organica 3/2018 de Proteccion de Datos y Garantia de los Derechos Digitales (LOPDGDD), te informamos sobre el tratamiento de tus datos personales:',
+        pt:'Em cumprimento do Regulamento Geral de Protecao de Dados (RGPD) e da Lei Organica 3/2018 de Protecao de Dados e Garantia dos Direitos Digitais (LOPDGDD), informamos-te sobre o tratamento dos teus dados pessoais:',
+        en:'In compliance with the General Data Protection Regulation (GDPR) and Organic Law 3/2018 on Data Protection and Guarantee of Digital Rights (LOPDGDD), we inform you about the processing of your personal data:'
+    },
+    legal_privacidade_finalidade_p1: {
+        gl:'Os datos recollidos utilizanse para a xestion interna da asociacion: rexistro de socios, comunicacions, organizacion de ensaios e bolos, e xestion de contido da web.',
+        es:'Los datos recogidos se utilizan para la gestion interna de la asociacion: registro de socios, comunicaciones, organizacion de ensayos y bolos, y gestion de contenido de la web.',
+        pt:'Os dados recolhidos sao utilizados para a gestao interna da associacao: registo de socios, comunicacoes, organizacao de ensaios e concertos, e gestao de conteudo da web.',
+        en:'The collected data is used for the internal management of the association: member registration, communications, rehearsal and gig organization, and website content management.'
+    },
+    legal_privacidade_datos_p1: {
+        gl:'Nome completo, nome de usuario, email, telefono, instrumento, foto de perfil e contrasinal (almacenada cifrada). Opcionalmente, datos de asistencia a ensaios e participacion en votacions.',
+        es:'Nombre completo, nombre de usuario, email, telefono, instrumento, foto de perfil y contrasena (almacenada cifrada). Opcionalmente, datos de asistencia a ensayos y participacion en votaciones.',
+        pt:'Nome completo, nome de utilizador, email, telefone, instrumento, foto de perfil e palavra-passe (armazenada cifrada). Opcionalmente, dados de presenca em ensaios e participacao em votacoes.',
+        en:'Full name, username, email, phone, instrument, profile photo and password (stored encrypted). Optionally, rehearsal attendance data and voting participation.'
+    },
+    legal_privacidade_base_p1: {
+        gl:'O consentimento do interesado ao rexistrarse na plataforma (art. 6.1.a RXPD). Podes retirar o teu consentimento en calquera momento contactando co titular.',
+        es:'El consentimiento del interesado al registrarse en la plataforma (art. 6.1.a RGPD). Puedes retirar tu consentimiento en cualquier momento contactando con el titular.',
+        pt:'O consentimento do interessado ao registar-se na plataforma (art. 6.1.a RGPD). Podes retirar o teu consentimento a qualquer momento contactando o titular.',
+        en:'The consent of the data subject upon registering on the platform (art. 6.1.a GDPR). You can withdraw your consent at any time by contacting the owner.'
+    },
+    legal_privacidade_dereitos_p1: {
+        gl:'Tes dereito a acceder, rectificar, suprimir e portar os teus datos, asi como a limitar ou oponerche ao seu tratamento. Podes exercer estes dereitos contactando co titular a traves do email indicado.',
+        es:'Tienes derecho a acceder, rectificar, suprimir y portar tus datos, asi como a limitar u oponerte a su tratamiento. Puedes ejercer estos derechos contactando con el titular a traves del email indicado.',
+        pt:'Tens direito a aceder, retificar, suprimir e portar os teus dados, bem como a limitar ou opor-te ao seu tratamento. Podes exercer estes direitos contactando o titular atraves do email indicado.',
+        en:'You have the right to access, rectify, delete and port your data, as well as to limit or object to its processing. You can exercise these rights by contacting the owner via the email provided.'
+    },
+    legal_privacidade_retencion_p1: {
+        gl:'Os datos conservaranse mentres a conta de usuario permaneza activa. Tras a baixa ou solicitude de supresion, eliminaranse nun prazo maximo de 30 dias, agás obriga legal de conservacion.',
+        es:'Los datos se conservaran mientras la cuenta de usuario permanezca activa. Tras la baja o solicitud de supresion, se eliminaran en un plazo maximo de 30 dias, salvo obligacion legal de conservacion.',
+        pt:'Os dados serao conservados enquanto a conta de utilizador permanecer ativa. Apos a eliminacao ou pedido de supressao, serao eliminados num prazo maximo de 30 dias, salvo obrigacao legal de conservacao.',
+        en:'Data will be kept as long as the user account remains active. After account deletion or erasure request, data will be deleted within a maximum of 30 days, unless there is a legal obligation to retain it.'
+    },
+
+    // Cookie Policy paragraphs
+    legal_cookies_intro: {
+        gl:'Este sitio web NON utiliza cookies. En cambio, usa o almacenamento local (localStorage) do navegador para gardar preferencias esenciais de funcionamento. Non se almacena ningun dato persoal nin se comparte informacion con terceiros.',
+        es:'Este sitio web NO utiliza cookies. En su lugar, usa el almacenamiento local (localStorage) del navegador para guardar preferencias esenciales de funcionamiento. No se almacena ningun dato personal ni se comparte informacion con terceros.',
+        pt:'Este site NAO utiliza cookies. Em vez disso, usa o armazenamento local (localStorage) do navegador para guardar preferencias essenciais de funcionamento. Nao se armazena nenhum dado pessoal nem se partilha informacao com terceiros.',
+        en:'This website does NOT use cookies. Instead, it uses the browser\'s local storage (localStorage) to save essential operating preferences. No personal data is stored and no information is shared with third parties.'
+    },
+    legal_cookies_list: {
+        gl:'<li><strong>session_token</strong> — Token de sesion para manter o acceso aberto tras iniciar sesion.</li><li><strong>lang</strong> — Idioma seleccionado (gl, es, pt, en).</li><li><strong>theme</strong> — Tema visual (claro/escuro).</li><li><strong>fontSize</strong> — Tamano de letra preferido.</li><li><strong>cookieConsent</strong> — Rexistro da tua eleccion sobre este aviso (accepted/rejected).</li>',
+        es:'<li><strong>session_token</strong> — Token de sesion para mantener el acceso abierto tras iniciar sesion.</li><li><strong>lang</strong> — Idioma seleccionado (gl, es, pt, en).</li><li><strong>theme</strong> — Tema visual (claro/oscuro).</li><li><strong>fontSize</strong> — Tamano de letra preferido.</li><li><strong>cookieConsent</strong> — Registro de tu eleccion sobre este aviso (accepted/rejected).</li>',
+        pt:'<li><strong>session_token</strong> — Token de sessao para manter o acesso aberto apos iniciar sessao.</li><li><strong>lang</strong> — Idioma selecionado (gl, es, pt, en).</li><li><strong>theme</strong> — Tema visual (claro/escuro).</li><li><strong>fontSize</strong> — Tamanho de letra preferido.</li><li><strong>cookieConsent</strong> — Registo da tua escolha sobre este aviso (accepted/rejected).</li>',
+        en:'<li><strong>session_token</strong> — Session token to keep access open after logging in.</li><li><strong>lang</strong> — Selected language (gl, es, pt, en).</li><li><strong>theme</strong> — Visual theme (light/dark).</li><li><strong>fontSize</strong> — Preferred font size.</li><li><strong>cookieConsent</strong> — Record of your choice on this notice (accepted/rejected).</li>'
+    },
+    legal_cookies_terceiros_p1: {
+        gl:'Este sitio incrusta un mapa de Google Maps na seccion de contacto. Google pode establecer as suas propias cookies ao cargar o mapa. Consulta a politica de privacidade de Google para mais informacion.',
+        es:'Este sitio incrusta un mapa de Google Maps en la seccion de contacto. Google puede establecer sus propias cookies al cargar el mapa. Consulta la politica de privacidad de Google para mas informacion.',
+        pt:'Este site incorpora um mapa do Google Maps na seccao de contacto. O Google pode definir os seus proprios cookies ao carregar o mapa. Consulta a politica de privacidade do Google para mais informacao.',
+        en:'This site embeds a Google Maps map in the contact section. Google may set its own cookies when loading the map. See Google\'s privacy policy for more information.'
+    },
 };
 
 function t(key) {

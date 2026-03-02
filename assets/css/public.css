@@ -1518,6 +1518,52 @@
     opacity: 1;
 }
 
+/* ---- Legal overlay (wider) ---- */
+.overlay-card.overlay-legal {
+    max-width: 800px;
+    text-align: left;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+.overlay-legal h3 {
+    color: var(--primary);
+    margin: var(--gap-lg) 0 var(--gap-sm) 0;
+    font-size: 1.05rem;
+}
+.overlay-legal p,
+.overlay-legal li {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: var(--gap-sm);
+}
+.overlay-legal ul {
+    padding-left: 1.5em;
+    margin-bottom: var(--gap);
+}
+
+/* ---- Cookie banner ---- */
+.cookie-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    padding: var(--gap) var(--gap-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap-lg);
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
+}
+.cookie-banner a { color: var(--primary); text-decoration: underline; }
+.cookie-banner-btns { display: flex; gap: var(--gap-sm); flex-shrink: 0; align-items: center; }
+.cookie-banner .btn { padding: 6px 18px; font-size: 0.85rem; }
+
 /* ---- Mobile nav toggle (hamburger) ---- */
 .pub-nav-toggle {
     display: none;
