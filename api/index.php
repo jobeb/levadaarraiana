@@ -12,10 +12,10 @@ ensure_dirs();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-// Normalize: remove base path to get just /api/...
-$base   = '/Levadaarraiana/api';
-if (strpos($uri, $base) === 0) {
-    $uri = substr($uri, strlen($base));
+// Normalize: remove base path to get just /api/... (auto-detect base)
+$scriptDir = dirname($_SERVER['SCRIPT_NAME']); // e.g. /Levadaarraiana/api or /levada/api
+if ($scriptDir !== '/' && strpos($uri, $scriptDir) === 0) {
+    $uri = substr($uri, strlen($scriptDir));
 }
 $uri = '/' . ltrim($uri, '/');
 
