@@ -2,54 +2,635 @@
  * Public — Carga contido na landing page (sen gate)
  */
 
+// Cached public data
+var _pubData = { noticias: [], bolos: [], instrumentos: [] };
+// Cache de comentarios: { noticia: { id: [comments] }, bolo: { id: [comments] } }
+var _pubComments = { noticia: {}, bolo: {} };
+
+// Instrument icons fallback
+var _pubInstrumentIcons = {
+    surdo: 'assets/img/instrumentos/surdo.jpg',
+    caixa: 'assets/img/instrumentos/caixa.jpg',
+    repinique: 'assets/img/instrumentos/repinique.jpg',
+    tamborim: 'assets/img/instrumentos/tamborim.jpg',
+    timbao: 'assets/img/instrumentos/timbao.jpg',
+    agogo: 'assets/img/instrumentos/agogo.jpg',
+    ganza: 'assets/img/instrumentos/ganza.jpg',
+    apito: 'assets/img/instrumentos/apito.jpg',
+    outro: 'assets/img/instrumentos/outro.png'
+};
+
+function _renderBoloCard(b) {
+    var count = (_pubComments.bolo[b.id] || []).length;
+    var imgHtml = '';
+    if (b.imaxe) {
+        imgHtml = `<div class="pub-card-img"><img src="${uploadUrl(b.imaxe)}" alt="${esc(tc(b,'titulo'))}" loading="lazy"></div>`;
+    } else {
+        imgHtml = `<div class="pub-card-img pub-card-placeholder"><div class="pub-card-placeholder-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div></div>`;
+    }
+    return `<div class="pub-card" data-type="bolo" onclick="_pubShowBolo(${b.id})">
+        ${imgHtml}
+        <div class="pub-card-body">
+            <h3>${esc(tc(b,'titulo'))}</h3>
+            <p>${esc(truncate(stripHtml(tc(b,'descricion')), 120))}</p>
+            <div class="pub-card-date">${formatDate(b.data)} ${esc(b.hora || '')} — ${esc(b.lugar || '')}</div>
+        </div>
+        <div class="pub-comment-toggle" onclick="event.stopPropagation();_pubToggleComments('bolo',${b.id},this)">${t('comentarios')} (${count})</div>
+        <div class="pub-comments-zone" id="comments-bolo-${b.id}" onclick="event.stopPropagation()"></div>
+    </div>`;
+}
+
+function _renderNoticiaCard(n) {
+    var count = (_pubComments.noticia[n.id] || []).length;
+    var hasImages = n.imaxes && n.imaxes.length;
+    var imgHtml = '';
+    if (hasImages) {
+        imgHtml = `<div class="pub-card-img"><img src="${uploadUrl(n.imaxes[0])}" alt="${esc(tc(n,'titulo'))}" loading="lazy"></div>`;
+    }
+    return `<div class="pub-card" data-type="noticia" onclick="_pubShowNoticia(${n.id})">
+        ${imgHtml}
+        <div class="pub-card-body">
+            <h3>${esc(tc(n,'titulo'))}</h3>
+            <p>${esc(truncate(stripHtml(tc(n,'texto')), 150))}</p>
+            <div class="pub-card-date">${formatDate(n.data)}</div>
+        </div>
+        <div class="pub-comment-toggle" onclick="event.stopPropagation();_pubToggleComments('noticia',${n.id},this)">${t('comentarios')} (${count})</div>
+        <div class="pub-comments-zone" id="comments-noticia-${n.id}" onclick="event.stopPropagation()"></div>
+    </div>`;
+}
+
+// ---- Public detail modal ----
+function _pubShowDetail(imgHtml, bodyHtml) {
+    document.getElementById('pub-detail-img').innerHTML = imgHtml;
+    document.getElementById('pub-detail-body').innerHTML = bodyHtml;
+    document.getElementById('pub-detail-overlay').classList.add('show');
+}
+function hidePubDetail() {
+    document.getElementById('pub-detail-overlay').classList.remove('show');
+}
+
+function _pubShowNoticia(id) {
+    var n = _pubData.noticias.find(function(x) { return x.id === id; });
+    if (!n) return;
+    var hasImages = n.imaxes && n.imaxes.length;
+    var imgHtml = '';
+    if (hasImages) {
+        imgHtml = '<div class="pub-detail-img-wrap">' +
+            '<img src="' + uploadUrl(n.imaxes[0]) + '" alt="' + esc(tc(n,'titulo')) + '" onclick="openLightbox([' + n.imaxes.map(function(i) { return "'" + uploadUrl(i) + "'"; }).join(',') + '], 0)">' +
+            (n.imaxes.length > 1 ? '<div class="pub-detail-gallery">' + n.imaxes.slice(1, 5).map(function(i, idx) {
+                return '<img src="' + uploadUrl(i) + '" alt="" onclick="openLightbox([' + n.imaxes.map(function(x) { return "'" + uploadUrl(x) + "'"; }).join(',') + '],' + (idx + 1) + ')" loading="lazy">';
+            }).join('') + (n.imaxes.length > 5 ? '<span class="pub-detail-more">+' + (n.imaxes.length - 5) + '</span>' : '') + '</div>' : '') +
+        '</div>';
+    }
+    var bodyHtml = '<div class="pub-detail-header">' +
+        '<span class="pub-detail-badge noticia">' + t('noticias') + '</span>' +
+        '<span class="pub-detail-date">' + formatDate(n.data) + '</span>' +
+    '</div>' +
+    '<h2>' + esc(tc(n,'titulo')) + '</h2>' +
+    '<div class="rt-content pub-detail-text">' + tc(n,'texto') + '</div>';
+    _pubShowDetail(imgHtml, bodyHtml);
+}
+
+function _pubShowBolo(id) {
+    var b = _pubData.bolos.find(function(x) { return x.id === id; });
+    if (!b) return;
+    var imgHtml = '';
+    if (b.imaxe) {
+        imgHtml = '<div class="pub-detail-img-wrap">' +
+            '<img src="' + uploadUrl(b.imaxe) + '" alt="' + esc(tc(b,'titulo')) + '" onclick="openLightbox([\'' + uploadUrl(b.imaxe) + '\'], 0)">' +
+        '</div>';
+    }
+    var bodyHtml = '<div class="pub-detail-header">' +
+        '<span class="pub-detail-badge bolo">' + t('bolos') + '</span>' +
+        '<span class="pub-detail-date">' + formatDate(b.data) + '</span>' +
+    '</div>' +
+    '<h2>' + esc(tc(b,'titulo')) + '</h2>' +
+    '<div class="pub-detail-meta">' +
+        (b.hora ? '<div class="pub-detail-meta-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' + esc(b.hora) + '</div>' : '') +
+        (b.lugar ? '<div class="pub-detail-meta-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(b.lugar) + '</div>' : '') +
+    '</div>' +
+    '<div class="rt-content pub-detail-text">' + tc(b,'descricion') + '</div>';
+    _pubShowDetail(imgHtml, bodyHtml);
+}
+
+function _pubShowInstrumento(id) {
+    var i = _pubData.instrumentos.find(function(x) { return x.id === id; });
+    if (!i) return;
+    var iconSrc = i.imaxe ? uploadUrl(i.imaxe) : (_pubInstrumentIcons[i.tipo] || _pubInstrumentIcons['outro']);
+    var imgHtml = '<div class="pub-detail-img-wrap pub-detail-img-instrument">' +
+        '<img src="' + esc(iconSrc) + '" alt="' + esc(tc(i,'nome')) + '">' +
+    '</div>';
+    var bodyHtml = '<div class="pub-detail-header">' +
+        '<span class="pub-detail-badge instrumento">' + t('instrumento') + '</span>' +
+    '</div>' +
+    '<h2>' + esc(tc(i,'nome')) + '</h2>' +
+    (tc(i,'notas') ? '<p class="pub-detail-subtitle">' + esc(tc(i,'notas')) + '</p>' : '') +
+    (tc(i,'descricion') ? '<div class="rt-content pub-detail-text">' + tc(i,'descricion') + '</div>' : '<p class="text-muted">' + t(('desc_' + (i.tipo || 'outro'))) + '</p>');
+    _pubShowDetail(imgHtml, bodyHtml);
+}
+
+// Helper: get max_items for a section (0 = unlimited)
+function _pubMaxItems(secId) {
+    var cfg = _landingCfg[secId];
+    return (cfg && cfg.max_items) ? cfg.max_items : 0;
+}
+
+// Helper: render a "Ver mais" button if items were truncated
+function _pubVerMaisBtn(gridId, secId, total, shown) {
+    if (shown >= total) return '';
+    return '<div class="pub-ver-mais-wrap" style="text-align:center;margin-top:var(--gap-lg);grid-column:1/-1">' +
+        '<button class="btn btn-outline-primary pub-ver-mais-btn" onclick="_pubExpandSection(\'' + gridId + '\',\'' + secId + '\')">' +
+        t('ver_mais') + ' (' + (total - shown) + ')' +
+        '</button></div>';
+}
+
+// Expand section: show all items (remove limit)
+function _pubExpandSection(gridId, secId) {
+    // Temporarily set max_items to 0 (unlimited) and re-render that section
+    if (_landingCfg[secId]) _landingCfg[secId].max_items = 0;
+
+    var grid = document.getElementById(gridId);
+    if (!grid) return;
+
+    if (secId === 'noticias') {
+        var items = _pubData._allNoticias || [];
+        grid.innerHTML = items.length ? items.map(function(n) { return _renderNoticiaCard(n); }).join('')
+            : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+    } else if (secId === 'bolos') {
+        var items = _pubData._allBolosFuturos || [];
+        grid.innerHTML = items.length ? items.map(function(b) { return _renderBoloCard(b); }).join('')
+            : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+    } else if (secId === 'bolos_pasados') {
+        var items = _pubData._allBolosPasados || [];
+        grid.innerHTML = items.length ? items.map(function(b) { return _renderBoloCard(b); }).join('')
+            : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+    } else if (secId === 'galeria') {
+        var items = _pubData._allAlbums || [];
+        var _pubIsYT = function(s) { return s && s.indexOf('youtube.com/embed/') !== -1; };
+        var _pubYTThumb = function(s) { var m = s.match(/youtube\.com\/embed\/([^?&#]+)/); return m ? 'https://img.youtube.com/vi/' + m[1] + '/hqdefault.jpg' : ''; };
+        grid.innerHTML = items.length ? items.map(function(a) {
+            var allFotos = (a.fotos || []).map(function(f) { return uploadUrl(typeof f === 'string' ? f : (f.path || '')); });
+            var clickAttr = allFotos.length ? ' onclick="openLightbox([' + allFotos.map(function(f) { return "'" + f + "'"; }).join(',') + '], 0)"' : '';
+            var coverSrc = a.portada ? uploadUrl(a.portada) : (allFotos.length ? allFotos[0] : '');
+            var isYTCover = _pubIsYT(coverSrc);
+            var isVidCover = /\.(mp4|webm|ogg)$/i.test(coverSrc);
+            var coverHtml = '';
+            if (coverSrc && isYTCover) {
+                coverHtml = '<div class="pub-card-img" style="position:relative"><img src="' + _pubYTThumb(coverSrc) + '" alt="' + esc(tc(a,'titulo')) + '" loading="lazy"><span class="video-play-icon">&#9654;</span></div>';
+            } else if (coverSrc && isVidCover) {
+                coverHtml = '<div class="pub-card-img" style="position:relative"><video src="' + coverSrc + '" muted preload="metadata" style="width:100%;height:220px;object-fit:cover"></video><span class="video-play-icon">&#9654;</span></div>';
+            } else if (coverSrc) {
+                coverHtml = '<div class="pub-card-img"><img src="' + coverSrc + '" alt="' + esc(tc(a,'titulo')) + '" loading="lazy"></div>';
+            }
+            return '<div class="pub-card" data-type="album"' + clickAttr + '>' +
+                coverHtml +
+                '<div class="pub-card-body">' +
+                    '<h3>' + esc(tc(a,'titulo')) + '</h3>' +
+                    '<p>' + esc(tc(a,'descricion')) + '</p>' +
+                    '<div class="pub-card-date">' + formatDate(a.data) + ' — ' + allFotos.length + ' ' + t('fotos') + '</div>' +
+                '</div></div>';
+        }).join('') : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+    } else if (secId === 'instrumentos') {
+        _renderInstrumentCards();
+    }
+
+    // Re-trigger reveal animations on new cards
+    var revealObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    grid.querySelectorAll('.pub-card, .instrument-pub-card').forEach(function(el) {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        revealObserver.observe(el);
+        // Trigger immediately since grid is already visible
+        setTimeout(function() { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }, 50);
+    });
+}
+
+// Render instrument cards from API data
+function _renderInstrumentCards() {
+    var grid = document.getElementById('pub-instrumentos-grid');
+    if (!grid) return;
+    var list = _pubData.instrumentos;
+    if (!list.length) {
+        grid.innerHTML = '<p class="text-muted" style="text-align:center;grid-column:1/-1">' + t('sen_resultados') + '</p>';
+        return;
+    }
+    var max = _pubMaxItems('instrumentos');
+    var shown = (max > 0) ? list.slice(0, max) : list;
+    grid.innerHTML = shown.map(function(i) {
+        var iconSrc = i.imaxe ? uploadUrl(i.imaxe) : (_pubInstrumentIcons[i.tipo] || _pubInstrumentIcons['outro']);
+        var tipoClass = i.tipo || 'outro';
+        return '<div class="instrument-pub-card" onclick="_pubShowInstrumento(' + i.id + ')">' +
+            '<div class="instrument-pub-icon ' + esc(tipoClass) + '"><img src="' + esc(iconSrc) + '" alt="' + esc(tc(i,'nome')) + '"></div>' +
+            '<h3>' + esc(tc(i,'nome')) + '</h3>' +
+            '<p>' + esc(truncate(stripHtml(tc(i,'notas') || tc(i,'descricion')), 80)) + '</p>' +
+        '</div>';
+    }).join('') + _pubVerMaisBtn('pub-instrumentos-grid', 'instrumentos', list.length, shown.length);
+}
+
+async function _pubLoadAllComments() {
+    try {
+        var [cNoticias, cBolos] = await Promise.all([
+            api('/comentarios?item_type=noticia').catch(function() { return []; }),
+            api('/comentarios?item_type=bolo').catch(function() { return []; }),
+        ]);
+        _pubComments = { noticia: {}, bolo: {} };
+        cNoticias.forEach(function(c) {
+            if (!_pubComments.noticia[c.item_id]) _pubComments.noticia[c.item_id] = [];
+            _pubComments.noticia[c.item_id].push(c);
+        });
+        cBolos.forEach(function(c) {
+            if (!_pubComments.bolo[c.item_id]) _pubComments.bolo[c.item_id] = [];
+            _pubComments.bolo[c.item_id].push(c);
+        });
+    } catch (e) { /* ignore */ }
+}
+
+function _pubToggleComments(type, id, btn) {
+    var zone = document.getElementById('comments-' + type + '-' + id);
+    if (!zone) return;
+    var isOpen = zone.classList.contains('show');
+    if (isOpen) {
+        zone.classList.remove('show');
+    } else {
+        zone.classList.add('show');
+        _pubRenderComments(type, id);
+    }
+}
+
+function _pubFormatDatetime(dt) {
+    if (!dt) return '';
+    var d = dt.substring(0, 10);
+    var t = dt.substring(11, 16);
+    return formatDate(d) + ' ' + t;
+}
+
+function _pubRenderCommentItem(c, type, id, currentUserId, isAdmin, isSocio, canReply) {
+    var canDelete = (currentUserId === parseInt(c.autor_id)) || isAdmin || isSocio;
+    var html = '<div class="pub-comment">' +
+        (c.autor_foto
+            ? '<img class="pub-comment-avatar" src="' + esc(uploadUrl(c.autor_foto)) + '" alt="">'
+            : '<div class="pub-comment-avatar pub-comment-avatar-ph">' + esc((c.autor_nome || '?').charAt(0).toUpperCase()) + '</div>') +
+        '<div class="pub-comment-content">' +
+            '<div class="pub-comment-meta"><strong>' + esc(c.autor_nome || '') + '</strong> <span class="pub-comment-date">' + _pubFormatDatetime(c.creado) + '</span></div>' +
+            '<div class="pub-comment-text">' + nl2br(c.texto) + '</div>' +
+            (canReply ? '<button class="pub-comment-reply-btn" onclick="_pubToggleReplyForm(\'' + type + '\',' + id + ',' + c.id + ')">' + t('responder') + '</button>' : '') +
+        '</div>' +
+        (canDelete ? '<button class="pub-comment-delete" onclick="_pubDeleteComment(' + c.id + ',\'' + type + '\',' + id + ')" title="' + t('eliminar') + '">&times;</button>' : '') +
+    '</div>';
+    return html;
+}
+
+function _pubRenderComments(type, id) {
+    var zone = document.getElementById('comments-' + type + '-' + id);
+    if (!zone) return;
+    var comments = _pubComments[type] && _pubComments[type][id] ? _pubComments[type][id] : [];
+    var currentUserId = AppState.user ? parseInt(AppState.user.id) : 0;
+    var isAdmin = AppState.user && AppState.user.role === 'Admin';
+    var isSocio = AppState.user && AppState.user.role === 'Socio';
+    var isAuthenticated = !!AppState.token;
+
+    // Separate roots and replies
+    var roots = comments.filter(function(c) { return !c.parent_id; });
+    var replies = comments.filter(function(c) { return !!c.parent_id; });
+    var repliesByParent = {};
+    replies.forEach(function(r) {
+        if (!repliesByParent[r.parent_id]) repliesByParent[r.parent_id] = [];
+        repliesByParent[r.parent_id].push(r);
+    });
+
+    var html = '<div class="pub-comments-list">';
+    if (roots.length === 0 && replies.length === 0) {
+        html += '<p class="pub-comment-empty">' + t('sen_resultados') + '</p>';
+    } else {
+        roots.forEach(function(c) {
+            // Root comment — can reply if authenticated
+            html += _pubRenderCommentItem(c, type, id, currentUserId, isAdmin, isSocio, isAuthenticated);
+            // Reply form placeholder
+            html += '<div id="reply-form-' + c.id + '"></div>';
+            // Replies to this root
+            var childReplies = repliesByParent[c.id] || [];
+            childReplies.forEach(function(r) {
+                html += '<div class="pub-comment-reply">';
+                html += _pubRenderCommentItem(r, type, id, currentUserId, isAdmin, isSocio, false);
+                html += '</div>';
+            });
+        });
+    }
+    html += '</div>';
+
+    // Formulario principal ou mensaxe de login
+    if (AppState.token) {
+        html += '<div class="pub-comment-form">' +
+            '<textarea id="pub-comment-input-' + type + '-' + id + '" class="form-control" rows="2" placeholder="' + t('escribir_comentario') + '"></textarea>' +
+            '<button class="btn btn-primary btn-sm" onclick="_pubPostComment(\'' + type + '\',' + id + ')">' + t('enviar') + '</button>' +
+        '</div>';
+    } else {
+        html += '<div class="pub-comment-login">' +
+            '<a href="#" onclick="showOverlay(\'login\');return false">' + t('iniciar_sesion_comentar') + '</a>' +
+        '</div>';
+    }
+
+    zone.innerHTML = html;
+}
+
+function _pubToggleReplyForm(type, itemId, commentId) {
+    var container = document.getElementById('reply-form-' + commentId);
+    if (!container) return;
+    // Toggle: if already has form, remove it
+    if (container.innerHTML.trim() !== '') {
+        container.innerHTML = '';
+        return;
+    }
+    container.innerHTML = '<div class="pub-comment-reply-form">' +
+        '<textarea id="pub-reply-input-' + commentId + '" class="form-control" rows="1" placeholder="' + t('escribir_comentario') + '"></textarea>' +
+        '<button class="btn btn-primary btn-sm" onclick="_pubPostReply(\'' + type + '\',' + itemId + ',' + commentId + ')">' + t('enviar') + '</button>' +
+        '<button class="btn btn-sm" onclick="document.getElementById(\'reply-form-' + commentId + '\').innerHTML=\'\'">' + t('cancelar') + '</button>' +
+    '</div>';
+    var ta = document.getElementById('pub-reply-input-' + commentId);
+    if (ta) ta.focus();
+}
+
+async function _pubPostReply(type, itemId, parentId) {
+    var input = document.getElementById('pub-reply-input-' + parentId);
+    if (!input) return;
+    var texto = input.value.trim();
+    if (!texto) return;
+    try {
+        var result = await api('/comentarios', {
+            method: 'POST',
+            body: { item_type: type, item_id: itemId, texto: texto, parent_id: parentId }
+        });
+        // Recargar comentarios deste item
+        var updated = await api('/comentarios?item_type=' + type + '&item_id=' + itemId).catch(function() { return []; });
+        _pubComments[type][itemId] = updated;
+        _pubRenderComments(type, itemId);
+        _pubUpdateToggleCount(type, itemId);
+        // Toast según moderación
+        if (result.estado === 'pendente') {
+            toast(t('comentario_pendente_moderacion'), 'info');
+        } else {
+            toast(t('comentario_engadido'), 'success');
+        }
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+async function _pubPostComment(type, id) {
+    var input = document.getElementById('pub-comment-input-' + type + '-' + id);
+    if (!input) return;
+    var texto = input.value.trim();
+    if (!texto) return;
+    try {
+        var result = await api('/comentarios', {
+            method: 'POST',
+            body: { item_type: type, item_id: id, texto: texto }
+        });
+        // Recargar comentarios deste item
+        var updated = await api('/comentarios?item_type=' + type + '&item_id=' + id).catch(function() { return []; });
+        _pubComments[type][id] = updated;
+        _pubRenderComments(type, id);
+        // Actualizar contador no toggle
+        _pubUpdateToggleCount(type, id);
+        // Toast según moderación
+        if (result.estado === 'pendente') {
+            toast(t('comentario_pendente_moderacion'), 'info');
+        } else {
+            toast(t('comentario_engadido'), 'success');
+        }
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+async function _pubDeleteComment(commentId, type, itemId) {
+    if (!confirm(t('confirmar_eliminar'))) return;
+    try {
+        await api('/comentarios/' + commentId, { method: 'DELETE' });
+        // Recargar comentarios deste item
+        var updated = await api('/comentarios?item_type=' + type + '&item_id=' + itemId).catch(function() { return []; });
+        _pubComments[type][itemId] = updated;
+        _pubRenderComments(type, itemId);
+        _pubUpdateToggleCount(type, itemId);
+        toast(t('comentario_eliminado'), 'success');
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+function _pubUpdateToggleCount(type, id) {
+    var count = (_pubComments[type][id] || []).length;
+    var zone = document.getElementById('comments-' + type + '-' + id);
+    if (zone && zone.previousElementSibling && zone.previousElementSibling.classList.contains('pub-comment-toggle')) {
+        zone.previousElementSibling.textContent = t('comentarios') + ' (' + count + ')';
+    }
+}
+
+// Landing config keyed by section id (populated by _applyLandingBackgrounds)
+var _landingCfg = {};
+
+async function _applyLandingBackgrounds() {
+    try {
+        var seccions = await api('/landing-seccions').catch(function() { return []; });
+        seccions.forEach(function(s) {
+            _landingCfg[s.id] = s;
+            var el = document.querySelector('[data-landing-section="' + s.id + '"]');
+            if (!el) return;
+
+            // If nothing configured, skip
+            if (!s.bg_imaxe && !s.bg_video && !s.bg_cor) return;
+
+            // Background color
+            if (s.bg_cor) el.style.backgroundColor = s.bg_cor;
+
+            // Create .landing-bg div
+            if (s.bg_imaxe || s.bg_video) {
+                var bg = document.createElement('div');
+                bg.className = 'landing-bg' + (s.parallax ? ' parallax' : '');
+
+                if (s.bg_video) {
+                    var video = document.createElement('video');
+                    video.src = uploadUrl(s.bg_video);
+                    video.autoplay = true;
+                    video.muted = true;
+                    video.loop = true;
+                    video.playsInline = true;
+                    video.setAttribute('playsinline', '');
+                    bg.appendChild(video);
+                } else if (s.bg_imaxe) {
+                    bg.style.backgroundImage = 'url(' + uploadUrl(s.bg_imaxe) + ')';
+                }
+                el.prepend(bg);
+
+                // Overlay
+                var ov = document.createElement('div');
+                ov.className = 'landing-overlay';
+                ov.style.setProperty('--overlay-opacity', s.overlay_opacidade || 0.7);
+                el.insertBefore(ov, bg.nextSibling);
+            }
+
+            // For hero: hide original ::before pattern if custom bg is set
+            if (s.id === 'hero' && (s.bg_imaxe || s.bg_video)) {
+                el.classList.add('hero-custom-bg');
+            }
+        });
+    } catch (e) { /* ignore */ }
+}
+
+// Re-render all dynamic content when language changes (uses cached data)
+async function _pubRefreshLang() {
+    // Noticias
+    var allNot = _pubData._allNoticias || [];
+    var maxNot = _pubMaxItems('noticias');
+    var pubNot = (maxNot > 0) ? allNot.slice(0, maxNot) : allNot;
+    var ng = document.getElementById('pub-noticias-grid');
+    if (ng) {
+        ng.innerHTML = pubNot.length ? pubNot.map(_renderNoticiaCard).join('')
+            + _pubVerMaisBtn('pub-noticias-grid', 'noticias', allNot.length, pubNot.length)
+            : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+    }
+
+    // Bolos futuros
+    var allBol = _pubData._allBolosFuturos || [];
+    var maxBol = _pubMaxItems('bolos');
+    var pubBol = (maxBol > 0) ? allBol.slice(0, maxBol) : allBol;
+    var eg = document.getElementById('pub-bolos-grid');
+    if (eg) {
+        eg.innerHTML = pubBol.length ? pubBol.map(_renderBoloCard).join('')
+            + _pubVerMaisBtn('pub-bolos-grid', 'bolos', allBol.length, pubBol.length)
+            : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+    }
+
+    // Bolos pasados
+    var allPas = _pubData._allBolosPasados || [];
+    var maxPas = _pubMaxItems('bolos_pasados');
+    var pubPas = (maxPas > 0) ? allPas.slice(0, maxPas) : allPas;
+    var pg = document.getElementById('pub-bolos-pasados-grid');
+    if (pg) {
+        pg.innerHTML = pubPas.length ? pubPas.map(_renderBoloCard).join('')
+            + _pubVerMaisBtn('pub-bolos-pasados-grid', 'bolos_pasados', allPas.length, pubPas.length)
+            : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+    }
+
+    // Galeria
+    var allAlb = _pubData._allAlbums || [];
+    var maxGal = _pubMaxItems('galeria');
+    var pubAlb = (maxGal > 0) ? allAlb.slice(0, maxGal) : allAlb;
+    var gg = document.getElementById('pub-galeria-grid');
+    if (gg) {
+        var _pubIsYT = function(s) { return s && s.indexOf('youtube.com/embed/') !== -1; };
+        var _pubYTThumb = function(s) { var m = s.match(/youtube\.com\/embed\/([^?&#]+)/); return m ? 'https://img.youtube.com/vi/' + m[1] + '/hqdefault.jpg' : ''; };
+        gg.innerHTML = pubAlb.length ? pubAlb.map(function(a) {
+            var allFotos = (a.fotos || []).map(function(f) { return uploadUrl(typeof f === 'string' ? f : (f.path || '')); });
+            var clickAttr = allFotos.length ? ' onclick="openLightbox([' + allFotos.map(function(f) { return "'" + f + "'"; }).join(',') + '], 0)"' : '';
+            var coverSrc = a.portada ? uploadUrl(a.portada) : (allFotos.length ? allFotos[0] : '');
+            var isYTCover = _pubIsYT(coverSrc);
+            var isVidCover = /\.(mp4|webm|ogg)$/i.test(coverSrc);
+            var coverHtml = '';
+            if (coverSrc && isYTCover) {
+                coverHtml = '<div class="pub-card-img" style="position:relative"><img src="' + _pubYTThumb(coverSrc) + '" alt="' + esc(tc(a,'titulo')) + '" loading="lazy"><span class="video-play-icon">&#9654;</span></div>';
+            } else if (coverSrc && isVidCover) {
+                coverHtml = '<div class="pub-card-img" style="position:relative"><video src="' + coverSrc + '" muted preload="metadata" style="width:100%;height:220px;object-fit:cover"></video><span class="video-play-icon">&#9654;</span></div>';
+            } else if (coverSrc) {
+                coverHtml = '<div class="pub-card-img"><img src="' + coverSrc + '" alt="' + esc(tc(a,'titulo')) + '" loading="lazy"></div>';
+            }
+            return '<div class="pub-card" data-type="album"' + clickAttr + '>' +
+                coverHtml +
+                '<div class="pub-card-body">' +
+                    '<h3>' + esc(tc(a,'titulo')) + '</h3>' +
+                    '<p>' + esc(tc(a,'descricion')) + '</p>' +
+                    '<div class="pub-card-date">' + formatDate(a.data) + ' — ' + allFotos.length + ' ' + t('fotos') + '</div>' +
+                '</div></div>';
+        }).join('') + _pubVerMaisBtn('pub-galeria-grid', 'galeria', allAlb.length, pubAlb.length)
+            : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+    }
+
+    // Instrumentos
+    _renderInstrumentCards();
+
+    // Sobre nos (language-dependent from config)
+    try {
+        var cfg = await api('/config');
+        var key = 'sobre_nos_' + AppState.lang;
+        var txt = cfg[key] || cfg['sobre_nos_gl'] || '';
+        var sn = document.getElementById('pub-sobre-nos');
+        if (sn) sn.innerHTML = nl2br(txt);
+    } catch (e) {}
+}
+
 async function loadPublicContent() {
     try {
-        const [noticias, bolos, albums] = await Promise.all([
+        // Apply configurable backgrounds (also loads max_items config)
+        await _applyLandingBackgrounds();
+        // Cargar todo en paralelo
+        const [noticias, bolos, albums, instrumentos] = await Promise.all([
             api('/noticias').catch(() => []),
             api('/bolos').catch(() => []),
             api('/albums').catch(() => []),
+            api('/instrumentos').catch(() => []),
         ]);
 
-        // Noticias públicas
-        const pubNoticias = noticias.filter(n => n.publica || n.estado === 'publicada').slice(-6).reverse();
+        // Store globally for modal access
+        _pubData.noticias = noticias;
+        _pubData.bolos = bolos;
+        _pubData.instrumentos = instrumentos;
+
+        // Cargar comentarios antes de renderizar cards
+        await _pubLoadAllComments();
+
+        // Noticias publicas
+        const allPubNoticias = noticias.filter(n => n.publica || n.estado === 'publicada').reverse();
+        _pubData._allNoticias = allPubNoticias;
+        var maxNot = _pubMaxItems('noticias');
+        const pubNoticias = (maxNot > 0) ? allPubNoticias.slice(0, maxNot) : allPubNoticias;
         const ng = document.getElementById('pub-noticias-grid');
         if (ng) {
-            ng.innerHTML = pubNoticias.length ? pubNoticias.map(n => `
-                <div class="pub-card"${n.imaxes && n.imaxes.length ? ` onclick="openLightbox([${n.imaxes.map(i => "'" + uploadUrl(i) + "'").join(',')}], 0)"` : ''}>
-                    ${n.imaxes && n.imaxes.length ? `<img src="${uploadUrl(n.imaxes[0])}" alt="">` : ''}
-                    <div class="pub-card-body">
-                        <h3>${esc(n.titulo)}</h3>
-                        <p>${truncate(n.texto, 150)}</p>
-                        <div class="pub-card-date">${formatDate(n.data)}</div>
-                    </div>
-                </div>
-            `).join('') : `<p class="text-muted">${t('sen_resultados')}</p>`;
+            ng.innerHTML = pubNoticias.length ? pubNoticias.map(n => _renderNoticiaCard(n)).join('')
+                + _pubVerMaisBtn('pub-noticias-grid', 'noticias', allPubNoticias.length, pubNoticias.length)
+                : `<p class="text-muted" style="text-align:center">${t('sen_resultados')}</p>`;
         }
 
-        // Bolos públicos futuros
+        // Bolos publicos: futuros + pasados
         const hoy = today();
-        const pubBolos = bolos.filter(b => b.data >= hoy && b.publica).slice(0, 6);
+        const allBolosFuturos = bolos.filter(b => b.data >= hoy && b.publica);
+        const allBolosPasados = bolos.filter(b => b.data < hoy && b.publica).sort((a,b) => b.data.localeCompare(a.data));
+        _pubData._allBolosFuturos = allBolosFuturos;
+        _pubData._allBolosPasados = allBolosPasados;
+
+        var maxBol = _pubMaxItems('bolos');
+        const pubBolosFuturos = (maxBol > 0) ? allBolosFuturos.slice(0, maxBol) : allBolosFuturos;
         const eg = document.getElementById('pub-bolos-grid');
         if (eg) {
-            eg.innerHTML = pubBolos.length ? pubBolos.map(b => `
-                <div class="pub-card"${b.imaxe ? ` onclick="openLightbox(['${uploadUrl(b.imaxe)}'], 0)"` : ''}>
-                    ${b.imaxe ? `<img src="${uploadUrl(b.imaxe)}" alt="">` : ''}
-                    <div class="pub-card-body">
-                        <h3>${esc(b.titulo)}</h3>
-                        <p>${esc(b.descricion)}</p>
-                        <div class="pub-card-date">${formatDate(b.data)} ${esc(b.hora || '')} — ${esc(b.lugar || '')}</div>
-                    </div>
-                </div>
-            `).join('') : `<p class="text-muted">${t('sen_resultados')}</p>`;
+            eg.innerHTML = pubBolosFuturos.length ? pubBolosFuturos.map(b => _renderBoloCard(b)).join('')
+                + _pubVerMaisBtn('pub-bolos-grid', 'bolos', allBolosFuturos.length, pubBolosFuturos.length)
+                : `<p class="text-muted" style="text-align:center">${t('sen_resultados')}</p>`;
         }
 
-        // Galería con lightbox
+        // Past bolos
+        var maxPas = _pubMaxItems('bolos_pasados');
+        const pubBolosPasados = (maxPas > 0) ? allBolosPasados.slice(0, maxPas) : allBolosPasados;
+        const pg = document.getElementById('pub-bolos-pasados-grid');
+        if (pg) {
+            pg.innerHTML = pubBolosPasados.length ? pubBolosPasados.map(b => _renderBoloCard(b)).join('')
+                + _pubVerMaisBtn('pub-bolos-pasados-grid', 'bolos_pasados', allBolosPasados.length, pubBolosPasados.length)
+                : `<p class="text-muted" style="text-align:center">${t('sen_resultados')}</p>`;
+        }
+
+        // Galeria con lightbox
         const gg = document.getElementById('pub-galeria-grid');
         if (gg) {
             const _pubIsYT = (s) => s && s.indexOf('youtube.com/embed/') !== -1;
             const _pubYTThumb = (s) => { const m = s.match(/youtube\.com\/embed\/([^?&#]+)/); return m ? 'https://img.youtube.com/vi/' + m[1] + '/hqdefault.jpg' : ''; };
 
-            gg.innerHTML = albums.length ? albums.slice(-6).reverse().map(a => {
+            const allAlbums = albums.slice().reverse();
+            _pubData._allAlbums = allAlbums;
+            var maxGal = _pubMaxItems('galeria');
+            const shownAlbums = (maxGal > 0) ? allAlbums.slice(0, maxGal) : allAlbums;
+
+            gg.innerHTML = shownAlbums.length ? shownAlbums.map(a => {
                 const allFotos = (a.fotos || []).map(f => uploadUrl(typeof f === 'string' ? f : (f.path || '')));
                 const clickAttr = allFotos.length ? ` onclick="openLightbox([${allFotos.map(f => "'" + f + "'").join(',')}], 0)"` : '';
                 const coverSrc = a.portada ? uploadUrl(a.portada) : (allFotos.length ? allFotos[0] : '');
@@ -57,23 +638,27 @@ async function loadPublicContent() {
                 const isVidCover = /\.(mp4|webm|ogg)$/i.test(coverSrc);
                 let coverHtml = '';
                 if (coverSrc && isYTCover) {
-                    coverHtml = `<div style="position:relative"><img src="${_pubYTThumb(coverSrc)}" alt="" style="width:100%;height:200px;object-fit:cover"><span class="video-play-icon">&#9654;</span></div>`;
+                    coverHtml = `<div class="pub-card-img" style="position:relative"><img src="${_pubYTThumb(coverSrc)}" alt="${esc(tc(a,'titulo'))}" loading="lazy"><span class="video-play-icon">&#9654;</span></div>`;
                 } else if (coverSrc && isVidCover) {
-                    coverHtml = `<div style="position:relative"><video src="${coverSrc}" muted preload="metadata" style="width:100%;height:200px;object-fit:cover"></video><span class="video-play-icon">&#9654;</span></div>`;
+                    coverHtml = `<div class="pub-card-img" style="position:relative"><video src="${coverSrc}" muted preload="metadata" style="width:100%;height:220px;object-fit:cover"></video><span class="video-play-icon">&#9654;</span></div>`;
                 } else if (coverSrc) {
-                    coverHtml = `<img src="${coverSrc}" alt="">`;
+                    coverHtml = `<div class="pub-card-img"><img src="${coverSrc}" alt="${esc(tc(a,'titulo'))}" loading="lazy"></div>`;
                 }
                 return `
-                <div class="pub-card"${clickAttr}>
+                <div class="pub-card" data-type="album"${clickAttr}>
                     ${coverHtml}
                     <div class="pub-card-body">
-                        <h3>${esc(a.titulo)}</h3>
-                        <p>${esc(a.descricion || '')}</p>
+                        <h3>${esc(tc(a,'titulo'))}</h3>
+                        <p>${esc(tc(a,'descricion'))}</p>
                         <div class="pub-card-date">${formatDate(a.data)} — ${allFotos.length} ${t('fotos')}</div>
                     </div>
                 </div>
-            `}).join('') : `<p class="text-muted">${t('sen_resultados')}</p>`;
+            `}).join('') + _pubVerMaisBtn('pub-galeria-grid', 'galeria', allAlbums.length, shownAlbums.length)
+                : `<p class="text-muted" style="text-align:center">${t('sen_resultados')}</p>`;
         }
+
+        // Instrumentos (dynamic from API)
+        _renderInstrumentCards();
 
         // Sobre nos
         try {
@@ -82,7 +667,7 @@ async function loadPublicContent() {
             const txt = cfg[key] || cfg['sobre_nos_gl'] || '';
             const sn = document.getElementById('pub-sobre-nos');
             if (sn) sn.innerHTML = nl2br(txt);
-        } catch { /* ignore */ }
+        } catch (e) { /* ignore */ }
 
     } catch (err) {
         console.error('Error loading public content:', err);

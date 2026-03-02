@@ -26,33 +26,33 @@ if (in_array($method, ['POST', 'PUT'])) {
 
 try {
     // Auth routes
-    if ($uri === '/login' || $uri === '/logout' || $uri === '/register') {
+    if ($uri === '/login' || $uri === '/logout' || $uri === '/register' || $uri === '/forgot-password' || $uri === '/reset-password') {
         require __DIR__ . '/modules/auth.php';
         handle_auth($uri, $method, $input);
     }
 
     // Map URI to module
     $routes = [
+        '/arquivos'      => 'arquivos',
         '/socios'        => 'socios',
         '/noticias'      => 'noticias',
         '/bolos'         => 'bolos',
         '/albums'        => 'albums',
-        '/mensaxes'      => 'mensaxes',
         '/documentos'    => 'documentos',
         '/actas'         => 'actas',
         '/propostas'     => 'propostas',
         '/votacions'     => 'votacions',
         '/votos'         => 'votacions',
-        '/clientes'      => 'contabilidade',
-        '/proveedores'   => 'contabilidade',
-        '/facturas'      => 'contabilidade',
-        '/gastos'        => 'contabilidade',
+
         '/config'        => 'configuracion',
         '/ensaios'       => 'ensaios',
         '/asistencia'    => 'ensaios',
         '/instrumentos'  => 'instrumentos',
         '/repertorio'    => 'repertorio',
-        '/setlists'      => 'setlists',
+
+        '/comentarios'   => 'comentarios',
+        '/landing-seccions' => 'landing',
+        '/solicitude'    => 'solicitude',
         '/backup'        => 'backup',
         '/youtube'       => 'youtube',
     ];

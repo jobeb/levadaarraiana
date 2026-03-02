@@ -9,7 +9,14 @@
 
 html {
     scroll-behavior: smooth;
+    font-size: 16px;
 }
+html.fs-small { font-size: 14px; }
+html.fs-large { font-size: 18px; }
+html.compact-mode { --gap: 12px; --gap-sm: 4px; --gap-lg: 16px; --gap-xl: 20px; }
+html.compact-mode .card { padding: 0; }
+html.compact-mode .card-body { padding: 12px; }
+html.compact-mode .card-actions { padding: 8px 12px; }
 
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -63,7 +70,7 @@ p { margin-bottom: 0.5em; }
 /* Selection */
 ::selection {
     background: var(--primary);
-    color: var(--bg-dark);
+    color: var(--on-primary);
 }
 
 /* Hidden helper */

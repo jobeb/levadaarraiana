@@ -4,61 +4,138 @@
 var _ensaiosView = 'list';
 var _ensaiosCalendar = new CalendarWidget('ensaios-calendar', {
     onDayClick: function(date, events) {
-        if (events.length === 0 && AppState.isAdmin()) {
-            ensaiosModal(); // Open new ensaio on empty day
-            setTimeout(function() { var d = $('#ensaio-data'); if (d) d.value = date; }, 50);
-        } else if (events.length > 0) {
+        if (events.length > 0) {
             _showDayPopup(date, events);
+        } else if (AppState.isSocio()) {
+            ensaiosModal();
+            setTimeout(function() { var d = $('#ensaio-data'); if (d) d.value = date; }, 50);
         }
     },
     onEventClick: function(id) {
         var e = (AppState.ensaios || []).find(function(x) { return x.id == id; });
-        if (e && AppState.isAdmin()) ensaiosModal(e);
-        else if (e) ensaiosAsistencia(e.id);
+        if (!e) return;
+        // Single click on event in calendar — show day popup with that event
+        _showDayPopup(e.data, _ensaiosCalendar._eventsForDay(e.data));
     }
 });
 
 function _showDayPopup(date, events) {
     $('#modal-title').textContent = formatDate(date);
+    var isAdmin = AppState.isSocio();
     var html = '';
+
     events.forEach(function(ev) {
-        html += '<div class="card" style="margin-bottom:8px;padding:12px">' +
-            '<strong>' + esc(ev.title) + '</strong>' +
-            (ev.time ? '<br><span class="text-muted text-sm">' + esc(ev.time) + '</span>' : '') +
+        var ensaio = (AppState.ensaios || []).find(function(x) { return x.id == ev.id; });
+        var estado = ensaio ? ensaio.estado : '';
+
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-surface-2);border-radius:var(--radius);margin-bottom:8px">' +
+            '<div style="border-left:3px solid ' + (ev.color || 'var(--primary)') + ';padding-left:10px;flex:1">' +
+                '<strong>' + esc(ev.title) + '</strong>' +
+                (ev.time ? '<br><span style="color:var(--text-dim);font-size:0.85rem">' + esc(ev.time) + '</span>' : '') +
+                (estado ? ' ' + _ensaioEstadoBadge(estado) : '') +
+            '</div>' +
+            '<div style="display:flex;gap:4px;flex-shrink:0">' +
+                (ensaio ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + ev.id + ')">' + t('asistencia') + '</button>' : '') +
+                (ensaio && isAdmin ? '<button class="btn-icon" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + ev.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
+                (ensaio && isAdmin ? '<button class="btn-icon btn-danger" onclick="hideModal(\'modal-overlay\');ensaiosDelete(' + ev.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>' : '') +
+            '</div>' +
         '</div>';
     });
+
     $('#modal-body').innerHTML = html;
-    $('#modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+    $('#modal-footer').innerHTML =
+        (isAdmin ? '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');ensaiosModal();setTimeout(function(){var d=$(\'#ensaio-data\');if(d)d.value=\'' + date + '\';},50)">+ ' + t('novo_ensaio') + '</button> ' : '') +
+        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
     showModal('modal-overlay');
 }
 
 function ensaiosSetView(view) {
     _ensaiosView = view;
     var btns = $$('#ensaios-view-toggle button');
-    btns.forEach(function(b, i) { b.classList.toggle('active', (i === 0 && view === 'list') || (i === 1 && view === 'calendar')); });
+    btns.forEach(function(b, i) { b.classList.toggle('active', (i === 0 && view === 'list') || (i === 1 && view === 'calendar') || (i === 2 && view === 'notas')); });
     $('#ensaios-grid').style.display = view === 'list' ? '' : 'none';
     $('#ensaios-calendar').style.display = view === 'calendar' ? '' : 'none';
+    $('#ensaios-notas-list').style.display = view === 'notas' ? '' : 'none';
     if (view === 'calendar') ensaiosRenderCalendar();
+    if (view === 'notas') ensaiosRenderNotas();
 }
 
 function ensaiosRenderCalendar() {
+    var cfgColor = ((AppState.config || {}).cal_cor_ensaios) || '#e3c300';
     var events = (AppState.ensaios || []).map(function(e) {
-        var color = e.estado === 'cancelado' ? 'var(--danger)' : e.estado === 'realizado' ? 'var(--success)' : 'var(--primary)';
+        var color = e.estado === 'cancelado' ? 'var(--danger)' : e.estado === 'realizado' ? 'var(--success)' : cfgColor;
         return { date: e.data, title: (e.hora_inicio || '') + ' ' + (e.lugar || ''), color: color, id: e.id, time: (e.hora_inicio || '') + '-' + (e.hora_fin || '') };
     });
     _ensaiosCalendar.setEvents(events);
     _ensaiosCalendar.render();
 }
 
+function ensaiosRenderNotas() {
+    var container = $('#ensaios-notas-list');
+    if (!container) return;
+
+    var list = (AppState.ensaios || []).filter(function(e) {
+        return e.notas && stripHtml(e.notas).trim();
+    }).sort(function(a, b) { return (b.data || '').localeCompare(a.data || ''); });
+
+    if (list.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">' + t('sen_resultados') + '</p>';
+        return;
+    }
+
+    var html = '';
+    list.forEach(function(e) {
+        html += '<div class="ensaio-nota-entry" onclick="ensaiosViewNotas(' + e.id + ')">' +
+            '<div class="ensaio-nota-header">' +
+                '<div class="ensaio-nota-date">' + formatDate(e.data) + '</div>' +
+                '<div class="ensaio-nota-meta">' +
+                    esc(e.lugar || '') +
+                    (e.hora_inicio ? ' &middot; ' + esc(e.hora_inicio) + ' - ' + esc(e.hora_fin || '') : '') +
+                '</div>' +
+                _ensaioEstadoBadge(e.estado) +
+            '</div>' +
+            '<div class="ensaio-nota-body rt-content">' + (e.notas || '') + '</div>' +
+        '</div>';
+    });
+
+    container.innerHTML = html;
+}
+
 async function ensaiosLoad() {
     try {
-        AppState.ensaios = await api('/ensaios');
+        var results = await Promise.all([
+            api('/ensaios'),
+            Object.keys(AppState.config || {}).length ? Promise.resolve(AppState.config) : api('/config').catch(function() { return {}; })
+        ]);
+        AppState.ensaios = results[0];
+        AppState.config = results[1] || {};
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
-        AppState.ensaios = [];
+        AppState.ensaios = AppState.ensaios || [];
     }
     ensaiosRender();
     if (_ensaiosView === 'calendar') ensaiosRenderCalendar();
+    if (_ensaiosView === 'notas') ensaiosRenderNotas();
+}
+
+function _ensaioEstadoBadge(estado) {
+    switch (estado) {
+        case 'programado': return '<span class="badge badge-primary">' + t('programado') + '</span>';
+        case 'realizado':  return '<span class="badge badge-success">' + t('realizado') + '</span>';
+        case 'cancelado':  return '<span class="badge badge-danger">' + t('cancelado') + '</span>';
+        default:           return '<span class="badge">' + esc(estado || '') + '</span>';
+    }
+}
+
+function _ensaioDateBox(dateStr) {
+    var parts = (dateStr || '').split('-');
+    var day = parts.length === 3 ? parts[2] : '';
+    var monthNames = ['Xan','Feb','Mar','Abr','Mai','Xun','Xul','Ago','Set','Out','Nov','Dec'];
+    var month = parts.length === 3 ? monthNames[parseInt(parts[1], 10) - 1] || '' : '';
+    return '<div style="text-align:center;min-width:50px;padding:8px;background:var(--bg-surface-2);border-radius:8px">' +
+        '<div style="font-size:1.5em;font-weight:700;line-height:1">' + esc(day) + '</div>' +
+        '<div style="font-size:0.85em;text-transform:uppercase;color:var(--text-muted)">' + esc(month) + '</div>' +
+    '</div>';
 }
 
 function ensaiosRender() {
@@ -66,65 +143,187 @@ function ensaiosRender() {
     if (!grid) return;
 
     var list = AppState.ensaios || [];
-
     if (list.length === 0) {
         grid.innerHTML = '<p class="text-center">' + t('sen_resultados') + '</p>';
         return;
     }
 
-    var isAdmin = AppState.isAdmin();
+    var isAdmin = AppState.isSocio();
+
+    // Separate: recurring groups vs single ensaios
+    var groups = {};
+    var singles = [];
+    list.forEach(function(e) {
+        if (e.grupo_recorrencia) {
+            var g = e.grupo_recorrencia;
+            if (!groups[g]) groups[g] = [];
+            groups[g].push(e);
+        } else {
+            singles.push(e);
+        }
+    });
+
+    // Sort each group by date
+    Object.keys(groups).forEach(function(g) {
+        groups[g].sort(function(a, b) { return (a.data || '').localeCompare(b.data || ''); });
+    });
+
+    // Sort singles by date desc
+    singles.sort(function(a, b) { return (b.data || '').localeCompare(a.data || ''); });
+
     var html = '';
 
-    list.forEach(function(e) {
-        var estadoBadge = '';
-        switch (e.estado) {
-            case 'programado':
-                estadoBadge = '<span class="badge badge-primary">' + t('programado') + '</span>';
-                break;
-            case 'realizado':
-                estadoBadge = '<span class="badge badge-success">' + t('realizado') + '</span>';
-                break;
-            case 'cancelado':
-                estadoBadge = '<span class="badge badge-danger">' + t('cancelado') + '</span>';
-                break;
-            default:
-                estadoBadge = '<span class="badge">' + esc(e.estado || '') + '</span>';
-        }
-
-        // Parse date for display
-        var dateParts = (e.data || '').split('-');
-        var dayDisplay = dateParts.length === 3 ? dateParts[2] : '';
-        var monthNames = ['Xan', 'Feb', 'Mar', 'Abr', 'Mai', 'Xun', 'Xul', 'Ago', 'Set', 'Out', 'Nov', 'Dec'];
-        var monthDisplay = dateParts.length === 3 ? monthNames[parseInt(dateParts[1], 10) - 1] || '' : '';
+    // Render recurring groups
+    Object.keys(groups).forEach(function(g) {
+        var items = groups[g];
+        var first = items[0];
+        var last = items[items.length - 1];
+        var todayStr = today();
+        var next = items.find(function(e) { return e.data >= todayStr; }) || last;
+        var realizados = items.filter(function(e) { return e.estado === 'realizado'; }).length;
+        var programados = items.filter(function(e) { return e.estado === 'programado'; }).length;
+        var cancelados = items.filter(function(e) { return e.estado === 'cancelado'; }).length;
 
         html += '<div class="card">' +
-            '<div class="card-body">' +
+            '<div class="card-body" style="padding:16px">' +
                 '<div style="display:flex;gap:16px;align-items:flex-start">' +
-                    '<div style="text-align:center;min-width:50px;padding:8px;background:var(--bg-tertiary);border-radius:8px">' +
-                        '<div style="font-size:1.5em;font-weight:700;line-height:1">' + esc(dayDisplay) + '</div>' +
-                        '<div style="font-size:0.85em;text-transform:uppercase;color:var(--text-secondary)">' + esc(monthDisplay) + '</div>' +
+                    '<div style="text-align:center;min-width:50px;padding:10px 8px;background:var(--primary-dim);border-radius:8px">' +
+                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>' +
                     '</div>' +
-                    '<div style="flex:1">' +
-                        '<p class="card-meta">' + esc(e.hora_inicio || '') + ' - ' + esc(e.hora_fin || '') + '</p>' +
-                        '<p>' + esc(e.lugar || '') + '</p>' +
-                        '<p>' + estadoBadge +
-                            (e.recorrencia ? ' <span class="badge badge-info">' + t(e.recorrencia) + '</span>' : '') +
-                        '</p>' +
-                        (e.notas ? '<p class="card-text" style="margin-top:4px">' + esc(truncate(e.notas, 100)) + '</p>' : '') +
+                    '<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
+                        '<h3 style="font-size:1rem;margin:0">' + esc(first.lugar || t('ensaio')) + '</h3>' +
+                        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+                            '<span class="badge badge-info">' + t(first.recorrencia || 'semanal') + '</span>' +
+                            '<span style="color:var(--text-dim);font-size:0.85rem">' + esc(first.hora_inicio || '') + ' - ' + esc(first.hora_fin || '') + '</span>' +
+                        '</div>' +
+                        '<div style="font-size:0.85rem;color:var(--text-dim)">' +
+                            formatDate(first.data) + ' &rarr; ' + formatDate(last.data) +
+                            ' &middot; ' + items.length + ' ' + t('sesions') +
+                        '</div>' +
+                        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+                            (programados ? '<span class="badge badge-primary">' + programados + ' ' + t('programado') + '</span>' : '') +
+                            (realizados ? '<span class="badge badge-success">' + realizados + ' ' + t('realizado') + '</span>' : '') +
+                            (cancelados ? '<span class="badge badge-danger">' + cancelados + ' ' + t('cancelado') + '</span>' : '') +
+                        '</div>' +
+                        (first.notas ? '<div class="ensaio-notas-preview" onclick="event.stopPropagation();ensaiosViewNotas(' + first.id + ')">' + esc(truncate(stripHtml(first.notas), 150)) + '<span class="ensaio-notas-more">' + t('ver_mais') + '</span></div>' : '') +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="card-actions">' +
+                '<button class="btn btn-sm btn-secondary" onclick="ensaiosExpandGroup(' + g + ')">' + t('ver_sesions') + '</button>' +
+                (isAdmin
+                    ? '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + next.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+                      '<button class="btn-icon btn-danger" onclick="ensaiosDeleteGroup(' + g + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
+                    : '') +
+            '</div>' +
+        '</div>';
+    });
+
+    // Render single ensaios
+    singles.forEach(function(e) {
+        html += '<div class="card">' +
+            '<div class="card-body" style="padding:16px">' +
+                '<div style="display:flex;gap:16px;align-items:flex-start">' +
+                    _ensaioDateBox(e.data) +
+                    '<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
+                        '<div style="font-size:0.9rem;font-weight:600">' + esc(e.lugar || '') + '</div>' +
+                        '<div style="color:var(--text-dim);font-size:0.85rem">' + esc(e.hora_inicio || '') + ' - ' + esc(e.hora_fin || '') + '</div>' +
+                        '<div>' + _ensaioEstadoBadge(e.estado) + '</div>' +
+                        (e.notas ? '<div class="ensaio-notas-preview" onclick="event.stopPropagation();ensaiosViewNotas(' + e.id + ')">' + esc(truncate(stripHtml(e.notas), 150)) + '<span class="ensaio-notas-more">' + t('ver_mais') + '</span></div>' : '') +
                     '</div>' +
                 '</div>' +
             '</div>' +
             '<div class="card-actions">' +
                 (isAdmin
                     ? '<button class="btn btn-sm btn-secondary" onclick="ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' +
-                      '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '">&#9998;</button>' +
-                      '<button class="btn-icon btn-danger" onclick="ensaiosDelete(' + e.id + ')" title="' + t('eliminar') + '">&#128465;</button>'
+                      '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+                      '<button class="btn-icon btn-danger" onclick="ensaiosDelete(' + e.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
                     : '<button class="btn btn-sm btn-secondary" onclick="ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>') +
             '</div>' +
         '</div>';
     });
 
     grid.innerHTML = html;
+}
+
+// Expand a recurring group — show all sessions in a modal
+function ensaiosExpandGroup(grupo) {
+    var items = (AppState.ensaios || []).filter(function(e) {
+        return e.grupo_recorrencia == grupo;
+    }).sort(function(a, b) { return (a.data || '').localeCompare(b.data || ''); });
+
+    if (!items.length) return;
+    var isAdmin = AppState.isSocio();
+    var todayStr = today();
+
+    $('#modal-title').textContent = esc(items[0].lugar || t('ensaio')) + ' — ' + t(items[0].recorrencia || 'semanal');
+
+    var html = '<div class="table-wrap"><table><thead><tr>' +
+        '<th>' + t('data') + '</th><th>' + t('horario') + '</th><th>' + t('estado') + '</th><th></th>' +
+    '</tr></thead><tbody>';
+
+    items.forEach(function(e) {
+        var isPast = e.data < todayStr;
+        html += '<tr style="' + (isPast ? 'opacity:0.5' : '') + '">' +
+            '<td>' + formatDate(e.data) + '</td>' +
+            '<td>' + esc(e.hora_inicio || '') + ' - ' + esc(e.hora_fin || '') + '</td>' +
+            '<td>' + _ensaioEstadoBadge(e.estado) + '</td>' +
+            '<td style="text-align:right">' +
+                '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' +
+                (isAdmin ? ' <button class="btn-icon" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
+            '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    $('#modal-body').innerHTML = html;
+    $('#modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+    showModal('modal-overlay');
+}
+
+// View ensaio notes in detail modal
+function ensaiosViewNotas(id) {
+    var item = (AppState.ensaios || []).find(function(x) { return x.id === id; });
+    if (!item || !item.notas) return;
+
+    var title = (item.lugar || t('ensaio')) + ' — ' + formatDate(item.data);
+    $('#modal-title').textContent = title;
+
+    var html = '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:var(--gap)">' +
+            _ensaioEstadoBadge(item.estado) +
+            '<span style="color:var(--text-dim);font-size:0.85rem">' +
+                esc(item.hora_inicio || '') + ' - ' + esc(item.hora_fin || '') +
+            '</span>' +
+        '</div>' +
+        '<div class="rt-content">' + (item.notas || '') + '</div>';
+
+    $('#modal-body').innerHTML = html;
+
+    var footerHtml = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+    if (AppState.isSocio()) {
+        footerHtml += '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + id + '}))">' + t('editar') + '</button>';
+    }
+    $('#modal-footer').innerHTML = footerHtml;
+
+    showModal('modal-overlay');
+}
+
+// Delete entire recurring group
+async function ensaiosDeleteGroup(grupo) {
+    var items = (AppState.ensaios || []).filter(function(e) {
+        return e.grupo_recorrencia == grupo;
+    });
+    if (!items.length) return;
+    if (!await confirmAction(t('confirmar_eliminar_grupo'), {danger:true})) return;
+    try {
+        // Delete via the first item with scope=future
+        var first = items.sort(function(a, b) { return (a.data || '').localeCompare(b.data || ''); })[0];
+        await api('/ensaios/' + first.id + '?scope=future', { method: 'DELETE' });
+        toast(t('exito'), 'success');
+        ensaiosLoad();
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
 }
 
 function ensaiosModal(item) {
@@ -160,14 +359,25 @@ function ensaiosModal(item) {
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('notas') + '</label>' +
-            '<textarea class="form-control" id="ensaio-notas" rows="3">' + esc(isEdit ? item.notas || '' : '') + '</textarea>' +
+            '<div class="rt-wrap" id="ensaio-notas-editor"></div>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('estado') + '</label>' +
             '<select class="form-control" id="ensaio-estado">' + estadoOptions + '</select>' +
         '</div>' +
-        (!isEdit ? (
         '<hr style="border-color:var(--border);margin:12px 0">' +
+        (isEdit && item.grupo_recorrencia ? (
+        '<div style="padding:10px;background:var(--bg-surface-2);border-radius:var(--radius);margin-bottom:12px">' +
+            '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">' +
+                '<span class="badge badge-info">' + t(item.recorrencia || 'semanal') + '</span>' +
+                '<span style="color:var(--text-dim);font-size:0.85rem">' + t('recorrencia') + '</span>' +
+            '</div>' +
+            '<div class="form-group" style="margin-bottom:0">' +
+                '<label>' + t('data_fin_recorrencia') + '</label>' +
+                '<input type="date" class="form-control" id="ensaio-recorrencia-fin" value="' + esc(item.recorrencia_fin || '') + '">' +
+            '</div>' +
+        '</div>'
+        ) : !isEdit ? (
         '<div class="form-group">' +
             '<label>' + t('recorrencia') + '</label>' +
             '<select class="form-control" id="ensaio-recorrencia">' +
@@ -181,8 +391,7 @@ function ensaiosModal(item) {
             '<label>' + t('data_fin_recorrencia') + '</label>' +
             '<input type="date" class="form-control" id="ensaio-recorrencia-fin">' +
         '</div>'
-        ) : '') +
-        (isEdit && item.grupo_recorrencia ? '<div class="badge badge-info" style="margin-top:8px">' + t('recorrencia') + ': ' + esc(item.recorrencia || '') + '</div>' : '');
+        ) : '');
 
     $('#modal-footer').innerHTML =
         '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
@@ -190,12 +399,23 @@ function ensaiosModal(item) {
 
     showModal('modal-overlay');
 
-    // Toggle recurrence end date visibility
+    initRichTextEditor('ensaio-notas-editor', isEdit ? item.notas || '' : '', { uploadDir: 'ensaios' });
+
+    // Toggle recurrence end date visibility + auto-fill 6 months ahead
     var recSel = $('#ensaio-recorrencia');
     if (recSel) {
         recSel.addEventListener('change', function() {
             var fg = $('#recorrencia-fin-group');
             if (fg) fg.style.display = recSel.value ? '' : 'none';
+            if (recSel.value) {
+                var finInput = $('#ensaio-recorrencia-fin');
+                if (finInput && !finInput.value) {
+                    var start = ($('#ensaio-data') || {}).value || today();
+                    var d = new Date(start);
+                    d.setMonth(d.getMonth() + 6);
+                    finInput.value = d.toISOString().split('T')[0];
+                }
+            }
         });
     }
 }
@@ -209,16 +429,20 @@ async function ensaiosSave() {
         hora_inicio: ($('#ensaio-hora-inicio') || {}).value || '',
         hora_fin: ($('#ensaio-hora-fin') || {}).value || '',
         lugar: ($('#ensaio-lugar') || {}).value || '',
-        notas: ($('#ensaio-notas') || {}).value || '',
+        notas: getRichTextContent('ensaio-notas-editor'),
         estado: ($('#ensaio-estado') || {}).value || 'programado'
     };
 
-    if (!isEdit) {
-        var rec = ($('#ensaio-recorrencia') || {}).value || '';
-        var recFin = ($('#ensaio-recorrencia-fin') || {}).value || '';
-        if (rec && recFin) {
-            body.recorrencia = rec;
-            body.recorrencia_fin = recFin;
+    var recFinInput = $('#ensaio-recorrencia-fin');
+    if (recFinInput && recFinInput.value) {
+        if (!isEdit) {
+            var rec = ($('#ensaio-recorrencia') || {}).value || '';
+            if (rec) {
+                body.recorrencia = rec;
+                body.recorrencia_fin = recFinInput.value;
+            }
+        } else {
+            body.recorrencia_fin = recFinInput.value;
         }
     }
 
@@ -386,8 +610,21 @@ async function ensaiosAsistenciaResumo() {
     showModal('modal-overlay');
 }
 
-/* ---- Export Attendance CSV ---- */
-async function ensaiosExportAsistencia() {
+/* ---- Export Ensaios ---- */
+function ensaiosExport(format) {
+    var headers = [t('data'), t('hora_inicio'), t('hora_fin'), t('lugar'), t('estado')];
+    var rows = (AppState.ensaios || []).map(function(e) {
+        return [e.data || '', e.hora_inicio || '', e.hora_fin || '', e.lugar || '', e.estado || ''];
+    });
+    if (format === 'pdf') {
+        exportPDF(t('ensaios'), headers, rows);
+    } else {
+        exportCSV('ensaios.csv', headers, rows);
+    }
+}
+
+/* ---- Export Attendance CSV/PDF ---- */
+async function ensaiosExportAsistencia(format) {
     try {
         var data = await api('/asistencia/resumo');
         var headers = [t('socio'), t('instrumento'), t('confirmado'), t('ausente'), t('xustificado'), t('porcentaxe')];
@@ -396,7 +633,11 @@ async function ensaiosExportAsistencia() {
             var pct = total > 0 ? Math.round((parseInt(s.confirmados) || 0) / total * 100) : 0;
             return [s.nome_completo || s.username, s.instrumento || '', s.confirmados || 0, s.ausentes || 0, s.xustificados || 0, pct + '%'];
         });
-        exportCSV('asistencia.csv', headers, rows);
+        if (format === 'pdf') {
+            exportPDF(t('asistencia'), headers, rows);
+        } else {
+            exportCSV('asistencia.csv', headers, rows);
+        }
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }

@@ -24,22 +24,22 @@ function handle_bolos($method, $uri, $input) {
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) send_json(['error' => 'Bolo non atopado'], 404);
-            send_json(fix_row($row, [], ['publica'], ['importe']));
+            send_json(fix_row($row, ['i18n'], ['publica'], ['importe']));
         }
         $rows = $db->query("SELECT * FROM bolos ORDER BY data DESC, hora DESC, id DESC")->fetchAll();
-        send_json(fix_rows($rows, [], ['publica'], ['importe']));
+        send_json(fix_rows($rows, ['i18n'], ['publica'], ['importe']));
     }
 
     // POST — create (admin)
     if ($method === 'POST' && !$id) {
-        require_admin();
+        require_socio();
 
         // Imaxe base64
         $imaxe_path = '';
         if (!empty($input['imaxe_data'])) {
             $ext = $input['imaxe_ext'] ?? 'jpg';
             $tmpName = 'bolo_' . time() . '.' . $ext;
-            $imaxe_path = save_base64_file('bolos', $tmpName, $input['imaxe_data']);
+            $imaxe_path = process_and_save_image('bolos', $tmpName, $input['imaxe_data']);
         }
 
         // Contrato arquivo base64
@@ -49,11 +49,12 @@ function handle_bolos($method, $uri, $input) {
             $contrato_arquivo = save_base64_file('bolos', $safe, $input['contrato_arquivo_data']);
         }
 
+        $i18n = isset($input['i18n']) ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
         $stmt = $db->prepare(
             "INSERT INTO bolos (titulo, descricion, data, hora, lugar, tipo, imaxe,
              cliente_nome, cliente_nif, cliente_telefono, importe, notas,
-             contrato_arquivo, estado, publica)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             contrato_arquivo, estado, publica, i18n)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             trim($input['titulo'] ?? ''),
@@ -71,13 +72,14 @@ function handle_bolos($method, $uri, $input) {
             $contrato_arquivo,
             $input['estado'] ?? 'borrador',
             !empty($input['publica']) ? 1 : 0,
+            $i18n,
         ]);
         $newId = (int)$db->lastInsertId();
 
         // Rename image with real ID
         if (!empty($input['imaxe_data'])) {
             $ext = $input['imaxe_ext'] ?? 'jpg';
-            $newPath = save_base64_file('bolos', "bolo_{$newId}.{$ext}", $input['imaxe_data']);
+            $newPath = process_and_save_image('bolos', "bolo_{$newId}.{$ext}", $input['imaxe_data']);
             $db->prepare("UPDATE bolos SET imaxe = ? WHERE id = ?")->execute([$newPath, $newId]);
         }
 
@@ -86,7 +88,7 @@ function handle_bolos($method, $uri, $input) {
 
     // PUT — update (admin)
     if ($method === 'PUT' && $id) {
-        require_admin();
+        require_socio();
 
         $stmt = $db->prepare("SELECT * FROM bolos WHERE id = ?");
         $stmt->execute([$id]);
@@ -106,10 +108,15 @@ function handle_bolos($method, $uri, $input) {
             }
         }
 
+        if (array_key_exists('i18n', $input)) {
+            $fields[] = "i18n = ?";
+            $params[] = $input['i18n'] ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
+        }
+
         // Imaxe base64
         if (!empty($input['imaxe_data'])) {
             $ext = $input['imaxe_ext'] ?? 'jpg';
-            $path = save_base64_file('bolos', "bolo_{$id}.{$ext}", $input['imaxe_data']);
+            $path = process_and_save_image('bolos', "bolo_{$id}.{$ext}", $input['imaxe_data']);
             $fields[] = "imaxe = ?";
             $params[] = $path;
         } elseif (array_key_exists('imaxe', $input)) {
@@ -138,7 +145,7 @@ function handle_bolos($method, $uri, $input) {
 
     // DELETE — admin
     if ($method === 'DELETE' && $id) {
-        require_admin();
+        require_socio();
         $stmt = $db->prepare("DELETE FROM bolos WHERE id = ?");
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) {

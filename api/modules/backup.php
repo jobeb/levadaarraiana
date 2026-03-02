@@ -18,11 +18,10 @@ function handle_backup($method, $uri, $input) {
     $db = get_db();
     $tables = [
         'socios', 'noticias', 'bolos', 'albums', 'propostas',
-        'mensaxes', 'documentos', 'actas',
+        'documentos', 'actas',
         'votacions', 'votos', 'propostas_votos',
-        'clientes', 'proveedores', 'facturas',
-        'gastos', 'ensaios', 'asistencia', 'instrumentos',
-        'repertorio', 'setlists', 'setlist_items',
+        'ensaios', 'asistencia', 'instrumentos',
+        'repertorio',
         'youtube_tokens', 'config'
     ];
 

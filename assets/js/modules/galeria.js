@@ -62,7 +62,7 @@ function galeriaRender() {
         return;
     }
 
-    var isAdmin = AppState.isAdmin();
+    var isAdmin = AppState.isSocio();
     var html = '';
 
     list.forEach(function(album) {
@@ -76,9 +76,10 @@ function galeriaRender() {
         var coverIsYT = _isYoutubeUrl(coverSrc);
         var imgHtml;
         if (coverSrc && coverIsYT) {
-            imgHtml = '<div class="card-img" onclick="galeriaView(' + album.id + ')" style="position:relative">' +
-                '<img src="' + esc(_youtubeThumbUrl(coverSrc)) + '" alt="">' +
-                '<span class="video-play-icon">&#9654;</span></div>';
+            imgHtml = '<div class="card-img card-img-yt" style="position:relative">' +
+                '<iframe src="' + esc(coverSrc) + '?controls=0&modestbranding=1&rel=0" loading="lazy" allow="accelerometer;autoplay;encrypted-media;gyroscope" allowfullscreen style="width:100%;height:100%;border:none;pointer-events:none"></iframe>' +
+                '<div style="position:absolute;inset:0;cursor:pointer" onclick="galeriaView(' + album.id + ')"></div>' +
+                '</div>';
         } else if (coverSrc) {
             imgHtml = '<div class="card-img" onclick="galeriaView(' + album.id + ')"><img src="' + esc(coverSrc) + '" alt=""></div>';
         } else {
@@ -90,8 +91,8 @@ function galeriaRender() {
         var actions = '';
         if (isAdmin) {
             actions = '<div class="card-actions">' +
-                '<button class="btn-icon" onclick="galeriaModal(AppState.albums.find(x=>x.id==' + album.id + '))" title="' + t('editar') + '">&#9998;</button>' +
-                '<button class="btn-icon btn-danger" onclick="galeriaDelete(' + album.id + ')" title="' + t('eliminar') + '">&#128465;</button>' +
+                '<button class="btn-icon" onclick="galeriaModal(AppState.albums.find(x=>x.id==' + album.id + '))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+                '<button class="btn-icon btn-danger" onclick="galeriaDelete(' + album.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>' +
                 '</div>';
         }
 
@@ -138,9 +139,9 @@ function galeriaView(id) {
             var isYT = _isYoutubeUrl(fullSrc);
             var isVideo = /\.(mp4|webm|ogg)$/i.test(fullSrc);
             if (isYT) {
-                html += '<div class="photo-thumb photo-thumb-video" onclick="galeriaLightbox(\'' + esc(fullSrc).replace(/'/g, "\\'") + '\', _galeriaCurrentPhotos, ' + idx + ')">' +
-                    '<img src="' + esc(_youtubeThumbUrl(fullSrc)) + '" alt="' + esc(alt) + '" style="width:100%;height:100%;object-fit:cover">' +
-                    '<span class="video-play-icon">&#9654;</span>' +
+                html += '<div class="photo-thumb photo-thumb-video photo-thumb-yt" style="position:relative">' +
+                    '<iframe src="' + esc(fullSrc) + '?controls=0&modestbranding=1&rel=0" loading="lazy" allow="accelerometer;autoplay;encrypted-media;gyroscope" style="width:100%;height:100%;border:none;pointer-events:none"></iframe>' +
+                    '<div style="position:absolute;inset:0;cursor:pointer" onclick="galeriaLightbox(\'' + esc(fullSrc).replace(/'/g, "\\'") + '\', _galeriaCurrentPhotos, ' + idx + ')"></div>' +
                     '</div>';
             } else if (isVideo) {
                 html += '<div class="photo-thumb photo-thumb-video" onclick="galeriaLightbox(\'' + esc(fullSrc).replace(/'/g, "\\'") + '\', _galeriaCurrentPhotos, ' + idx + ')">' +
@@ -307,8 +308,9 @@ function galeriaModal(album) {
 
     $('#modal-body').innerHTML =
         '<input type="hidden" id="album-id" value="' + (isEdit ? album.id : '') + '">' +
+        _renderModalLangBar() +
         '<div class="form-group">' +
-            '<label>' + t('titulo') + '</label>' +
+            '<label class="required">' + t('titulo') + '</label>' +
             '<input type="text" class="form-control" id="album-titulo" value="' + esc(isEdit ? album.titulo : '') + '">' +
         '</div>' +
         '<div class="form-group">' +
@@ -333,6 +335,11 @@ function galeriaModal(album) {
     $('#modal-footer').innerHTML =
         '<button class="btn btn-secondary" onclick="_galeriaModalClose()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="galeriaSave()">' + t('gardar') + '</button>';
+
+    _initModalI18n([
+        { key: 'titulo', inputId: 'album-titulo', type: 'input' },
+        { key: 'descricion', inputId: 'album-descricion', type: 'textarea' }
+    ], isEdit ? album : null);
 
     showModal('modal-overlay');
     _renderEditorGrid();
@@ -369,12 +376,14 @@ function _renderEditorGrid() {
     var html = '';
     _editorPhotos.forEach(function(foto, idx) {
         var thumbSrc = '';
+        var isYT = false;
         if (foto._objectUrl) {
             thumbSrc = foto._objectUrl;
         } else if (foto.path) {
             var full = uploadUrl(foto.path);
             if (_isYoutubeUrl(full)) {
-                thumbSrc = _youtubeThumbUrl(full);
+                isYT = true;
+                thumbSrc = full;
             } else {
                 thumbSrc = full;
             }
@@ -384,15 +393,20 @@ function _renderEditorGrid() {
         var isSelected = idx === _editorSelectedIdx;
         var isVideo = foto._objectUrl && foto._isVideo;
 
+        var thumbHtml;
+        if (isYT) {
+            thumbHtml = '<iframe src="' + esc(thumbSrc) + '?controls=0&modestbranding=1&rel=0" loading="lazy" style="width:100%;height:100%;border:none;pointer-events:none"></iframe>';
+        } else if (isVideo) {
+            thumbHtml = '<video src="' + esc(thumbSrc) + '" muted preload="metadata"></video>';
+        } else {
+            thumbHtml = '<img src="' + esc(thumbSrc) + '" alt="' + esc(foto.alt || '') + '">';
+        }
+
         html += '<div class="photo-editor-item' + (isCover ? ' is-cover' : '') + (isSelected ? ' selected' : '') + '" ' +
             'draggable="true" data-photo-idx="' + idx + '">' +
-            '<div class="photo-editor-thumb" onclick="_photoSelect(' + idx + ')">' +
-                (isVideo
-                    ? '<video src="' + esc(thumbSrc) + '" muted preload="metadata"></video>'
-                    : '<img src="' + esc(thumbSrc) + '" alt="' + esc(foto.alt || '') + '">') +
-            '</div>' +
+            '<div class="photo-editor-thumb" onclick="_photoSelect(' + idx + ')">' + thumbHtml + '</div>' +
             '<div class="photo-editor-actions">' +
-                '<button type="button" class="cover-btn' + (isCover ? ' active' : '') + '" onclick="_photoSetCover(' + idx + ')" title="' + t('definir_portada') + '">&#9733;</button>' +
+                '<button type="button" class="cover-btn' + (isCover ? ' active' : '') + '" onclick="_photoSetCover(' + idx + ')" title="' + t('definir_portada') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>' +
                 '<button type="button" class="delete-btn" onclick="_photoRemove(' + idx + ')" title="' + t('eliminar_foto') + '">&times;</button>' +
             '</div>' +
             (foto.titulo ? '<div class="photo-editor-caption">' + esc(foto.titulo) + '</div>' : '') +
@@ -523,7 +537,7 @@ async function _handleNewPhotos(files) {
                 });
             }
         } else {
-            var b64 = await fileToBase64(file);
+            var b64 = await imageToBase64(file);
             var objUrl2 = URL.createObjectURL(file);
             _editorPhotos.push({
                 path: '',
@@ -587,47 +601,54 @@ function _initPhotoDnD(container) {
 // ---- Save ----
 
 async function galeriaSave() {
-    var id = ($('#album-id') || {}).value;
-    var isEdit = !!id;
-
-    var body = {
-        titulo: ($('#album-titulo') || {}).value || '',
-        descricion: ($('#album-descricion') || {}).value || '',
-        data: ($('#album-data') || {}).value || today()
-    };
-
-    // Build fotos array from editor state
-    var fotos = [];
-    for (var i = 0; i < _editorPhotos.length; i++) {
-        var p = _editorPhotos[i];
-        if (p._data) {
-            // New photo: send base64 data
-            fotos.push({
-                data: p._data,
-                ext: p._ext || 'jpg',
-                nome: p._nome || ('foto_' + i + '.' + (p._ext || 'jpg')),
-                titulo: p.titulo || '',
-                alt: p.alt || ''
-            });
-        } else if (p.path) {
-            // Existing photo: send path + metadata
-            fotos.push({
-                path: p.path,
-                titulo: p.titulo || '',
-                alt: p.alt || ''
-            });
-        }
-    }
-    if (fotos.length > 0) {
-        body.fotos = fotos;
-    }
-
-    // Cover: if a specific cover was chosen, send portada_path
-    if (_editorPortada && !_editorPortada.startsWith('__new__')) {
-        body.portada_path = _editorPortada;
-    }
+    var btn = $('#modal-footer .btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = t('gardando'); }
 
     try {
+        var id = ($('#album-id') || {}).value;
+        var isEdit = !!id;
+
+        _saveModalLangValues();
+        var glData = _modalI18n.data.gl || {};
+
+        var body = {
+            titulo: glData.titulo || ($('#album-titulo') || {}).value || '',
+            descricion: glData.descricion || ($('#album-descricion') || {}).value || '',
+            data: ($('#album-data') || {}).value || today(),
+            i18n: _collectModalI18n()
+        };
+
+        // Build fotos array from editor state
+        var fotos = [];
+        for (var i = 0; i < _editorPhotos.length; i++) {
+            var p = _editorPhotos[i];
+            if (p._data) {
+                // New photo: send base64 data
+                fotos.push({
+                    data: p._data,
+                    ext: p._ext || 'jpg',
+                    nome: p._nome || ('foto_' + i + '.' + (p._ext || 'jpg')),
+                    titulo: p.titulo || '',
+                    alt: p.alt || ''
+                });
+            } else if (p.path) {
+                // Existing photo or YouTube URL: send path + metadata
+                fotos.push({
+                    path: p.path,
+                    titulo: p.titulo || '',
+                    alt: p.alt || ''
+                });
+            }
+        }
+        if (fotos.length > 0) {
+            body.fotos = fotos;
+        }
+
+        // Cover: if a specific cover was chosen, send portada_path
+        if (_editorPortada && typeof _editorPortada === 'string' && _editorPortada.indexOf('__new__') !== 0) {
+            body.portada_path = _editorPortada;
+        }
+
         if (isEdit) {
             await api('/albums/' + id, { method: 'PUT', body: body });
         } else {
@@ -637,7 +658,10 @@ async function galeriaSave() {
         toast(t('exito'), 'success');
         galeriaLoad();
     } catch (e) {
-        toast(t('erro') + ': ' + e.message, 'error');
+        console.error('galeriaSave error:', e);
+        toast(t('erro') + ': ' + (e.message || e), 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = t('gardar'); }
     }
 }
 

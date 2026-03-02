@@ -1,16 +1,17 @@
 /**
- * Instrumentos — Instruments inventory module
+ * Instrumentos — Showcase of instruments we use
  */
 
 var _instrumentoIcons = {
-    surdo: 'S',
-    caixa: 'C',
-    repinique: 'R',
-    tamborim: 'T',
-    agogo: 'A',
-    ganza: 'G',
-    apito: 'P',
-    outro: 'O'
+    surdo: 'assets/img/instrumentos/surdo.jpg',
+    caixa: 'assets/img/instrumentos/caixa.jpg',
+    repinique: 'assets/img/instrumentos/repinique.jpg',
+    tamborim: 'assets/img/instrumentos/tamborim.jpg',
+    timbao: 'assets/img/instrumentos/timbao.jpg',
+    agogo: 'assets/img/instrumentos/agogo.jpg',
+    ganza: 'assets/img/instrumentos/ganza.jpg',
+    apito: 'assets/img/instrumentos/apito.jpg',
+    outro: 'assets/img/instrumentos/outro.png'
 };
 
 async function instrumentosLoad() {
@@ -20,79 +21,71 @@ async function instrumentosLoad() {
         toast(t('erro') + ': ' + e.message, 'error');
         AppState.instrumentos = [];
     }
-    // Also load socios for assignment dropdown
-    if (!AppState.socios || AppState.socios.length === 0) {
-        try {
-            AppState.socios = await api('/socios');
-        } catch (e) {
-            AppState.socios = [];
-        }
-    }
     instrumentosRender();
 }
 
 function instrumentosRender() {
-    var tbody = $('#instrumentos-table tbody');
-    if (!tbody) return;
+    var grid = document.getElementById('instrumentos-grid');
+    if (!grid) return;
 
-    var list = AppState.instrumentos || [];
+    var list = (AppState.instrumentos || []).slice();
+
+    // Filter: search
+    var searchVal = ($('#instrumentos-search') || {}).value || '';
+    if (searchVal) {
+        var q = searchVal.toLowerCase();
+        list = list.filter(function(i) {
+            return (i.nome || '').toLowerCase().indexOf(q) !== -1 ||
+                   (i.tipo || '').toLowerCase().indexOf(q) !== -1 ||
+                   (i.notas || '').toLowerCase().indexOf(q) !== -1 ||
+                   stripHtml(i.descricion || '').toLowerCase().indexOf(q) !== -1;
+        });
+    }
+
+    // Sort by nome
+    list.sort(function(a, b) { return (a.nome || '').localeCompare(b.nome || ''); });
 
     if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">' + t('sen_resultados') + '</td></tr>';
+        grid.innerHTML = '<p class="text-center text-muted" style="grid-column:1/-1">' + t('sen_resultados') + '</p>';
         return;
     }
 
-    var isAdmin = AppState.isAdmin();
+    var isAdmin = AppState.isSocio();
     var html = '';
 
     list.forEach(function(i) {
-        var icon = _instrumentoIcons[i.tipo] || _instrumentoIcons['outro'];
+        var iconSrc = i.imaxe ? uploadUrl(i.imaxe) : (_instrumentoIcons[i.tipo] || _instrumentoIcons['outro']);
 
-        var tipoBadge = '<span class="badge">' + esc((i.tipo || '').charAt(0).toUpperCase() + (i.tipo || '').slice(1)) + '</span>';
-
-        var estadoBadge = '';
-        switch (i.estado) {
-            case 'bo':
-                estadoBadge = '<span class="badge badge-success">' + t('bo') + '</span>';
-                break;
-            case 'reparacion':
-                estadoBadge = '<span class="badge badge-warning">' + t('reparacion') + '</span>';
-                break;
-            case 'baixa':
-                estadoBadge = '<span class="badge badge-danger">' + t('baixa') + '</span>';
-                break;
-            default:
-                estadoBadge = '<span class="badge">' + esc(i.estado || '') + '</span>';
+        var notasHtml = '';
+        if (i.notas) {
+            notasHtml = '<p class="card-meta instrumento-notas">' + esc(i.notas) + '</p>';
         }
 
-        var asignado = '';
-        if (i.asignado_a) {
-            var socio = (AppState.socios || []).find(function(s) {
-                return s.id === i.asignado_a || s.id === parseInt(i.asignado_a) || s.username === i.asignado_a;
-            });
-            asignado = socio ? (socio.nome_completo || socio.username) : i.asignado_a;
-        } else {
-            asignado = '<span class="text-muted">' + t('sen_asignar') + '</span>';
+        var descricionHtml = '';
+        if (i.descricion) {
+            descricionHtml = '<div class="rt-content instrumento-desc">' + i.descricion + '</div>';
         }
 
         var actions = '';
         if (isAdmin) {
-            actions += '<button class="btn-icon" onclick="instrumentosModal(AppState.instrumentos.find(function(x){return x.id==' + i.id + '}))" title="' + t('editar') + '">&#9998;</button>';
-            actions += '<button class="btn btn-sm btn-secondary" onclick="instrumentosHistorial(' + i.id + ')" title="' + t('historial_mantemento') + '">&#128295;</button>';
-            actions += '<button class="btn-icon btn-danger" onclick="instrumentosDelete(' + i.id + ')" title="' + t('eliminar') + '">&#128465;</button>';
+            actions += '<button class="btn-icon" onclick="instrumentosModal(AppState.instrumentos.find(function(x){return x.id==' + i.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
+            actions += '<button class="btn-icon btn-danger" onclick="instrumentosDelete(' + i.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>';
         }
 
-        html += '<tr>' +
-            '<td style="font-size:1.3em">' + icon + '</td>' +
-            '<td>' + esc(i.nome) + '</td>' +
-            '<td>' + tipoBadge + '</td>' +
-            '<td>' + estadoBadge + '</td>' +
-            '<td>' + asignado + '</td>' +
-            '<td class="actions-cell">' + actions + '</td>' +
-        '</tr>';
+        html += '<div class="card instrumento-card" onclick="instrumentosView(' + i.id + ')">' +
+            '<div class="instrumento-card-header">' +
+                '<img src="' + esc(iconSrc) + '" alt="' + esc(i.tipo || '') + '" class="instrumento-card-icon">' +
+                '<div class="instrumento-card-info">' +
+                    '<h4>' + esc(i.nome) + '</h4>' +
+                    notasHtml +
+                '</div>' +
+                (actions ? '<div class="instrumento-card-actions" onclick="event.stopPropagation()">' + actions + '</div>' : '') +
+            '</div>' +
+            descricionHtml +
+        '</div>';
     });
 
-    tbody.innerHTML = html;
+    grid.innerHTML = html;
 }
 
 function instrumentosModal(item) {
@@ -101,54 +94,57 @@ function instrumentosModal(item) {
 
     $('#modal-title').textContent = title;
 
-    var tipoOptions = ['surdo', 'caixa', 'repinique', 'tamborim', 'agogo', 'ganza', 'apito', 'outro'].map(function(tp) {
-        var sel = (isEdit && item.tipo === tp) ? ' selected' : '';
-        return '<option value="' + tp + '"' + sel + '>' + tp.charAt(0).toUpperCase() + tp.slice(1) + '</option>';
-    }).join('');
-
-    var estadoOptions = ['bo', 'reparacion', 'baixa'].map(function(e) {
-        var sel = (isEdit && item.estado === e) ? ' selected' : '';
-        return '<option value="' + e + '"' + sel + '>' + t(e) + '</option>';
-    }).join('');
-
-    var socios = (AppState.socios || []).filter(function(s) { return s.estado === 'Aprobado'; });
-    var socioOptions = '<option value="">' + t('sen_asignar') + '</option>';
-    socios.forEach(function(s) {
-        var val = s.id;
-        var sel = (isEdit && (item.asignado_a === s.id || item.asignado_a === String(s.id) || item.asignado_a === s.username)) ? ' selected' : '';
-        socioOptions += '<option value="' + val + '"' + sel + '>' + esc(s.nome_completo || s.username) + '</option>';
-    });
+    var imaxePreview = '';
+    if (isEdit) {
+        var previewSrc = item.imaxe ? uploadUrl(item.imaxe) : (_instrumentoIcons[item.tipo] || _instrumentoIcons['outro']);
+        imaxePreview = '<img src="' + esc(previewSrc) + '" id="instrumento-imaxe-preview" style="margin-top:8px;max-width:120px;border-radius:8px">';
+    }
 
     $('#modal-body').innerHTML =
         '<input type="hidden" id="instrumento-id" value="' + (isEdit ? item.id : '') + '">' +
+        _renderModalLangBar() +
         '<div class="form-group">' +
-            '<label>' + t('nome') + '</label>' +
+            '<label class="required">' + t('nome') + '</label>' +
             '<input type="text" class="form-control" id="instrumento-nome" value="' + esc(isEdit ? item.nome : '') + '">' +
         '</div>' +
-        '<div class="form-row">' +
-            '<div class="form-group" style="flex:1">' +
-                '<label>' + t('tipo') + '</label>' +
-                '<select class="form-control" id="instrumento-tipo">' + tipoOptions + '</select>' +
-            '</div>' +
-            '<div class="form-group" style="flex:1">' +
-                '<label>' + t('numero_serie') + '</label>' +
-                '<input type="text" class="form-control" id="instrumento-serie" value="' + esc(isEdit ? item.numero_serie || '' : '') + '">' +
-            '</div>' +
-        '</div>' +
-        '<div class="form-row">' +
-            '<div class="form-group" style="flex:1">' +
-                '<label>' + t('estado') + '</label>' +
-                '<select class="form-control" id="instrumento-estado">' + estadoOptions + '</select>' +
-            '</div>' +
-            '<div class="form-group" style="flex:1">' +
-                '<label>' + t('asignado_a') + '</label>' +
-                '<select class="form-control" id="instrumento-asignado">' + socioOptions + '</select>' +
-            '</div>' +
+        '<div class="form-group">' +
+            '<label>' + t('imaxe') + '</label>' +
+            '<input type="file" class="form-control" id="instrumento-imaxe" accept="image/*">' +
+            imaxePreview +
         '</div>' +
         '<div class="form-group">' +
-            '<label>' + t('notas') + '</label>' +
-            '<textarea class="form-control" id="instrumento-notas" rows="3">' + esc(isEdit ? item.notas || '' : '') + '</textarea>' +
+            '<label>' + t('descricion_curta') + '</label>' +
+            '<textarea class="form-control" id="instrumento-notas" rows="2">' + esc(isEdit ? item.notas || '' : '') + '</textarea>' +
+        '</div>' +
+        '<div class="form-group">' +
+            '<label>' + t('descricion') + '</label>' +
+            '<div class="rt-wrap" id="instrumento-descricion-editor"></div>' +
         '</div>';
+
+    initRichTextEditor('instrumento-descricion-editor', isEdit ? item.descricion || '' : '', { uploadDir: 'instrumentos' });
+
+    _initModalI18n([
+        { key: 'nome', inputId: 'instrumento-nome', type: 'input' },
+        { key: 'notas', inputId: 'instrumento-notas', type: 'textarea' },
+        { key: 'descricion', inputId: 'instrumento-descricion-editor', type: 'richtext', editorId: 'instrumento-descricion-editor' }
+    ], isEdit ? item : null);
+
+    // Live preview when selecting a new image
+    var imaxeInput = $('#instrumento-imaxe');
+    if (imaxeInput) {
+        imaxeInput.addEventListener('change', function() {
+            if (imaxeInput.files && imaxeInput.files[0]) {
+                var preview = $('#instrumento-imaxe-preview');
+                if (!preview) {
+                    preview = document.createElement('img');
+                    preview.id = 'instrumento-imaxe-preview';
+                    preview.style.cssText = 'margin-top:8px;max-width:120px;border-radius:8px';
+                    imaxeInput.parentNode.appendChild(preview);
+                }
+                preview.src = URL.createObjectURL(imaxeInput.files[0]);
+            }
+        });
+    }
 
     $('#modal-footer').innerHTML =
         '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
@@ -161,14 +157,22 @@ async function instrumentosSave() {
     var id = ($('#instrumento-id') || {}).value;
     var isEdit = !!id;
 
+    _saveModalLangValues();
+    var glData = _modalI18n.data.gl || {};
+
     var body = {
-        nome: ($('#instrumento-nome') || {}).value || '',
-        tipo: ($('#instrumento-tipo') || {}).value || 'outro',
-        numero_serie: ($('#instrumento-serie') || {}).value || '',
-        estado: ($('#instrumento-estado') || {}).value || 'bo',
-        asignado_a: ($('#instrumento-asignado') || {}).value || null,
-        notas: ($('#instrumento-notas') || {}).value || ''
+        nome: glData.nome || ($('#instrumento-nome') || {}).value || '',
+        notas: glData.notas || ($('#instrumento-notas') || {}).value || '',
+        descricion: glData.descricion || getRichTextContent('instrumento-descricion-editor'),
+        i18n: _collectModalI18n()
     };
+
+    var fileInput = $('#instrumento-imaxe');
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        var imgB64 = await imageToBase64(fileInput.files[0]);
+        body.imaxe_data = imgB64.data;
+        body.imaxe_ext = 'jpg';
+    }
 
     try {
         if (isEdit) {
@@ -195,78 +199,27 @@ async function instrumentosDelete(id) {
     }
 }
 
-function instrumentosHistorial(id) {
-    var inst = (AppState.instrumentos || []).find(function(x) { return x.id == id; });
-    if (!inst) return;
+function instrumentosView(id) {
+    var item = (AppState.instrumentos || []).find(function(x) { return x.id === id; });
+    if (!item) return;
 
-    var historial = [];
-    if (inst.historial_mantemento) {
-        historial = typeof inst.historial_mantemento === 'string'
-            ? JSON.parse(inst.historial_mantemento) || []
-            : inst.historial_mantemento;
+    var iconSrc = item.imaxe ? uploadUrl(item.imaxe) : (_instrumentoIcons[item.tipo] || _instrumentoIcons['outro']);
+
+    $('#modal-title').textContent = item.nome;
+
+    var notasHtml = item.notas ? '<p class="text-muted" style="margin:0 0 8px">' + esc(item.notas) + '</p>' : '';
+    var descHtml = item.descricion ? '<div class="rt-content instrumento-view-desc">' + item.descricion + '</div>' : '';
+
+    $('#modal-body').innerHTML =
+        '<img src="' + esc(iconSrc) + '" alt="' + esc(item.nome) + '" class="instrumento-view-img">' +
+        notasHtml +
+        descHtml;
+
+    var footerHtml = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+    if (AppState.isSocio()) {
+        footerHtml += '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');instrumentosModal(AppState.instrumentos.find(function(x){return x.id==' + id + '}))">' + t('editar') + '</button>';
     }
-
-    $('#modal-title').textContent = t('historial_mantemento') + ' — ' + (inst.nome || '');
-
-    var html = '';
-    if (historial.length === 0) {
-        html += '<p class="text-center">' + t('sen_resultados') + '</p>';
-    } else {
-        html += '<div class="historial-list">';
-        historial.forEach(function(h) {
-            html += '<div class="historial-entry">' +
-                '<strong>' + formatDate(h.data) + '</strong> — ' +
-                '<span class="badge">' + esc(h.tipo || '') + '</span> ' +
-                esc(h.descricion || '') +
-                (h.autor ? ' <span class="text-muted">(' + esc(h.autor) + ')</span>' : '') +
-            '</div>';
-        });
-        html += '</div>';
-    }
-
-    html += '<hr style="margin:12px 0;border-color:var(--border)">';
-    html += '<div class="form-group">' +
-        '<label>' + t('data') + '</label>' +
-        '<input type="date" class="form-control" id="mantemento-data" value="' + today() + '">' +
-    '</div>' +
-    '<div class="form-group">' +
-        '<label>' + t('tipo') + '</label>' +
-        '<select class="form-control" id="mantemento-tipo">' +
-            '<option value="revision">Revisión</option>' +
-            '<option value="reparacion">' + t('reparacion') + '</option>' +
-            '<option value="limpeza">Limpeza</option>' +
-            '<option value="substitucion">Substitución</option>' +
-        '</select>' +
-    '</div>' +
-    '<div class="form-group">' +
-        '<label>' + t('descricion') + '</label>' +
-        '<input type="text" class="form-control" id="mantemento-desc" placeholder="...">' +
-    '</div>';
-
-    $('#modal-body').innerHTML = html;
-    $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>' +
-        '<button class="btn btn-primary" onclick="instrumentosAddMantemento(' + id + ')">' + t('engadir') + '</button>';
+    $('#modal-footer').innerHTML = footerHtml;
 
     showModal('modal-overlay');
-}
-
-async function instrumentosAddMantemento(id) {
-    var body = {
-        data: ($('#mantemento-data') || {}).value || today(),
-        tipo: ($('#mantemento-tipo') || {}).value || '',
-        descricion: ($('#mantemento-desc') || {}).value || '',
-        autor: AppState.user ? (AppState.user.nome_completo || AppState.user.username) : ''
-    };
-
-    try {
-        var res = await api('/instrumentos/' + id + '/mantemento', { method: 'POST', body: body });
-        // Update local state
-        var inst = (AppState.instrumentos || []).find(function(x) { return x.id == id; });
-        if (inst && res.historial) inst.historial_mantemento = res.historial;
-        toast(t('exito'), 'success');
-        instrumentosHistorial(id); // Refresh modal
-    } catch (e) {
-        toast(t('erro') + ': ' + e.message, 'error');
-    }
 }

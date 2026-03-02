@@ -49,10 +49,19 @@ function require_auth() {
     return $user;
 }
 
-// ---- Require Admin or Director role ----
+// ---- Require Admin role ----
 function require_admin() {
     $user = require_auth();
-    if (!in_array($user['role'], ['Admin', 'Director'])) {
+    if ($user['role'] !== 'Admin') {
+        send_json(['error' => 'Acceso denegado'], 403);
+    }
+    return $user;
+}
+
+// ---- Require Socio or Admin role ----
+function require_socio() {
+    $user = require_auth();
+    if (!in_array($user['role'], ['Admin', 'Socio'])) {
         send_json(['error' => 'Acceso denegado'], 403);
     }
     return $user;

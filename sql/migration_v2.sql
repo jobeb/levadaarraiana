@@ -10,9 +10,6 @@ ALTER TABLE ensaios ADD COLUMN recorrencia VARCHAR(20) DEFAULT NULL;
 ALTER TABLE ensaios ADD COLUMN recorrencia_fin DATE DEFAULT NULL;
 ALTER TABLE ensaios ADD COLUMN grupo_recorrencia INT DEFAULT NULL;
 
--- Fase 9: Mensaxería respuestas
-ALTER TABLE mensaxes ADD COLUMN en_resposta_a INT DEFAULT NULL;
-
 -- Fase 10: Votación de propostas
 CREATE TABLE IF NOT EXISTS `propostas_votos` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -24,24 +21,6 @@ CREATE TABLE IF NOT EXISTS `propostas_votos` (
     CONSTRAINT `fk_pvoto_socio` FOREIGN KEY (`socio_id`) REFERENCES `socios`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Fase 11: Setlists
-CREATE TABLE IF NOT EXISTS `setlists` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `nome` VARCHAR(255) NOT NULL DEFAULT '',
-    `descricion` TEXT DEFAULT NULL,
-    `bolo_id` INT DEFAULT NULL,
-    `creado` DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `setlist_items` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `setlist_id` INT NOT NULL,
-    `repertorio_id` INT NOT NULL,
-    `orde` INT NOT NULL DEFAULT 0,
-    `notas` TEXT DEFAULT NULL,
-    CONSTRAINT `fk_sli_setlist` FOREIGN KEY (`setlist_id`) REFERENCES `setlists`(`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_sli_repertorio` FOREIGN KEY (`repertorio_id`) REFERENCES `repertorio`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Fase 12C: Votación fecha límite
 ALTER TABLE votacions ADD COLUMN data_limite DATE DEFAULT NULL;

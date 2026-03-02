@@ -9,16 +9,17 @@
     <link rel="stylesheet" href="assets/css/base.css">
     <link rel="stylesheet" href="assets/css/layout.css">
     <link rel="stylesheet" href="assets/css/components.css">
-    <link rel="stylesheet" href="assets/css/calendar.css">
+    <link rel="stylesheet" href="assets/css/calendar.css?v=2">
     <link rel="stylesheet" href="assets/css/app.css">
     <link rel="stylesheet" href="assets/css/responsive.css">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
 </head>
 <body>
 
 <!-- Login overlay -->
 <div id="login-overlay" class="auth-overlay">
     <div class="auth-box" id="login-box">
-        <img src="assets/img/logo-color.png" alt="Levada Arraiana" style="display:block;max-width:180px;margin:0 auto 16px">
+        <img src="assets/img/logo-shadow.png" alt="Levada Arraiana" style="display:block;max-width:180px;margin:0 auto 16px">
         <h2 data-i18n="login_titulo">Iniciar sesión</h2>
         <div class="form-group">
             <input type="text" id="login-user" class="form-control" data-i18n-placeholder="username" placeholder="Usuario">
@@ -26,7 +27,7 @@
         <div class="form-group">
             <div class="pw-wrap">
                 <input type="password" id="login-pass" class="form-control" data-i18n-placeholder="contrasinal" placeholder="Contrasinal">
-                <button type="button" class="pw-toggle" onclick="togglePw('login-pass', this)" title="Ver contrasinal">&#128065;</button>
+                <button type="button" class="pw-toggle" onclick="togglePw('login-pass', this)" title="Ver contrasinal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
             </div>
         </div>
         <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="onLogin()" data-i18n="entrar">Entrar</button>
@@ -50,7 +51,7 @@
         <div class="form-group">
             <div class="pw-wrap">
                 <input type="password" id="reg-pass" class="form-control" data-i18n-placeholder="contrasinal" placeholder="Contrasinal">
-                <button type="button" class="pw-toggle" onclick="togglePw('reg-pass', this)" title="Ver contrasinal">&#128065;</button>
+                <button type="button" class="pw-toggle" onclick="togglePw('reg-pass', this)" title="Ver contrasinal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
             </div>
         </div>
         <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="onRegister()" data-i18n="rexistro">Rexistro</button>
@@ -65,17 +66,6 @@
 
 <!-- Header (compact top-right toolbar) -->
 <header class="app-header" id="app-header" style="display:none">
-    <div class="lang-selector">
-        <button data-lang="gl" class="active">GL</button>
-        <button data-lang="es">ES</button>
-        <button data-lang="pt">PT</button>
-        <button data-lang="en">EN</button>
-    </div>
-    <!-- Notification bell -->
-    <button class="header-bell" id="header-bell" onclick="bellClick()" title="Notificacións">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="bell-badge" id="bell-badge" style="display:none">0</span>
-    </button>
     <!-- Profile -->
     <div class="header-profile" id="header-profile">
         <button class="header-profile-btn" onclick="toggleProfileMenu()">
@@ -89,6 +79,43 @@
                 <span data-i18n="meu_perfil">O meu perfil</span>
             </button>
             <div class="profile-dropdown-sep"></div>
+            <!-- Idioma -->
+            <div class="profile-dropdown-label" data-i18n="idioma">Idioma</div>
+            <div class="profile-dropdown-langs lang-selector">
+                <button data-lang="gl" class="active">GL</button>
+                <button data-lang="es">ES</button>
+                <button data-lang="pt">PT</button>
+                <button data-lang="en">EN</button>
+            </div>
+            <div class="profile-dropdown-sep"></div>
+            <!-- Aparencia -->
+            <div class="profile-dropdown-label" data-i18n="aparencia">Aparencia</div>
+            <div class="profile-dropdown-option">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                <span data-i18n="tamano_texto">Texto</span>
+                <div class="font-size-control">
+                    <button onclick="setFontSize('small')" id="fs-small" title="A-">A<small>-</small></button>
+                    <button onclick="setFontSize('normal')" id="fs-normal" class="active" title="A">A</button>
+                    <button onclick="setFontSize('large')" id="fs-large" title="A+">A<small>+</small></button>
+                </div>
+            </div>
+            <div class="profile-dropdown-option">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                <span data-i18n="modo_compacto">Compacto</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="compact-toggle" onchange="toggleCompactMode(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="profile-dropdown-option">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <span data-i18n="modo_claro">Modo claro</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="theme-toggle" onchange="setTheme(this.checked?'light':'dark')">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="profile-dropdown-sep"></div>
             <button class="profile-dropdown-item profile-dropdown-danger" onclick="doLogout()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 <span data-i18n="saír">Sa&iacute;r</span>
@@ -101,8 +128,9 @@
 <aside class="app-sidebar" id="app-sidebar" style="display:none">
     <!-- Logo -->
     <a href="index.html" class="sidebar-logo" title="Ir á páxina principal">
-        <img src="assets/img/logo-white.png" alt="Levada Arraiana">
+        <img src="assets/img/logo-shadow.png" alt="Levada Arraiana">
     </a>
+    <div class="sidebar-brand-bar"></div>
     <!-- Xeral -->
     <div class="sidebar-section" data-i18n="sec_xeral">Xeral</div>
     <button class="sidebar-link active" data-section="dashboard" onclick="Router.navigate('dashboard')">
@@ -123,11 +151,11 @@
 
     <!-- Comunicación -->
     <div class="sidebar-section" data-i18n="sec_comunicacion">Comunicación</div>
-    <button class="sidebar-link" data-section="mensaxeria" onclick="Router.navigate('mensaxeria')">
-        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span data-i18n="mensaxeria">Mensaxería</span>
-    </button>
     <button class="sidebar-link" data-section="propostas" onclick="Router.navigate('propostas')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span><span data-i18n="propostas">Propostas</span>
+    </button>
+    <button class="sidebar-link socio-only" data-section="comentarios" onclick="Router.navigate('comentarios')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span data-i18n="comentarios">Comentarios</span>
     </button>
 
     <!-- Administración -->
@@ -138,14 +166,8 @@
     <button class="sidebar-link" data-section="documentos" onclick="Router.navigate('documentos')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span data-i18n="documentos">Documentos</span>
     </button>
-    <button class="sidebar-link" data-section="votacions" onclick="Router.navigate('votacions')">
+    <button class="sidebar-link socio-only" data-section="votacions" onclick="Router.navigate('votacions')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span data-i18n="votacions">Votacións</span>
-    </button>
-
-    <!-- Finanzas -->
-    <div class="sidebar-section" data-i18n="sec_finanzas">Finanzas</div>
-    <button class="sidebar-link" data-section="contabilidade" onclick="Router.navigate('contabilidade')">
-        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span data-i18n="contabilidade">Contabilidade</span>
     </button>
 
     <!-- Música -->
@@ -190,7 +212,7 @@
                 <h3 class="dashboard-card-title" data-i18n="actividade_recente">Actividade recente</h3>
                 <div id="dashboard-activity-list"></div>
             </div>
-            <div class="dashboard-card admin-only" id="dashboard-actions">
+            <div class="dashboard-card socio-only" id="dashboard-actions">
                 <h3 class="dashboard-card-title" data-i18n="accions_rapidas">Accións rápidas</h3>
                 <div id="dashboard-actions-list"></div>
             </div>
@@ -199,44 +221,69 @@
 
     <!-- Socios -->
     <div class="section" id="sec-socios">
-        <div class="section-header">
-            <h2 data-i18n="socios">Socios</h2>
-            <div class="flex gap-sm">
-                <button class="btn btn-sm btn-secondary admin-only" onclick="sociosExport()" data-i18n="exportar_csv">Exportar CSV</button>
-                <button class="btn btn-primary admin-only" onclick="sociosModal()">+ <span data-i18n="socio">Socio/a</span></button>
+        <div class="section-header"><h2 data-i18n="socios">Usuarios</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="socios-search" oninput="sociosRender()" style="max-width:260px">
+            <select class="form-control" id="socios-role-filter" style="max-width:160px" onchange="sociosRender()">
+                <option value="" data-i18n="todos">Todos</option>
+                <option value="Admin">Admin</option>
+                <option value="Socio" data-i18n="socio">Socio</option>
+                <option value="Usuario" data-i18n="usuario">Usuario</option>
+            </select>
+            <div class="view-toggle" id="socios-view-toggle">
+                <button onclick="sociosSetView('table')" data-i18n="vista_tabla">Tabla</button>
+                <button class="active" onclick="sociosSetView('cards')" data-i18n="vista_cards">Tarjetas</button>
             </div>
+            <div class="export-dropdown admin-only" style="margin-left:auto">
+                <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
+                <div class="export-dropdown-menu">
+                    <button onclick="sociosExport('csv')">CSV</button>
+                    <button onclick="sociosExport('pdf')">PDF</button>
+                </div>
+            </div>
+            <button class="btn btn-primary admin-only" onclick="sociosModal()">+ <span data-i18n="usuario">Usuario</span></button>
         </div>
-        <div class="search-bar">
-            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="socios-search" oninput="sociosRender()">
-        </div>
-        <div class="table-wrap"><table id="socios-table"><thead><tr>
+        <div class="table-wrap" style="display:none"><table id="socios-table"><thead><tr>
             <th></th><th data-i18n="username" class="sortable" data-sort="username">Usuario</th><th data-i18n="nome_completo" class="sortable" data-sort="nome_completo">Nome</th>
             <th data-i18n="instrumento" class="sortable" data-sort="instrumento">Instrumento</th><th data-i18n="rol">Rol</th>
             <th data-i18n="estado">Estado</th><th data-i18n="accions">Accións</th>
         </tr></thead><tbody></tbody></table></div>
-        <div id="socios-pagination"></div>
+        <div id="socios-pagination" style="display:none"></div>
+        <div class="card-grid" id="socios-cards"></div>
     </div>
 
     <!-- Noticias -->
     <div class="section" id="sec-noticias">
-        <div class="section-header">
-            <h2 data-i18n="noticias">Noticias</h2>
-            <button class="btn btn-primary admin-only" onclick="noticiasModal()">+ <span data-i18n="nova_noticia">Nova noticia</span></button>
+        <div class="section-header"><h2 data-i18n="noticias">Noticias</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <div class="export-dropdown socio-only" style="margin-left:auto">
+                <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
+                <div class="export-dropdown-menu">
+                    <button onclick="noticiasExport('csv')">CSV</button>
+                    <button onclick="noticiasExport('pdf')">PDF</button>
+                </div>
+            </div>
+            <button class="btn btn-primary socio-only" onclick="noticiasModal()">+ <span data-i18n="nova_noticia">Nova noticia</span></button>
         </div>
         <div class="card-grid" id="noticias-grid"></div>
     </div>
 
     <!-- Bolos -->
     <div class="section" id="sec-bolos">
-        <div class="section-header">
-            <h2 data-i18n="bolos">Bolos</h2>
-            <div class="flex items-center gap-sm">
-                <div class="view-toggle" id="bolos-view-toggle">
-                    <button class="active" onclick="bolosSetView('list')" data-i18n="vista_lista">Lista</button>
-                    <button onclick="bolosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
-                </div>
-                <button class="btn btn-primary admin-only" onclick="bolosModal()">+ <span data-i18n="novo_bolo">Novo bolo</span></button>
+        <div class="section-header"><h2 data-i18n="bolos">Bolos</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <div class="view-toggle" id="bolos-view-toggle">
+                <button class="active" onclick="bolosSetView('list')" data-i18n="vista_lista">Lista</button>
+                <button onclick="bolosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
             </div>
+            <div class="export-dropdown socio-only" style="margin-left:auto">
+                <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
+                <div class="export-dropdown-menu">
+                    <button onclick="bolosExport('csv')">CSV</button>
+                    <button onclick="bolosExport('pdf')">PDF</button>
+                </div>
+            </div>
+            <button class="btn btn-primary socio-only" onclick="bolosModal()">+ <span data-i18n="novo_bolo">Novo bolo</span></button>
         </div>
         <div class="card-grid" id="bolos-grid"></div>
         <div id="bolos-calendar" style="display:none"></div>
@@ -244,140 +291,196 @@
 
     <!-- Galería -->
     <div class="section" id="sec-galeria">
-        <div class="section-header">
-            <h2 data-i18n="galeria">Galería</h2>
-            <button class="btn btn-primary admin-only" onclick="galeriaModal()">+ <span data-i18n="novo_album">Novo álbum</span></button>
+        <div class="section-header"><h2 data-i18n="galeria">Galería</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <button class="btn btn-primary socio-only" onclick="galeriaModal()" style="margin-left:auto">+ <span data-i18n="novo_album">Novo álbum</span></button>
         </div>
         <div class="card-grid" id="galeria-grid"></div>
     </div>
-
-    <!-- Mensaxería -->
-    <div class="section" id="sec-mensaxeria">
-        <div class="section-header">
-            <h2 data-i18n="mensaxeria">Mensaxería</h2>
-            <button class="btn btn-primary" onclick="mensaxeriaModal()">+ <span data-i18n="nova_mensaxe">Nova mensaxe</span></button>
-        </div>
-        <div class="search-bar">
-            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="mensaxeria-search" oninput="mensaxeriaRender()">
-        </div>
-        <div id="mensaxes-list"></div>
-    </div>
-
 
     <!-- Propostas -->
     <div class="section" id="sec-propostas">
         <div class="section-header">
             <h2 data-i18n="propostas">Propostas</h2>
-            <button class="btn btn-primary" onclick="propostasModal()">+ <span data-i18n="nova_proposta">Nova proposta</span></button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <input type="text" class="form-control" id="propostas-search" data-i18n-placeholder="buscar" placeholder="Buscar..." style="max-width:260px" oninput="propostasRender()">
+            <select class="form-control" id="propostas-sort" style="max-width:200px" onchange="propostasRender()">
+                <option value="recentes">Máis recentes</option>
+                <option value="votadas">Máis votadas</option>
+                <option value="comentadas">Máis comentadas</option>
+                <option value="titulo">Título A-Z</option>
+            </select>
+            <select class="form-control" id="propostas-estado-filter" style="max-width:160px" onchange="propostasRender()">
+                <option value="todas">Todas</option>
+                <option value="aberta">Aberta</option>
+                <option value="pechada">Pechada</option>
+            </select>
+            <div class="export-dropdown socio-only" style="margin-left:auto">
+                <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
+                <div class="export-dropdown-menu">
+                    <button onclick="propostasExport('csv')">CSV</button>
+                    <button onclick="propostasExport('pdf')">PDF</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-nova-proposta" onclick="propostasModal()" style="display:none">+ <span data-i18n="nova_proposta">Nova proposta</span></button>
         </div>
         <div class="card-grid" id="propostas-grid"></div>
     </div>
 
     <!-- Actas -->
     <div class="section" id="sec-actas">
-        <div class="section-header">
-            <h2 data-i18n="actas">Actas</h2>
-            <button class="btn btn-primary admin-only" onclick="actasModal()">+ <span data-i18n="nova_acta">Nova acta</span></button>
+        <div class="section-header"><h2 data-i18n="actas">Actas</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <input type="text" class="form-control" id="actas-search" data-i18n-placeholder="buscar" placeholder="Buscar..." style="max-width:260px" oninput="actasRender()">
+            <select class="form-control" id="actas-sort" style="max-width:200px" onchange="actasRender()">
+                <option value="recentes" data-i18n="mais_recentes">Máis recentes</option>
+                <option value="antigas" data-i18n="mais_antigas">Máis antigas</option>
+                <option value="titulo" data-i18n="titulo_az">Título A-Z</option>
+            </select>
+            <select class="form-control" id="actas-estado-filter" style="max-width:160px" onchange="actasRender()">
+                <option value="todas" data-i18n="todas">Todas</option>
+                <option value="publicada" data-i18n="publicada">Publicada</option>
+                <option value="borrador" data-i18n="borrador">Borrador</option>
+            </select>
+            <div class="export-dropdown socio-only" style="margin-left:auto">
+                <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
+                <div class="export-dropdown-menu">
+                    <button onclick="actasExport('csv')">CSV</button>
+                    <button onclick="actasExport('pdf')">PDF</button>
+                </div>
+            </div>
+            <button class="btn btn-primary socio-only" onclick="actasModal()">+ <span data-i18n="nova_acta">Nova acta</span></button>
         </div>
         <div class="card-grid" id="actas-grid"></div>
     </div>
 
-    <!-- Documentos -->
+    <!-- Documentos (file browser) -->
     <div class="section" id="sec-documentos">
-        <div class="section-header">
-            <h2 data-i18n="documentos">Documentos</h2>
-            <button class="btn btn-primary admin-only" onclick="documentosModal()">+ <span data-i18n="novo_documento">Novo documento</span></button>
+        <div class="section-header"><h2 data-i18n="documentos">Documentos</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="documentos-search" oninput="documentosRender()" style="max-width:260px">
+            <button class="btn btn-primary socio-only" onclick="documentosModal()" style="margin-left:auto">+ <span data-i18n="novo_documento">Novo documento</span></button>
         </div>
-        <div class="search-bar">
-            <input type="text" class="form-control" data-i18n-placeholder="buscar" id="documentos-search" oninput="documentosRender()">
+        <div class="file-browser">
+            <div class="file-browser-folders" id="documentos-folders"></div>
+            <div class="file-browser-content">
+                <div class="table-wrap"><table id="documentos-table"><thead><tr>
+                    <th data-i18n="nome">Nome</th>
+                    <th data-i18n="carpeta">Carpeta</th>
+                    <th data-i18n="tamano">Tamaño</th>
+                    <th data-i18n="data">Data</th>
+                    <th data-i18n="accions">Accións</th>
+                </tr></thead><tbody></tbody></table></div>
+                <div id="documentos-pagination"></div>
+            </div>
         </div>
-        <div class="table-wrap"><table id="documentos-table"><thead><tr>
-            <th data-i18n="titulo">Título</th><th data-i18n="visibilidade">Visibilidade</th>
-            <th data-i18n="data">Data</th><th data-i18n="accions">Accións</th>
-        </tr></thead><tbody></tbody></table></div>
-        <div id="documentos-pagination"></div>
     </div>
 
     <!-- Votacións -->
-    <div class="section" id="sec-votacions">
-        <div class="section-header">
-            <h2 data-i18n="votacions">Votacións</h2>
-            <button class="btn btn-primary admin-only" onclick="votacionsModal()">+ <span data-i18n="nova_votacion">Nova votación</span></button>
+    <div class="section socio-only" id="sec-votacions">
+        <div class="section-header"><h2 data-i18n="votacions">Votacións</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <input type="text" class="form-control" id="votacions-search" data-i18n-placeholder="buscar" placeholder="Buscar..." style="max-width:260px" oninput="votacionsRender()">
+            <select class="form-control" id="votacions-estado-filter" style="max-width:160px" onchange="votacionsRender()">
+                <option value="" data-i18n="todas">Todas</option>
+                <option value="aberta" data-i18n="aberta">Aberta</option>
+                <option value="pechada" data-i18n="pechada">Pechada</option>
+            </select>
+            <select class="form-control" id="votacions-tipo-filter" style="max-width:200px" onchange="votacionsRender()">
+                <option value="" data-i18n="todos_tipos">Todos os tipos</option>
+                <option value="simple" data-i18n="seleccion_simple">Selección simple</option>
+                <option value="multiple" data-i18n="seleccion_multiple">Selección múltiple</option>
+                <option value="anonima" data-i18n="anonima">Anónima</option>
+            </select>
+            <select class="form-control" id="votacions-sort" style="max-width:200px" onchange="votacionsRender()">
+                <option value="recentes" data-i18n="mais_recentes">Máis recentes</option>
+                <option value="antigas" data-i18n="mais_antigas">Máis antigas</option>
+                <option value="titulo" data-i18n="titulo_az">Título A-Z</option>
+            </select>
+            <div class="export-dropdown socio-only" style="margin-left:auto">
+                <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
+                <div class="export-dropdown-menu">
+                    <button onclick="votacionsExport('csv')">CSV</button>
+                    <button onclick="votacionsExport('pdf')">PDF</button>
+                </div>
+            </div>
+            <button class="btn btn-primary socio-only" onclick="votacionsModal()">+ <span data-i18n="nova_votacion">Nova votación</span></button>
         </div>
         <div class="card-grid" id="votacions-grid"></div>
     </div>
 
-    <!-- Contabilidade -->
-    <div class="section" id="sec-contabilidade">
+    <!-- Comentarios (admin/socio) -->
+    <div class="section socio-only" id="sec-comentarios">
         <div class="section-header">
-            <h2 data-i18n="contabilidade">Contabilidade</h2>
-            <div class="flex gap-sm admin-only">
-                <button class="btn btn-sm btn-secondary" onclick="facturasExport()">CSV <span data-i18n="factura">Facturas</span></button>
-                <button class="btn btn-sm btn-secondary" onclick="gastosExport()">CSV <span data-i18n="gastos_label">Gastos</span></button>
-            </div>
+            <h2 data-i18n="comentarios">Comentarios</h2>
         </div>
-        <div class="finance-summary" id="finance-summary"></div>
-        <div class="tabs" id="conta-tabs">
-            <button class="tab-btn active" data-tab="facturas" onclick="contaTab('facturas')" data-i18n="factura">Facturas</button>
-            <button class="tab-btn" data-tab="gastos" onclick="contaTab('gastos')" data-i18n="gastos_label">Gastos</button>
-            <button class="tab-btn" data-tab="clientes" onclick="contaTab('clientes')" data-i18n="cliente">Clientes</button>
-            <button class="tab-btn" data-tab="proveedores" onclick="contaTab('proveedores')" data-i18n="proveedor">Provedores</button>
-            <button class="tab-btn" data-tab="resumo" onclick="contaTab('resumo')" data-i18n="resumo">Resumo</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <select class="form-control" id="comentarios-estado-filter" style="max-width:180px" onchange="comentariosRender()">
+                <option value="" data-i18n="todos">Todos</option>
+                <option value="pendente" selected data-i18n="pendentes">Pendentes</option>
+                <option value="aprobado" data-i18n="aprobados">Aprobados</option>
+                <option value="rexeitado" data-i18n="rexeitados">Rexeitados</option>
+            </select>
         </div>
-        <div id="conta-content"></div>
-    </div>
-
-
-    <!-- Ensaios -->
-    <div class="section" id="sec-ensaios">
-        <div class="section-header">
-            <h2 data-i18n="ensaios">Ensaios</h2>
-            <div class="flex items-center gap-sm">
-                <button class="btn btn-sm btn-secondary admin-only" onclick="ensaiosAsistenciaResumo()" data-i18n="resumo_asistencia">Resumo asistencia</button>
-                <button class="btn btn-sm btn-secondary admin-only" onclick="ensaiosExportAsistencia()" data-i18n="exportar_csv">Exportar CSV</button>
-                <div class="view-toggle" id="ensaios-view-toggle">
-                    <button class="active" onclick="ensaiosSetView('list')" data-i18n="vista_lista">Lista</button>
-                    <button onclick="ensaiosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
-                </div>
-                <button class="btn btn-primary admin-only" onclick="ensaiosModal()">+ <span data-i18n="novo_ensaio">Novo ensaio</span></button>
-            </div>
-        </div>
-        <div class="card-grid" id="ensaios-grid"></div>
-        <div id="ensaios-calendar" style="display:none"></div>
-    </div>
-
-    <!-- Instrumentos -->
-    <div class="section" id="sec-instrumentos">
-        <div class="section-header">
-            <h2 data-i18n="instrumentos">Instrumentos</h2>
-            <button class="btn btn-primary admin-only" onclick="instrumentosModal()">+ <span data-i18n="novo_instrumento">Novo instrumento</span></button>
-        </div>
-        <div class="table-wrap"><table id="instrumentos-table"><thead><tr>
-            <th></th><th data-i18n="nome">Nome</th><th data-i18n="tipo">Tipo</th>
-            <th data-i18n="estado">Estado</th><th data-i18n="asignado_a">Asignado a</th>
+        <div class="table-wrap"><table id="comentarios-table"><thead><tr>
+            <th data-i18n="tipo">Tipo</th><th data-i18n="titulo">Título</th>
+            <th data-i18n="autor">Autor</th><th data-i18n="texto">Texto</th>
+            <th data-i18n="estado">Estado</th><th data-i18n="data">Data</th>
             <th data-i18n="accions">Accións</th>
         </tr></thead><tbody></tbody></table></div>
     </div>
 
+    <!-- Ensaios -->
+    <div class="section" id="sec-ensaios">
+        <div class="section-header"><h2 data-i18n="ensaios">Ensaios</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <div class="view-toggle" id="ensaios-view-toggle">
+                <button class="active" onclick="ensaiosSetView('list')" data-i18n="vista_lista">Lista</button>
+                <button onclick="ensaiosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
+                <button onclick="ensaiosSetView('notas')" data-i18n="notas">Notas</button>
+            </div>
+            <button class="btn btn-sm btn-secondary socio-only" onclick="ensaiosAsistenciaResumo()" data-i18n="resumo_asistencia" style="margin-left:auto">Resumo asistencia</button>
+            <div class="export-dropdown socio-only">
+                <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
+                <div class="export-dropdown-menu">
+                    <button onclick="ensaiosExport('csv')">Ensaios CSV</button>
+                    <button onclick="ensaiosExport('pdf')">Ensaios PDF</button>
+                    <button onclick="ensaiosExportAsistencia('csv')">Asistencia CSV</button>
+                    <button onclick="ensaiosExportAsistencia('pdf')">Asistencia PDF</button>
+                </div>
+            </div>
+            <button class="btn btn-primary socio-only" onclick="ensaiosModal()">+ <span data-i18n="novo_ensaio">Novo ensaio</span></button>
+        </div>
+        <div class="card-grid" id="ensaios-grid"></div>
+        <div id="ensaios-calendar" style="display:none"></div>
+        <div id="ensaios-notas-list" style="display:none"></div>
+    </div>
+
+    <!-- Instrumentos -->
+    <div class="section" id="sec-instrumentos">
+        <div class="section-header"><h2 data-i18n="instrumentos">Instrumentos</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <input type="text" class="form-control" id="instrumentos-search" data-i18n-placeholder="buscar" placeholder="Buscar..." style="max-width:260px" oninput="instrumentosRender()">
+            <button class="btn btn-primary socio-only" onclick="instrumentosModal()" style="margin-left:auto">+ <span data-i18n="novo_instrumento">Novo instrumento</span></button>
+        </div>
+        <div class="card-grid" id="instrumentos-grid"></div>
+    </div>
+
     <!-- Repertorio -->
     <div class="section" id="sec-repertorio">
-        <div class="section-header">
-            <h2 data-i18n="repertorio">Repertorio</h2>
-            <div>
-                <button class="btn btn-primary admin-only" id="btn-novo-ritmo" onclick="repertorioModal()">+ <span data-i18n="novo_ritmo">Novo ritmo</span></button>
-                <button class="btn btn-primary admin-only" id="btn-nova-setlist" onclick="setlistModal()" style="display:none">+ <span data-i18n="nova_setlist">Nova setlist</span></button>
+        <div class="section-header"><h2 data-i18n="repertorio">Repertorio</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <div class="export-dropdown socio-only" style="margin-left:auto">
+                <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
+                <div class="export-dropdown-menu">
+                    <button onclick="repertorioExport('csv')">CSV</button>
+                    <button onclick="repertorioExport('pdf')">PDF</button>
+                </div>
             </div>
+            <button class="btn btn-primary socio-only" id="btn-novo-ritmo" onclick="repertorioModal()">+ <span data-i18n="novo_ritmo">Novo ritmo</span></button>
         </div>
-        <div class="tabs" id="repertorio-tabs">
-            <button class="tab-btn active" onclick="repertorioTab('ritmos')" data-i18n="repertorio">Repertorio</button>
-            <button class="tab-btn" onclick="repertorioTab('setlists')" data-i18n="setlists">Setlists</button>
-        </div>
-        <div id="repertorio-tab-ritmos">
-            <div class="card-grid" id="repertorio-grid"></div>
-        </div>
-        <div id="repertorio-tab-setlists" style="display:none">
-            <div class="card-grid" id="setlists-grid"></div>
-        </div>
+        <div class="card-grid" id="repertorio-grid"></div>
     </div>
 
     <!-- Configuración -->
@@ -419,6 +522,7 @@
 </div>
 
 <!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 <script src="assets/js/config.js"></script>
 <script src="assets/js/state.js"></script>
 <script src="assets/js/utils.js"></script>
@@ -427,23 +531,27 @@
 <script src="assets/js/router.js"></script>
 <script src="assets/js/components/modal-confirm.js"></script>
 <script src="assets/js/components/pagination.js"></script>
-<script src="assets/js/components/calendar.js"></script>
+<script src="assets/js/components/calendar.js?v=2"></script>
 <script src="assets/js/components/charts.js"></script>
 <script src="assets/js/components/export.js"></script>
-<script src="assets/js/modules/socios.js"></script>
+<script src="assets/js/components/datepicker.js"></script>
+<script src="assets/js/components/richtext.js"></script>
+<script src="assets/js/modules/usuarios.js"></script>
 <script src="assets/js/modules/noticias.js"></script>
-<script src="assets/js/modules/bolos.js"></script>
+<script src="assets/js/modules/bolos.js?v=2"></script>
 <script src="assets/js/modules/galeria.js"></script>
-<script src="assets/js/modules/mensaxeria.js"></script>
 <script src="assets/js/modules/propostas.js"></script>
 <script src="assets/js/modules/actas.js"></script>
 <script src="assets/js/modules/documentos.js"></script>
 <script src="assets/js/modules/votacions.js"></script>
-<script src="assets/js/modules/contabilidade.js"></script>
-<script src="assets/js/modules/ensaios.js"></script>
+
+<script src="assets/js/modules/ensaios.js?v=2"></script>
 <script src="assets/js/modules/instrumentos.js"></script>
 <script src="assets/js/modules/repertorio.js"></script>
+<script src="assets/js/modules/comentarios.js"></script>
 <script src="assets/js/modules/configuracion.js"></script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/app.js?v=2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>
 </body>
 </html>

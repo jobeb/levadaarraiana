@@ -1,72 +1,93 @@
 /**
- * Documentos — Document management module
+ * Documentos — Unified file browser + document upload
  */
-var _docsPager = new Paginator('documentos-pagination', { perPage: 15, onChange: function() { documentosRender(); } });
+var _docsPager = new Paginator('documentos-pagination', { perPage: 20, onChange: function() { documentosRender(); } });
+var _fileTree = [];
+var _selectedFolder = null;
 
 async function documentosLoad() {
     try {
-        AppState.documentos = await api('/documentos');
+        _fileTree = await api('/arquivos');
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
-        AppState.documentos = [];
+        _fileTree = [];
     }
+    _docsPager.currentPage = 1;
     documentosRender();
 }
 
 function documentosRender() {
+    var foldersEl = $('#documentos-folders');
     var tbody = $('#documentos-table tbody');
-    if (!tbody) return;
+    if (!foldersEl || !tbody) return;
 
-    var list = AppState.documentos || [];
+    // Count total files first
+    var totalFiles = 0;
+    (_fileTree || []).forEach(function(g) { totalFiles += g.files ? g.files.length : 0; });
+
+    // Build folder list
+    var folderSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+    var foldersHtml = '<div class="folder-item' + (_selectedFolder === null ? ' active' : '') + '" onclick="documentosSelectFolder(null)">' +
+        folderSvg + '<span>' + t('todas_carpetas') + '</span><span class="folder-count">' + totalFiles + '</span></div>';
+
+    (_fileTree || []).forEach(function(g) {
+        var count = g.files ? g.files.length : 0;
+        foldersHtml += '<div class="folder-item' + (_selectedFolder === g.folder ? ' active' : '') + '" onclick="documentosSelectFolder(\'' + esc(g.folder) + '\')">' +
+            folderSvg + '<span>' + esc(g.folder) + '</span><span class="folder-count">' + count + '</span></div>';
+    });
+
+    foldersEl.innerHTML = foldersHtml;
+
+    // Gather files for selected folder
+    var allFiles = [];
+    (_fileTree || []).forEach(function(g) {
+        if (_selectedFolder !== null && g.folder !== _selectedFolder) return;
+        (g.files || []).forEach(function(f) {
+            allFiles.push({ name: f.name, path: f.path, size: f.size, modified: f.modified, folder: g.folder });
+        });
+    });
 
     // Search filter
     var search = ($('#documentos-search') || {}).value || '';
     var term = search.toLowerCase();
     if (term) {
-        list = list.filter(function(d) {
-            return (d.titulo || '').toLowerCase().indexOf(term) !== -1 ||
-                   (d.descricion || '').toLowerCase().indexOf(term) !== -1;
+        allFiles = allFiles.filter(function(f) {
+            return f.name.toLowerCase().indexOf(term) !== -1 ||
+                   f.folder.toLowerCase().indexOf(term) !== -1;
         });
     }
 
-    if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center">' + t('sen_resultados') + '</td></tr>';
+    // Sort by modified desc
+    allFiles.sort(function(a, b) { return (b.modified || '').localeCompare(a.modified || ''); });
+
+    if (allFiles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">' + t('sen_resultados') + '</td></tr>';
         _docsPager.setTotal(0);
         _docsPager.render();
         return;
     }
 
     // Paginate
-    list = _docsPager.slice(list);
+    _docsPager.setTotal(allFiles.length);
+    var paged = _docsPager.slice(allFiles);
 
-    var isAdmin = AppState.isAdmin();
+    var isSocio = AppState.isSocio();
     var html = '';
 
-    list.forEach(function(d) {
-        var visBadge = '';
-        if (d.visibilidade === 'todos') {
-            visBadge = '<span class="badge badge-success">' + t('todos') + '</span>';
-        } else if (d.visibilidade === 'direccion') {
-            visBadge = '<span class="badge badge-primary">' + t('direccion') + '</span>';
-        } else if (d.visibilidade === 'admin') {
-            visBadge = '<span class="badge badge-warning">' + t('admin') + '</span>';
-        } else {
-            visBadge = '<span class="badge">' + esc(d.visibilidade || '') + '</span>';
-        }
+    paged.forEach(function(f) {
+        var downloadSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+        var deleteSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>';
 
-        var actions = '';
-        if (d.arquivo) {
-            actions += '<a href="' + esc(uploadUrl(d.arquivo)) + '" target="_blank" class="btn-icon" title="Download">&#8615;</a>';
-        }
-        if (isAdmin) {
-            actions += '<button class="btn-icon" onclick="documentosModal(AppState.documentos.find(function(x){return x.id==' + d.id + '}))" title="' + t('editar') + '">&#9998;</button>';
-            actions += '<button class="btn-icon btn-danger" onclick="documentosDelete(' + d.id + ')" title="' + t('eliminar') + '">&#128465;</button>';
+        var actions = '<a href="' + esc(uploadUrl(f.path)) + '" target="_blank" class="btn-icon" title="Download">' + downloadSvg + '</a>';
+        if (isSocio) {
+            actions += '<button class="btn-icon btn-danger" onclick="documentosDeleteFile(this.dataset.path)" data-path="' + esc(f.path) + '" title="' + t('eliminar') + '">' + deleteSvg + '</button>';
         }
 
         html += '<tr>' +
-            '<td>' + esc(d.titulo) + '</td>' +
-            '<td>' + visBadge + '</td>' +
-            '<td>' + formatDate(d.creado || d.data || '') + '</td>' +
+            '<td>' + esc(f.name) + '</td>' +
+            '<td><span class="badge">' + esc(f.folder) + '</span></td>' +
+            '<td>' + formatFileSize(f.size) + '</td>' +
+            '<td>' + esc(f.modified || '') + '</td>' +
             '<td class="actions-cell">' + actions + '</td>' +
         '</tr>';
     });
@@ -74,6 +95,32 @@ function documentosRender() {
     tbody.innerHTML = html;
     _docsPager.render();
 }
+
+function documentosSelectFolder(folder) {
+    _selectedFolder = folder;
+    _docsPager.currentPage = 1;
+    documentosRender();
+}
+
+async function documentosDeleteFile(path) {
+    if (!await confirmAction(t('confirmar_eliminar'), {danger:true})) return;
+    try {
+        await api('/arquivos', { method: 'DELETE', body: { path: path } });
+        toast(t('exito'), 'success');
+        documentosLoad();
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes == null) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+// ---- Upload modal (existing document CRUD — uploads to documentos/) ----
 
 function documentosModal(item) {
     var isEdit = item && item.id;
@@ -137,17 +184,6 @@ async function documentosSave() {
             await api('/documentos', { method: 'POST', body: body });
         }
         hideModal('modal-overlay');
-        toast(t('exito'), 'success');
-        documentosLoad();
-    } catch (e) {
-        toast(t('erro') + ': ' + e.message, 'error');
-    }
-}
-
-async function documentosDelete(id) {
-    if (!await confirmAction(t('confirmar_eliminar'), {danger:true})) return;
-    try {
-        await api('/documentos/' + id, { method: 'DELETE' });
         toast(t('exito'), 'success');
         documentosLoad();
     } catch (e) {

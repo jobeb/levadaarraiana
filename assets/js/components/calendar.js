@@ -75,9 +75,10 @@ CalendarWidget.prototype.render = function() {
     var html = '<div class="calendar' + (this.mini ? ' calendar-mini' : '') + '" id="' + calId + '">';
 
     // Header
+    var isCurrentMonth = (this.year === new Date().getFullYear() && this.month === new Date().getMonth());
     html += '<div class="calendar-header">';
     html += '<button class="calendar-nav" data-dir="prev">&#10094;</button>';
-    html += '<span class="calendar-title">' + esc(monthName) + ' ' + this.year + '</span>';
+    html += '<span class="calendar-title' + (isCurrentMonth ? '' : ' calendar-title-link') + '" data-dir="today">' + esc(monthName) + ' ' + this.year + '</span>';
     html += '<button class="calendar-nav" data-dir="next">&#10095;</button>';
     html += '</div>';
 
@@ -121,6 +122,12 @@ CalendarWidget.prototype.render = function() {
             if (dayEvents.length > 3) {
                 html += '<div class="day-event-more">+' + (dayEvents.length - 3) + '</div>';
             }
+            // Colored dots for mobile (hidden on desktop)
+            html += '<div class="day-dots day-dots-mobile">';
+            dayEvents.slice(0, 3).forEach(function(ev) {
+                html += '<span class="day-dot" style="background:' + (ev.color || 'var(--primary)') + '"></span>';
+            });
+            html += '</div>';
         } else if (this.mini && dayEvents.length > 0) {
             html += '<div class="day-dots">';
             dayEvents.slice(0, 3).forEach(function(ev) {
@@ -145,6 +152,11 @@ CalendarWidget.prototype.render = function() {
 
     container.innerHTML = html;
 
+    // Re-append legend if stored (dashboard calendar)
+    if (this._legendHtml) {
+        container.insertAdjacentHTML('beforeend', this._legendHtml);
+    }
+
     // Bind navigation
     var calEl = document.getElementById(calId);
     calEl.querySelectorAll('.calendar-nav').forEach(function(btn) {
@@ -154,6 +166,10 @@ CalendarWidget.prototype.render = function() {
             else self.nextMonth();
         });
     });
+    var titleEl = calEl.querySelector('.calendar-title-link');
+    if (titleEl) {
+        titleEl.addEventListener('click', function() { self.goToToday(); });
+    }
 
     // Bind day clicks
     calEl.querySelectorAll('.calendar-cell:not(.outside)').forEach(function(cell) {

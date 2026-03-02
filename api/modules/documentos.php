@@ -33,7 +33,7 @@ function handle_documentos($method, $uri, $input) {
 
     // POST — create (admin)
     if ($method === 'POST' && !$id) {
-        require_admin();
+        require_socio();
 
         $arquivo = null;
         $arquivo_nome = null;
@@ -59,7 +59,7 @@ function handle_documentos($method, $uri, $input) {
 
     // PUT — update
     if ($method === 'PUT' && $id) {
-        require_admin();
+        require_socio();
 
         $stmt = $db->prepare("SELECT * FROM documentos WHERE id = ?");
         $stmt->execute([$id]);
@@ -90,7 +90,7 @@ function handle_documentos($method, $uri, $input) {
 
     // DELETE
     if ($method === 'DELETE' && $id) {
-        require_admin();
+        require_socio();
         $stmt = $db->prepare("DELETE FROM documentos WHERE id = ?");
         $stmt->execute([$id]);
         send_json(['ok' => true]);

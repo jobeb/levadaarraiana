@@ -46,10 +46,66 @@ function save_base64_file($subdir, $filename, $b64data) {
     return $subdir . '/' . $filename;
 }
 
+function process_and_save_image($subdir, $filename, $b64data, $preset = 'default') {
+    $presets = [
+        'avatar'  => ['max_w' => 200,  'max_h' => 200,  'quality' => 80],
+        'cover'   => ['max_w' => 1200, 'max_h' => 800,  'quality' => 85],
+        'gallery' => ['max_w' => 1920, 'max_h' => 1920, 'quality' => 88],
+        'default' => ['max_w' => 1200, 'max_h' => 1200, 'quality' => 82],
+    ];
+    $p = $presets[$preset] ?? $presets['default'];
+
+    $raw = base64_decode($b64data);
+    $src = @imagecreatefromstring($raw);
+    if (!$src) {
+        return save_base64_file($subdir, $filename, $b64data);
+    }
+
+    // Fix EXIF orientation (photos from phones)
+    $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'exif_' . uniqid() . '.jpg';
+    file_put_contents($tmp, $raw);
+    $exif = @exif_read_data($tmp);
+    @unlink($tmp);
+    $orientation = 1;
+    if ($exif) {
+        $orientation = $exif['Orientation'] ?? $exif['orientation'] ?? 1;
+    }
+    switch ($orientation) {
+        case 2: imageflip($src, IMG_FLIP_HORIZONTAL); break;
+        case 3: $src = imagerotate($src, 180, 0); break;
+        case 4: imageflip($src, IMG_FLIP_VERTICAL); break;
+        case 5: imageflip($src, IMG_FLIP_HORIZONTAL); $src = imagerotate($src, 270, 0); break;
+        case 6: $src = imagerotate($src, 270, 0); break;
+        case 7: imageflip($src, IMG_FLIP_HORIZONTAL); $src = imagerotate($src, 90, 0); break;
+        case 8: $src = imagerotate($src, 90, 0); break;
+    }
+
+    $w = imagesx($src);
+    $h = imagesy($src);
+    if ($w > $p['max_w'] || $h > $p['max_h']) {
+        $ratio = min($p['max_w'] / $w, $p['max_h'] / $h);
+        $nw = (int)($w * $ratio);
+        $nh = (int)($h * $ratio);
+        $dst = imagecreatetruecolor($nw, $nh);
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+        imagedestroy($src);
+        $src = $dst;
+    }
+
+    $filename = preg_replace('/\.[^.]+$/', '.jpg', $filename);
+    $dir = UPLOADS_DIR . '/' . $subdir;
+    if (!is_dir($dir)) mkdir($dir, 0755, true);
+    $path = $dir . '/' . $filename;
+    imagejpeg($src, $path, $p['quality']);
+    imagedestroy($src);
+
+    return $subdir . '/' . $filename;
+}
+
 function ensure_dirs() {
     $subs = ['fotos','noticias','albums','bolos','propostas',
-             'actas','documentos','gastos','mensaxes',
-             'ensaios','instrumentos','repertorio'];
+             'actas','documentos','votacions',
+             'ensaios','instrumentos','repertorio','repertorio/medios','landing'];
     if (!is_dir(UPLOADS_DIR)) mkdir(UPLOADS_DIR, 0755, true);
     foreach ($subs as $s) {
         $d = UPLOADS_DIR . '/' . $s;

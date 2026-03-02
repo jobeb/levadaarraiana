@@ -14,7 +14,7 @@ function handle_noticias($method, $uri, $input) {
     // GET /noticias → listar todas (público)
     if ($uri === '/noticias' && $method === 'GET') {
         $rows = $db->query("SELECT * FROM noticias ORDER BY data DESC, id DESC")->fetchAll();
-        $rows = fix_rows($rows, ['imaxes'], ['publica']);
+        $rows = fix_rows($rows, ['imaxes', 'i18n'], ['publica']);
         send_json($rows);
     }
 
@@ -24,24 +24,26 @@ function handle_noticias($method, $uri, $input) {
         $stmt->execute([(int)$m[1]]);
         $row = $stmt->fetch();
         if (!$row) send_json(['error' => 'Noticia non atopada'], 404);
-        $row = fix_row($row, ['imaxes'], ['publica']);
+        $row = fix_row($row, ['imaxes', 'i18n'], ['publica']);
         send_json($row);
     }
 
     // POST /noticias → crear
     if ($uri === '/noticias' && $method === 'POST') {
-        $user = require_admin();
+        $user = require_socio();
 
+        $i18n = isset($input['i18n']) ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
         $stmt = $db->prepare(
-            "INSERT INTO noticias (titulo, texto, data, autor, imaxes, estado, publica)
-             VALUES (?, ?, NOW(), ?, '[]', ?, ?)"
+            "INSERT INTO noticias (titulo, texto, data, autor, imaxes, estado, publica, i18n)
+             VALUES (?, ?, NOW(), ?, '[]', ?, ?, ?)"
         );
         $stmt->execute([
             trim($input['titulo'] ?? ''),
             $input['texto'] ?? '',
             $user['nome_completo'] ?? $user['username'],
-            $input['estado'] ?? 'Publicada',
+            $input['estado'] ?? 'publicada',
             isset($input['publica']) ? (int)(bool)$input['publica'] : 1,
+            $i18n,
         ]);
         $id = (int)$db->lastInsertId();
 
@@ -52,7 +54,7 @@ function handle_noticias($method, $uri, $input) {
                 if (!empty($img['data'])) {
                     $ext  = $img['ext'] ?? 'jpg';
                     $nome = $img['nome'] ?? "img_{$i}.{$ext}";
-                    $path = save_base64_file("noticias/{$id}", $nome, $img['data']);
+                    $path = process_and_save_image("noticias/{$id}", $nome, $img['data']);
                     $imaxes[] = $path;
                 } elseif (!empty($img['path'])) {
                     $imaxes[] = $img['path'];
@@ -67,7 +69,7 @@ function handle_noticias($method, $uri, $input) {
 
     // PUT /noticias/ID → actualizar
     if (preg_match('#^/noticias/(\d+)$#', $uri, $m) && $method === 'PUT') {
-        require_admin();
+        require_socio();
         $id = (int)$m[1];
 
         $check = $db->prepare("SELECT id FROM noticias WHERE id = ?");
@@ -88,6 +90,10 @@ function handle_noticias($method, $uri, $input) {
             $fields[] = "publica = ?";
             $params[] = (int)(bool)$input['publica'];
         }
+        if (array_key_exists('i18n', $input)) {
+            $fields[] = "i18n = ?";
+            $params[] = $input['i18n'] ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
+        }
 
         // Procesar imaxes novas
         if (!empty($input['imaxes']) && is_array($input['imaxes'])) {
@@ -96,7 +102,7 @@ function handle_noticias($method, $uri, $input) {
                 if (!empty($img['data'])) {
                     $ext  = $img['ext'] ?? 'jpg';
                     $nome = $img['nome'] ?? "img_{$i}.{$ext}";
-                    $path = save_base64_file("noticias/{$id}", $nome, $img['data']);
+                    $path = process_and_save_image("noticias/{$id}", $nome, $img['data']);
                     $imaxes[] = $path;
                 } elseif (!empty($img['path'])) {
                     $imaxes[] = $img['path'];
@@ -119,7 +125,7 @@ function handle_noticias($method, $uri, $input) {
 
     // DELETE /noticias/ID → eliminar
     if (preg_match('#^/noticias/(\d+)$#', $uri, $m) && $method === 'DELETE') {
-        require_admin();
+        require_socio();
         $id   = (int)$m[1];
         $stmt = $db->prepare("DELETE FROM noticias WHERE id = ?");
         $stmt->execute([$id]);

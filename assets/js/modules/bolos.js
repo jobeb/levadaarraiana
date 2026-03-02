@@ -10,7 +10,7 @@ var _bolosCalendar = new CalendarWidget('bolos-calendar', {
     },
     onEventClick: function(id) {
         var b = (AppState.bolos || []).find(function(x) { return x.id == id; });
-        if (b && AppState.isAdmin()) bolosModal(b);
+        if (b && AppState.isSocio()) bolosModal(b);
     }
 });
 
@@ -24,8 +24,9 @@ function bolosSetView(view) {
 }
 
 function bolosRenderCalendar() {
+    var cfgColor = ((AppState.config || {}).cal_cor_bolos) || '#ff9800';
     var events = (AppState.bolos || []).map(function(b) {
-        var color = b.tipo === 'festival' ? 'var(--success)' : b.tipo === 'taller' ? 'var(--warning)' : 'var(--primary)';
+        var color = b.tipo === 'festival' ? 'var(--success)' : b.tipo === 'taller' ? 'var(--warning)' : cfgColor;
         return { date: b.data, title: b.titulo, color: color, id: b.id, time: b.hora || '' };
     });
     _bolosCalendar.setEvents(events);
@@ -34,10 +35,15 @@ function bolosRenderCalendar() {
 
 async function bolosLoad() {
     try {
-        AppState.bolos = await api('/bolos');
+        var results = await Promise.all([
+            api('/bolos'),
+            Object.keys(AppState.config || {}).length ? Promise.resolve(AppState.config) : api('/config').catch(function() { return {}; })
+        ]);
+        AppState.bolos = results[0];
+        AppState.config = results[1] || {};
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
-        AppState.bolos = [];
+        AppState.bolos = AppState.bolos || [];
     }
     bolosRender();
     if (_bolosView === 'calendar') bolosRenderCalendar();
@@ -54,7 +60,7 @@ function bolosRender() {
         return;
     }
 
-    var isAdmin = AppState.isAdmin();
+    var isAdmin = AppState.isSocio();
     var html = '';
 
     list.forEach(function(b) {
@@ -106,11 +112,11 @@ function bolosRender() {
 
         var actions = '';
         if (b.contrato_arquivo) {
-            actions += '<a href="' + esc(uploadUrl(b.contrato_arquivo)) + '" target="_blank" class="btn-icon" title="Download">&#8615;</a>';
+            actions += '<a href="' + esc(uploadUrl(b.contrato_arquivo)) + '" target="_blank" class="btn-icon" title="Download"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>';
         }
         if (isAdmin) {
-            actions += '<button class="btn-icon" onclick="bolosModal(AppState.bolos.find(function(x){return x.id==' + b.id + '}))" title="' + t('editar') + '">&#9998;</button>';
-            actions += '<button class="btn-icon btn-danger" onclick="bolosDelete(' + b.id + ')" title="' + t('eliminar') + '">&#128465;</button>';
+            actions += '<button class="btn-icon" onclick="bolosModal(AppState.bolos.find(function(x){return x.id==' + b.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
+            actions += '<button class="btn-icon btn-danger" onclick="bolosDelete(' + b.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>';
         }
 
         html += '<div class="card">' +
@@ -118,7 +124,7 @@ function bolosRender() {
             '<div class="card-body">' +
                 '<h3 class="card-title">' + esc(b.titulo) + '</h3>' +
                 '<div class="card-meta">' + metaHtml + '</div>' +
-                (b.descricion ? '<p class="card-text">' + esc(truncate(b.descricion, 100)) + '</p>' : '') +
+                (b.descricion ? '<p class="card-text">' + esc(truncate(stripHtml(b.descricion), 100)) + '</p>' : '') +
                 '<div class="card-badges">' + tipoBadge + ' ' + estadoBadge +
                     (b.publica ? ' <span class="badge badge-primary">' + t('publica') + '</span>' : '') +
                 '</div>' +
@@ -150,13 +156,14 @@ function bolosModal(item) {
 
     $('#modal-body').innerHTML =
         '<input type="hidden" id="bolo-id" value="' + (isEdit ? item.id : '') + '">' +
+        _renderModalLangBar() +
         '<div class="form-group">' +
-            '<label>' + t('titulo') + '</label>' +
+            '<label class="required">' + t('titulo') + '</label>' +
             '<input type="text" class="form-control" id="bolo-titulo" value="' + esc(isEdit ? item.titulo : '') + '">' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('descricion') + '</label>' +
-            '<textarea class="form-control" id="bolo-descricion" rows="3">' + esc(isEdit ? item.descricion || '' : '') + '</textarea>' +
+            '<div class="rt-wrap" id="bolo-descricion-editor"></div>' +
         '</div>' +
         '<div class="form-row">' +
             '<div class="form-group" style="flex:1">' +
@@ -221,6 +228,13 @@ function bolosModal(item) {
             (isEdit && item.contrato_arquivo ? '<p style="margin-top:4px"><a href="' + esc(uploadUrl(item.contrato_arquivo)) + '" target="_blank">' + esc(item.contrato_arquivo) + '</a></p>' : '') +
         '</div>';
 
+    initRichTextEditor('bolo-descricion-editor', isEdit ? item.descricion || '' : '', { uploadDir: 'bolos' });
+
+    _initModalI18n([
+        { key: 'titulo', inputId: 'bolo-titulo', type: 'input' },
+        { key: 'descricion', inputId: 'bolo-descricion-editor', type: 'richtext', editorId: 'bolo-descricion-editor' }
+    ], isEdit ? item : null);
+
     $('#modal-footer').innerHTML =
         '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="bolosSave()">' + t('gardar') + '</button>';
@@ -232,9 +246,12 @@ async function bolosSave() {
     var id = ($('#bolo-id') || {}).value;
     var isEdit = !!id;
 
+    _saveModalLangValues();
+    var glData = _modalI18n.data.gl || {};
+
     var body = {
-        titulo: ($('#bolo-titulo') || {}).value || '',
-        descricion: ($('#bolo-descricion') || {}).value || '',
+        titulo: glData.titulo || ($('#bolo-titulo') || {}).value || '',
+        descricion: glData.descricion || getRichTextContent('bolo-descricion-editor'),
         data: ($('#bolo-data') || {}).value || today(),
         hora: ($('#bolo-hora') || {}).value || '',
         lugar: ($('#bolo-lugar') || {}).value || '',
@@ -245,14 +262,16 @@ async function bolosSave() {
         cliente_nif: ($('#bolo-cliente-nif') || {}).value || '',
         cliente_telefono: ($('#bolo-cliente-telefono') || {}).value || '',
         importe: parseFloat(($('#bolo-importe') || {}).value) || 0,
-        notas: ($('#bolo-notas') || {}).value || ''
+        notas: ($('#bolo-notas') || {}).value || '',
+        i18n: _collectModalI18n()
     };
 
     // Image file
     var fileInput = $('#bolo-imaxe');
     if (fileInput && fileInput.files && fileInput.files.length > 0) {
-        body.imaxe_data = await fileToBase64(fileInput.files[0]);
-        body.imaxe_ext = fileInput.files[0].name.split('.').pop() || 'jpg';
+        var imgB64 = await imageToBase64(fileInput.files[0]);
+        body.imaxe_data = imgB64.data;
+        body.imaxe_ext = 'jpg';
     }
 
     // Contract file
@@ -273,6 +292,18 @@ async function bolosSave() {
         bolosLoad();
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+function bolosExport(format) {
+    var headers = [t('titulo'), t('data'), t('hora'), t('lugar'), t('tipo'), t('estado')];
+    var rows = (AppState.bolos || []).map(function(b) {
+        return [b.titulo, b.data || '', b.hora || '', b.lugar || '', b.tipo || '', b.estado || ''];
+    });
+    if (format === 'pdf') {
+        exportPDF(t('bolos'), headers, rows);
+    } else {
+        exportCSV('bolos.csv', headers, rows);
     }
 }
 

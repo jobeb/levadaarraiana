@@ -28,7 +28,7 @@ function handle_youtube($method, $uri, $input) {
 
     // POST /youtube/upload — Sube vídeo a YouTube
     if ($method === 'POST' && preg_match('#/youtube/upload$#', $uri)) {
-        require_admin();
+        require_socio();
         _youtube_upload($input);
     }
 

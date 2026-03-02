@@ -13,7 +13,7 @@ function handle_instrumentos($method, $uri, $input) {
 
     // POST /instrumentos/ID/mantemento — add maintenance entry
     if (preg_match('#^/instrumentos/(\d+)/mantemento$#', $uri, $m) && $method === 'POST') {
-        require_admin();
+        require_socio();
         $inst_id = (int)$m[1];
 
         $stmt = $db->prepare("SELECT historial_mantemento FROM instrumentos WHERE id = ?");
@@ -41,66 +41,83 @@ function handle_instrumentos($method, $uri, $input) {
         $id = (int)$m[1];
     }
 
-    // GET — list all (LEFT JOIN socios for asignado_a name) or single
+    // GET — list all or single (público — showcase)
     if ($method === 'GET') {
-        require_auth();
         if ($id) {
-            $stmt = $db->prepare(
-                "SELECT i.*, s.nome_completo AS asignado_nome
-                 FROM instrumentos i
-                 LEFT JOIN socios s ON s.id = i.asignado_a
-                 WHERE i.id = ?"
-            );
+            $stmt = $db->prepare("SELECT * FROM instrumentos WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) send_json(['error' => 'Instrumento non atopado'], 404);
-            send_json($row);
+            send_json(fix_row($row, ['i18n']));
         }
-        $rows = $db->query(
-            "SELECT i.*, s.nome_completo AS asignado_nome
-             FROM instrumentos i
-             LEFT JOIN socios s ON s.id = i.asignado_a
-             ORDER BY i.nome ASC"
-        )->fetchAll();
-        send_json($rows);
+        $rows = $db->query("SELECT * FROM instrumentos ORDER BY nome ASC")->fetchAll();
+        send_json(fix_rows($rows, ['i18n']));
     }
 
-    // POST — create (admin)
+    // POST — create (socio+)
     if ($method === 'POST' && !$id) {
-        require_admin();
+        require_socio();
+
+        $imaxe_path = '';
+        if (!empty($input['imaxe_data'])) {
+            $ext = $input['imaxe_ext'] ?? 'jpg';
+            $tmpName = 'instrumento_' . time() . '.' . $ext;
+            $imaxe_path = process_and_save_image('instrumentos', $tmpName, $input['imaxe_data']);
+        }
+
+        $i18n = isset($input['i18n']) ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
         $stmt = $db->prepare(
-            "INSERT INTO instrumentos (nome, tipo, numero_serie, estado, asignado_a, notas)
+            "INSERT INTO instrumentos (nome, tipo, notas, descricion, imaxe, i18n)
              VALUES (?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             $input['nome'] ?? '',
             $input['tipo'] ?? '',
-            $input['numero_serie'] ?? '',
-            $input['estado'] ?? 'Dispoñible',
-            $input['asignado_a'] ?? null,
-            $input['notas'] ?? ''
+            $input['notas'] ?? '',
+            $input['descricion'] ?? null,
+            $imaxe_path,
+            $i18n
         ]);
-        send_json(['ok' => true, 'id' => $db->lastInsertId()], 201);
+        $newId = $db->lastInsertId();
+
+        // Re-save image with proper ID
+        if (!empty($input['imaxe_data'])) {
+            $imaxe_path = process_and_save_image('instrumentos', "instrumento_{$newId}.{$ext}", $input['imaxe_data']);
+            $db->prepare("UPDATE instrumentos SET imaxe = ? WHERE id = ?")->execute([$imaxe_path, $newId]);
+        }
+
+        send_json(['ok' => true, 'id' => $newId], 201);
     }
 
     // PUT — update
     if ($method === 'PUT' && $id) {
-        require_admin();
+        require_socio();
         $stmt = $db->prepare("SELECT * FROM instrumentos WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
         if (!$existing) send_json(['error' => 'Instrumento non atopado'], 404);
 
+        $imaxe = $existing['imaxe'];
+        if (!empty($input['imaxe_data'])) {
+            $ext = $input['imaxe_ext'] ?? 'jpg';
+            $imaxe = process_and_save_image('instrumentos', "instrumento_{$id}.{$ext}", $input['imaxe_data']);
+        }
+
+        $i18n_val = $existing['i18n'];
+        if (array_key_exists('i18n', $input)) {
+            $i18n_val = $input['i18n'] ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
+        }
+
         $stmt = $db->prepare(
-            "UPDATE instrumentos SET nome=?, tipo=?, numero_serie=?, estado=?, asignado_a=?, notas=? WHERE id=?"
+            "UPDATE instrumentos SET nome=?, tipo=?, notas=?, descricion=?, imaxe=?, i18n=? WHERE id=?"
         );
         $stmt->execute([
             $input['nome'] ?? $existing['nome'],
             $input['tipo'] ?? $existing['tipo'],
-            $input['numero_serie'] ?? $existing['numero_serie'],
-            $input['estado'] ?? $existing['estado'],
-            array_key_exists('asignado_a', $input) ? $input['asignado_a'] : $existing['asignado_a'],
             $input['notas'] ?? $existing['notas'],
+            array_key_exists('descricion', $input) ? $input['descricion'] : $existing['descricion'],
+            $imaxe,
+            $i18n_val,
             $id
         ]);
         send_json(['ok' => true]);
@@ -108,7 +125,7 @@ function handle_instrumentos($method, $uri, $input) {
 
     // DELETE — admin
     if ($method === 'DELETE' && $id) {
-        require_admin();
+        require_socio();
         $stmt = $db->prepare("DELETE FROM instrumentos WHERE id = ?");
         $stmt->execute([$id]);
         send_json(['ok' => true]);

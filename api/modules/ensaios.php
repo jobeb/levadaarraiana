@@ -98,7 +98,7 @@ function handle_ensaios($method, $uri, $input) {
 
     // POST — create (admin), with optional recurrence
     if ($method === 'POST' && !$id) {
-        require_admin();
+        require_socio();
 
         $recorrencia = $input['recorrencia'] ?? null;
         $recorrencia_fin = $input['recorrencia_fin'] ?? null;
@@ -160,12 +160,13 @@ function handle_ensaios($method, $uri, $input) {
 
     // PUT — update
     if ($method === 'PUT' && $id) {
-        require_admin();
+        require_socio();
         $stmt = $db->prepare("SELECT * FROM ensaios WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
         if (!$existing) send_json(['error' => 'Ensaio non atopado'], 404);
 
+        // Update this single ensaio
         $stmt = $db->prepare(
             "UPDATE ensaios SET data=?, hora_inicio=?, hora_fin=?, lugar=?, notas=?, estado=? WHERE id=?"
         );
@@ -178,12 +179,74 @@ function handle_ensaios($method, $uri, $input) {
             $input['estado'] ?? $existing['estado'],
             $id
         ]);
+
+        // Handle recurrence end date change for the entire group
+        $new_fin = $input['recorrencia_fin'] ?? null;
+        $grupo = $existing['grupo_recorrencia'];
+        if ($new_fin && $grupo) {
+            $old_fin = $existing['recorrencia_fin'];
+            $recorrencia = $existing['recorrencia'] ?? 'semanal';
+
+            if ($new_fin !== $old_fin) {
+                // Update recorrencia_fin on all group members
+                $stmt = $db->prepare("UPDATE ensaios SET recorrencia_fin=? WHERE grupo_recorrencia=?");
+                $stmt->execute([$new_fin, $grupo]);
+
+                if ($new_fin < $old_fin) {
+                    // Trim: delete ensaios after new end date
+                    $stmt = $db->prepare("DELETE FROM asistencia WHERE ensaio_id IN (SELECT id FROM ensaios WHERE grupo_recorrencia=? AND data > ?)");
+                    $stmt->execute([$grupo, $new_fin]);
+                    $stmt = $db->prepare("DELETE FROM ensaios WHERE grupo_recorrencia=? AND data > ?");
+                    $stmt->execute([$grupo, $new_fin]);
+                } elseif ($new_fin > $old_fin) {
+                    // Extend: find the last existing date, generate new rows after it
+                    $last_row = $db->prepare("SELECT * FROM ensaios WHERE grupo_recorrencia=? ORDER BY data DESC LIMIT 1");
+                    $last_row->execute([$grupo]);
+                    $last = $last_row->fetch();
+
+                    if ($last) {
+                        $current = new DateTime($last['data']);
+                        $end = new DateTime($new_fin);
+                        $max = 52;
+                        $count = 0;
+
+                        // Advance one interval from the last date
+                        if ($recorrencia === 'semanal') $current->modify('+1 week');
+                        elseif ($recorrencia === 'bisemanal') $current->modify('+2 weeks');
+                        elseif ($recorrencia === 'mensual') $current->modify('+1 month');
+
+                        $ins = $db->prepare(
+                            "INSERT INTO ensaios (data, hora_inicio, hora_fin, lugar, notas, estado, recorrencia, recorrencia_fin, grupo_recorrencia)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                        );
+                        while ($current <= $end && $count < $max) {
+                            $ins->execute([
+                                $current->format('Y-m-d'),
+                                $last['hora_inicio'],
+                                $last['hora_fin'],
+                                $last['lugar'],
+                                $last['notas'] ?? '',
+                                'programado',
+                                $recorrencia,
+                                $new_fin,
+                                $grupo
+                            ]);
+                            $count++;
+                            if ($recorrencia === 'semanal') $current->modify('+1 week');
+                            elseif ($recorrencia === 'bisemanal') $current->modify('+2 weeks');
+                            elseif ($recorrencia === 'mensual') $current->modify('+1 month');
+                        }
+                    }
+                }
+            }
+        }
+
         send_json(['ok' => true]);
     }
 
     // DELETE — admin (supports ?scope=future for recurring)
     if ($method === 'DELETE' && $id) {
-        require_admin();
+        require_socio();
         $scope = $_GET['scope'] ?? 'single';
 
         if ($scope === 'future') {

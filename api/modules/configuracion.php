@@ -17,7 +17,7 @@ function handle_configuracion($method, $uri, $input) {
         if (!$row) send_json(['error' => 'Configuración non atopada'], 404);
         // Mask SMTP password and YouTube secret for non-admin users
         $user = get_session_user();
-        if (!in_array($user['role'] ?? '', ['Admin', 'Director'])) {
+        if (($user['role'] ?? '') !== 'Admin') {
             if (isset($row['smtp_pass']) && $row['smtp_pass']) {
                 $row['smtp_pass'] = '********';
             }
@@ -54,7 +54,9 @@ function handle_configuracion($method, $uri, $input) {
                 fiscal_nome=?, fiscal_nif=?, fiscal_enderezo=?, fiscal_cp=?,
                 fiscal_localidade=?, fiscal_provincia=?, fiscal_telefono=?, fiscal_email=?,
                 sobre_nos_gl=?, sobre_nos_es=?, sobre_nos_pt=?, sobre_nos_en=?,
-                youtube_client_id=?, youtube_client_secret=?
+                youtube_client_id=?, youtube_client_secret=?,
+                comentarios_moderacion=?,
+                cal_cor_ensaios=?, cal_cor_bolos=?, cal_cor_noticias=?, cal_cor_votacions=?
              WHERE id = 1"
         );
         $stmt->execute([
@@ -80,6 +82,11 @@ function handle_configuracion($method, $uri, $input) {
             $input['sobre_nos_en'] ?? $row['sobre_nos_en'],
             $input['youtube_client_id'] ?? $row['youtube_client_id'] ?? '',
             $yt_secret,
+            (int)($input['comentarios_moderacion'] ?? $row['comentarios_moderacion'] ?? 0),
+            $input['cal_cor_ensaios'] ?? $row['cal_cor_ensaios'] ?? '#e3c300',
+            $input['cal_cor_bolos'] ?? $row['cal_cor_bolos'] ?? '#ff9800',
+            $input['cal_cor_noticias'] ?? $row['cal_cor_noticias'] ?? '#005f97',
+            $input['cal_cor_votacions'] ?? $row['cal_cor_votacions'] ?? '#a50d3d',
         ]);
         send_json(['ok' => true]);
     }

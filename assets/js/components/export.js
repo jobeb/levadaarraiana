@@ -35,3 +35,68 @@ function exportCSV(filename, headers, rows) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
+
+/**
+ * Export PDF utility (requires jsPDF + AutoTable)
+ * exportPDF(title, headers, rows)
+ */
+function exportPDF(title, headers, rows) {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        toast('PDF library not loaded. Try again in a moment.', 'error');
+        return;
+    }
+    var jsPDF = window.jspdf.jsPDF;
+    var orientation = headers.length > 5 ? 'landscape' : 'portrait';
+    var doc = new jsPDF({ orientation: orientation, unit: 'mm', format: 'a4' });
+
+    // Header
+    doc.setFontSize(14);
+    doc.text(title, 14, 18);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(new Date().toLocaleDateString(), 14, 24);
+    doc.setTextColor(0);
+
+    // Table
+    doc.autoTable({
+        head: [headers],
+        body: rows,
+        startY: 30,
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [0, 95, 151], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 14, right: 14 }
+    });
+
+    doc.save(title.toLowerCase().replace(/[^a-z0-9]/g, '_') + '.pdf');
+}
+
+/**
+ * Export dropdown toggle — click to open, click outside to close
+ */
+document.addEventListener('click', function(e) {
+    var toggle = e.target.closest('.export-dropdown-toggle');
+    if (toggle) {
+        e.stopPropagation();
+        var menu = toggle.parentElement.querySelector('.export-dropdown-menu');
+        // Close all other menus first
+        document.querySelectorAll('.export-dropdown-menu.show').forEach(function(m) {
+            if (m !== menu) m.classList.remove('show');
+        });
+        menu.classList.toggle('show');
+        return;
+    }
+    // Click on menu item — let it execute, then close
+    if (e.target.closest('.export-dropdown-menu')) {
+        setTimeout(function() {
+            document.querySelectorAll('.export-dropdown-menu.show').forEach(function(m) {
+                m.classList.remove('show');
+            });
+        }, 100);
+        return;
+    }
+    // Click outside — close all
+    document.querySelectorAll('.export-dropdown-menu.show').forEach(function(m) {
+        m.classList.remove('show');
+    });
+});

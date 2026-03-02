@@ -16,16 +16,26 @@
 <!-- Public nav -->
 <nav class="pub-nav" id="pub-nav">
     <div class="logo">
-        <img src="assets/img/logo-white.png" alt="Levada Arraiana" style="height:40px">
+        <img src="assets/img/logo-white.png" alt="Levada Arraiana">
     </div>
-    <button class="pub-nav-toggle" onclick="document.querySelector('.pub-nav-links').classList.toggle('open')">&#9776;</button>
+    <button class="pub-nav-toggle" id="pub-nav-toggle" onclick="togglePubNav()">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+    </button>
     <div class="pub-nav-links">
         <a href="#noticias-pub" data-i18n="noticias">Noticias</a>
         <a href="#bolos-pub" data-i18n="bolos">Bolos</a>
-        <a href="#galeria-pub" data-i18n="galeria">Galería</a>
-        <a href="#sobre-nos" data-i18n="sobre_nos_landing">Sobre nós</a>
-        <a href="#" class="btn-outline" onclick="showOverlay('login');return false" data-i18n="acceder">Acceder</a>
-        <a href="#" class="btn btn-primary btn-sm" onclick="showOverlay('register');return false" data-i18n="rexistro">Rexistro</a>
+        <a href="#galeria-pub" data-i18n="galeria">Galeria</a>
+        <a href="#instrumentos-pub" data-i18n="instrumentos">Instrumentos</a>
+        <a href="#sobre-nos" data-i18n="sobre_nos_landing">Sobre nos</a>
+        <a href="#" class="btn btn-primary btn-sm pub-join-btn" onclick="showJoinOverlay();return false" data-i18n="quero_unirme">Quero unirme</a>
+        <a href="#" class="btn-outline pub-auth-btn" onclick="showOverlay('login');return false" data-i18n="acceder">Acceder</a>
+        <a href="#" class="btn btn-primary btn-sm pub-auth-btn" onclick="showOverlay('register');return false" data-i18n="rexistro">Rexistro</a>
+        <span class="pub-nav-user" id="pub-nav-user" style="display:none">
+            <strong id="pub-nav-username"></strong>
+            <a href="app.html" data-i18n="ir_ao_panel">Ir ao panel</a>
+        </span>
         <div class="lang-selector">
             <button data-lang="gl" class="active">GL</button>
             <button data-lang="es">ES</button>
@@ -39,21 +49,24 @@
 <div id="overlay-login" class="overlay" onclick="if(event.target===this)hideOverlays()">
     <div class="overlay-card">
         <button class="overlay-close" onclick="hideOverlays()">&times;</button>
-        <h2 data-i18n="login_titulo">Iniciar sesión</h2>
+        <h2 data-i18n="login_titulo">Iniciar sesion</h2>
         <form class="overlay-form" onsubmit="onLoginSubmit(event)">
             <div class="form-group">
-                <label data-i18n="username">Usuario</label>
+                <label class="required" data-i18n="username">Usuario</label>
                 <input type="text" id="login-username" class="form-control" autocomplete="username" required>
             </div>
             <div class="form-group">
-                <label data-i18n="contrasinal">Contrasinal</label>
+                <label class="required" data-i18n="contrasinal">Contrasinal</label>
                 <div class="pw-wrap">
                     <input type="password" id="login-password" class="form-control" autocomplete="current-password" required>
-                    <button type="button" class="pw-toggle" onclick="togglePw('login-password', this)">&#128065;</button>
+                    <button type="button" class="pw-toggle" onclick="togglePw('login-password', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 </div>
             </div>
             <button type="submit" class="btn btn-primary" data-i18n="acceder">Acceder</button>
             <div id="login-error" class="overlay-error"></div>
+            <div style="text-align:center;margin-top:8px">
+                <a class="overlay-link-forgot" onclick="showOverlay('forgot')" data-i18n="esquecin_contrasinal">Esquecin o contrasinal</a>
+            </div>
         </form>
         <div class="overlay-footer">
             <span data-i18n="non_tes_conta">Non tes conta?</span>
@@ -69,7 +82,7 @@
         <h2 data-i18n="rexistro_titulo">Crear conta</h2>
         <form class="overlay-form" onsubmit="onRegisterSubmit(event)">
             <div class="form-group">
-                <label data-i18n="username">Usuario</label>
+                <label class="required" data-i18n="username">Usuario</label>
                 <input type="text" id="reg-username" class="form-control" autocomplete="username" required>
             </div>
             <div class="form-group">
@@ -77,11 +90,11 @@
                 <input type="text" id="reg-nome" class="form-control" autocomplete="name">
             </div>
             <div class="form-group">
-                <label data-i18n="email">Email</label>
-                <input type="email" id="reg-email" class="form-control" autocomplete="email">
+                <label class="required" data-i18n="email">Email</label>
+                <input type="email" id="reg-email" class="form-control" autocomplete="email" required>
             </div>
             <div class="form-group">
-                <label data-i18n="telefono">Teléfono</label>
+                <label data-i18n="telefono">Telefono</label>
                 <input type="tel" id="reg-telefono" class="form-control" autocomplete="tel">
             </div>
             <div class="form-group">
@@ -89,17 +102,17 @@
                 <input type="text" id="reg-instrumento" class="form-control" placeholder="Surdo, Caixa, Repinique...">
             </div>
             <div class="form-group">
-                <label data-i18n="contrasinal">Contrasinal</label>
+                <label class="required" data-i18n="contrasinal">Contrasinal</label>
                 <div class="pw-wrap">
                     <input type="password" id="reg-password" class="form-control" autocomplete="new-password" required>
-                    <button type="button" class="pw-toggle" onclick="togglePw('reg-password', this)">&#128065;</button>
+                    <button type="button" class="pw-toggle" onclick="togglePw('reg-password', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 </div>
             </div>
             <div class="form-group">
-                <label data-i18n="repetir_contrasinal">Repetir contrasinal</label>
+                <label class="required" data-i18n="repetir_contrasinal">Repetir contrasinal</label>
                 <div class="pw-wrap">
                     <input type="password" id="reg-password2" class="form-control" autocomplete="new-password" required>
-                    <button type="button" class="pw-toggle" onclick="togglePw('reg-password2', this)">&#128065;</button>
+                    <button type="button" class="pw-toggle" onclick="togglePw('reg-password2', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 </div>
             </div>
             <div class="form-group">
@@ -115,8 +128,65 @@
         </form>
         <div class="overlay-footer">
             <span data-i18n="xa_tes_conta">Xa tes conta?</span>
-            <a onclick="showOverlay('login')" data-i18n="iniciar_sesion">Iniciar sesión</a>
+            <a onclick="showOverlay('login')" data-i18n="iniciar_sesion">Iniciar sesion</a>
         </div>
+    </div>
+</div>
+
+<!-- Join overlay -->
+<div id="overlay-join" class="overlay" onclick="if(event.target===this)hideOverlays()">
+    <div class="overlay-card">
+        <button class="overlay-close" onclick="hideOverlays()">&times;</button>
+        <h2 data-i18n="quero_unirme">Quero unirme</h2>
+        <div id="join-overlay-content"></div>
+    </div>
+</div>
+
+<!-- Forgot password overlay -->
+<div id="overlay-forgot" class="overlay" onclick="if(event.target===this)hideOverlays()">
+    <div class="overlay-card">
+        <button class="overlay-close" onclick="hideOverlays()">&times;</button>
+        <h2 data-i18n="recuperar_contrasinal">Recuperar contrasinal</h2>
+        <p class="overlay-desc" data-i18n="recuperar_desc">Introduce o teu usuario ou email e enviarémosche un enlace para restablecer o contrasinal.</p>
+        <form class="overlay-form" onsubmit="onForgotSubmit(event)">
+            <div class="form-group">
+                <label class="required" data-i18n="usuario_ou_email">Usuario ou email</label>
+                <input type="text" id="forgot-identifier" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary" data-i18n="enviar">Enviar</button>
+            <div id="forgot-error" class="overlay-error"></div>
+            <div id="forgot-success" class="overlay-success"></div>
+        </form>
+        <div class="overlay-footer">
+            <a onclick="showOverlay('login')" data-i18n="voltar_login">Voltar ao login</a>
+        </div>
+    </div>
+</div>
+
+<!-- Reset password overlay -->
+<div id="overlay-reset" class="overlay" onclick="if(event.target===this)hideOverlays()">
+    <div class="overlay-card">
+        <button class="overlay-close" onclick="hideOverlays()">&times;</button>
+        <h2 data-i18n="novo_contrasinal">Novo contrasinal</h2>
+        <form class="overlay-form" onsubmit="onResetSubmit(event)">
+            <div class="form-group">
+                <label class="required" data-i18n="contrasinal_nova">Nova contrasinal</label>
+                <div class="pw-wrap">
+                    <input type="password" id="reset-password" class="form-control" autocomplete="new-password" required>
+                    <button type="button" class="pw-toggle" onclick="togglePw('reset-password', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="required" data-i18n="repetir_contrasinal">Repetir contrasinal</label>
+                <div class="pw-wrap">
+                    <input type="password" id="reset-password2" class="form-control" autocomplete="new-password" required>
+                    <button type="button" class="pw-toggle" onclick="togglePw('reset-password2', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" data-i18n="restablecer_contrasinal">Restablecer contrasinal</button>
+            <div id="reset-error" class="overlay-error"></div>
+            <div id="reset-success" class="overlay-success"></div>
+        </form>
     </div>
 </div>
 
@@ -130,65 +200,129 @@
     <button class="lightbox-next" onclick="lightboxNav(1)">&#10095;</button>
 </div>
 
+<!-- Public detail modal -->
+<div id="pub-detail-overlay" class="overlay" onclick="if(event.target===this)hidePubDetail()">
+    <div class="overlay-card pub-detail-card">
+        <button class="overlay-close" onclick="hidePubDetail()">&times;</button>
+        <div id="pub-detail-img"></div>
+        <div id="pub-detail-body"></div>
+    </div>
+</div>
+
+<!-- Scroll to top -->
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#9650;</button>
+
 <!-- Content -->
 <div id="pub-content">
 
     <!-- Hero -->
-    <section class="hero">
+    <section class="hero" data-landing-section="hero">
         <div class="hero-content">
-            <img src="assets/img/logo-color.png" class="hero-logo" alt="Levada Arraiana">
-            <h1 data-i18n="benvidos">Benvidos á Levada Arraiana</h1>
-            <p data-i18n="subtitulo_landing">Batucada de Estás, Tomiño</p>
-            <a href="#" class="btn btn-primary" onclick="showOverlay('login');return false" data-i18n="acceder">Acceder</a>
+            <img src="assets/img/logo-shadow.png" class="hero-logo" alt="Levada Arraiana">
+            <h1><span data-i18n="app_name">Levada Arraiana</span></h1>
+            <p class="hero-subtitle" data-i18n="subtitulo_landing">Batucada de Estas, Tomino</p>
+            <p class="hero-tagline" data-i18n="frontera_ritmo">Na fronteira do ritmo</p>
+            <div class="hero-buttons">
+                <a href="#sobre-nos" class="btn btn-primary" data-i18n="sobre_nos_landing">Sobre nos</a>
+                <a href="#" class="btn-secondary" onclick="showOverlay('register');return false" data-i18n="rexistrarse">Rexistrarse</a>
+            </div>
+        </div>
+        <div class="hero-scroll-indicator" onclick="document.getElementById('noticias-pub').scrollIntoView({behavior:'smooth'})">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 13l5 5 5-5"/><path d="M7 6l5 5 5-5"/></svg>
         </div>
     </section>
 
+    <!-- Pattern divider -->
+    <div class="geo-divider"></div>
+
     <!-- Noticias -->
+    <div data-landing-section="noticias">
     <section class="pub-section" id="noticias-pub">
-        <h2 data-i18n="ultimas_noticias">Últimas noticias</h2>
-        <div id="pub-noticias-grid" class="pub-card-grid"></div>
+        <h2 class="reveal"><span data-i18n="ultimas_noticias">Ultimas noticias</span></h2>
+        <div id="pub-noticias-grid" class="pub-card-grid stagger-children reveal"></div>
     </section>
+    </div>
 
     <!-- Bolos -->
-    <section class="pub-section" id="bolos-pub">
-        <h2 data-i18n="proximos_bolos">Próximos bolos</h2>
-        <div id="pub-bolos-grid" class="pub-card-grid"></div>
-    </section>
+    <div class="pub-section-alt" data-landing-section="bolos">
+        <section class="pub-section-inner" id="bolos-pub">
+            <h2 class="reveal"><span data-i18n="proximos_bolos">Proximos bolos</span></h2>
+            <div id="pub-bolos-grid" class="pub-card-grid stagger-children reveal"></div>
+        </section>
+    </div>
 
-    <!-- Galería -->
-    <section class="pub-section" id="galeria-pub">
-        <h2 data-i18n="galeria_fotos">Galería de fotos</h2>
-        <div id="pub-galeria-grid" class="pub-card-grid"></div>
+    <!-- Bolos pasados -->
+    <div data-landing-section="bolos_pasados">
+    <section class="pub-section" id="bolos-pasados-pub">
+        <h2 class="reveal"><span data-i18n="bolos_realizados">Bolos realizados</span></h2>
+        <div id="pub-bolos-pasados-grid" class="pub-card-grid stagger-children reveal"></div>
     </section>
+    </div>
+
+    <!-- Galeria -->
+    <div data-landing-section="galeria">
+    <section class="pub-section" id="galeria-pub">
+        <h2 class="reveal"><span data-i18n="galeria_fotos">Galeria de fotos</span></h2>
+        <div id="pub-galeria-grid" class="pub-card-grid stagger-children reveal"></div>
+    </section>
+    </div>
+
+    <!-- Instrumentos -->
+    <div class="pub-section-alt" data-landing-section="instrumentos">
+        <section class="pub-section-inner" id="instrumentos-pub">
+            <h2 class="reveal"><span data-i18n="os_nosos_instrumentos">Os nosos instrumentos</span></h2>
+            <div id="pub-instrumentos-grid" class="instruments-grid stagger-children reveal"></div>
+        </section>
+    </div>
+
+    <!-- Pattern divider -->
+    <div class="geo-divider"></div>
 
     <!-- Sobre nos -->
+    <div data-landing-section="sobre_nos">
     <section class="pub-section" id="sobre-nos">
-        <h2 data-i18n="sobre_nos_landing">Sobre nós</h2>
-        <div id="pub-sobre-nos" class="about-content"></div>
+        <h2 class="reveal"><span data-i18n="sobre_nos_landing">Sobre nos</span></h2>
+        <div id="pub-sobre-nos" class="about-content reveal"></div>
+    </section>
+    </div>
+
+    <!-- CTA: Join us -->
+    <section class="cta-section">
+        <div class="cta-inner reveal-scale">
+            <h2 data-i18n="unirse_titulo">Queres tocar con nos?</h2>
+            <p data-i18n="unirse_texto">Non precisas experiencia previa. Ensaiamos todas as semanas e ensinamos dende cero. Unete a Levada!</p>
+            <a href="#" class="btn btn-primary" onclick="showJoinOverlay();return false" data-i18n="quero_unirme">Quero unirme</a>
+        </div>
     </section>
 
     <!-- Footer -->
     <footer class="pub-footer">
         <div class="pub-footer-grid">
             <div class="pub-footer-col">
-                <img src="assets/img/logo-white.png" alt="Levada Arraiana" style="height:30px;margin-bottom:8px;display:block">
-                <h4>Levada Arraiana</h4>
-                <p>Batucada de Estás, Tomiño (Galicia)</p>
+                <img src="assets/img/logo-white.png" alt="Levada Arraiana" class="footer-logo">
+                <p class="footer-desc" data-i18n="footer_desc">Grupo de batucada con sede en Estas, Tomino, na fronteira entre Galicia e Portugal.</p>
             </div>
             <div class="pub-footer-col">
-                <h4 data-i18n="noticias">Noticias</h4>
-                <a href="#noticias-pub" data-i18n="ultimas_noticias">Últimas noticias</a><br>
-                <a href="#bolos-pub" data-i18n="proximos_bolos">Próximos bolos</a><br>
-                <a href="#galeria-pub" data-i18n="galeria_fotos">Galería de fotos</a>
+                <h4 data-i18n="enlaces">Ligazons</h4>
+                <a href="#noticias-pub" data-i18n="noticias">Noticias</a><br>
+                <a href="#bolos-pub" data-i18n="proximos_bolos">Proximos bolos</a><br>
+                <a href="#galeria-pub" data-i18n="galeria_fotos">Galeria de fotos</a><br>
+                <a href="#instrumentos-pub" data-i18n="instrumentos">Instrumentos</a>
             </div>
             <div class="pub-footer-col">
                 <h4 data-i18n="acceder">Acceder</h4>
-                <a href="#" onclick="showOverlay('login');return false" data-i18n="iniciar_sesion">Iniciar sesión</a><br>
-                <a href="#" onclick="showOverlay('register');return false" data-i18n="rexistrarse">Rexistrarse</a>
+                <a href="#" onclick="showOverlay('login');return false" data-i18n="iniciar_sesion">Iniciar sesion</a><br>
+                <a href="#" onclick="showOverlay('register');return false" data-i18n="rexistrarse">Rexistrarse</a><br>
+                <br>
+                <h4 data-i18n="localizacion">Localizacion</h4>
+                <p>Estás, Tomiño<br>Pontevedra, Galicia</p>
+            </div>
+            <div class="pub-footer-col" style="text-align:center">
+                <img src="assets/img/qr-levada.jpg" alt="QR Levada Arraiana" style="width:120px;height:120px;border-radius:var(--radius);background:#fff;padding:4px">
             </div>
         </div>
         <div class="pub-footer-bottom">
-            &copy; 2026 Levada Arraiana — Estás, Tomiño (Galicia)
+            &copy; 2026 Levada Arraiana — Estas, Tomino (Galicia)
         </div>
     </footer>
 </div>
@@ -200,15 +334,27 @@
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/public.js"></script>
 <script>
+    // ---- Mobile nav toggle ----
+    function togglePubNav() {
+        var links = document.querySelector('.pub-nav-links');
+        var btn = document.getElementById('pub-nav-toggle');
+        links.classList.toggle('open');
+        btn.classList.toggle('active');
+    }
+    function closePubNav() {
+        document.querySelector('.pub-nav-links').classList.remove('open');
+        document.getElementById('pub-nav-toggle').classList.remove('active');
+    }
+
     // ---- Password toggle ----
     function togglePw(inputId, btn) {
         const inp = document.getElementById(inputId);
         if (inp.type === 'password') {
             inp.type = 'text';
-            btn.innerHTML = '&#128064;';
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
         } else {
             inp.type = 'password';
-            btn.innerHTML = '&#128065;';
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
         }
     }
 
@@ -222,7 +368,7 @@
         document.querySelectorAll('.overlay').forEach(o => o.classList.remove('show'));
     }
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') hideOverlays();
+        if (e.key === 'Escape') { hideOverlays(); hidePubDetail(); }
     });
 
     // ---- Login ----
@@ -351,10 +497,249 @@
         if (e.key === 'ArrowRight') lightboxNav(1);
     });
 
+    // ---- Scroll effects ----
+    (function() {
+        const nav = document.getElementById('pub-nav');
+        const scrollBtn = document.getElementById('scroll-top');
+        const scrollIndicator = document.querySelector('.hero-scroll-indicator');
+        const navLinks = document.querySelectorAll('.pub-nav-links a[href^="#"]');
+        const sections = document.querySelectorAll('[id$="-pub"], #sobre-nos');
+
+        window.addEventListener('scroll', function() {
+            var y = window.scrollY;
+            // Nav opacity on scroll
+            if (y > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+            // Scroll-to-top button
+            if (y > 400) {
+                scrollBtn.classList.add('show');
+            } else {
+                scrollBtn.classList.remove('show');
+            }
+            // Hide scroll indicator after scrolling
+            if (scrollIndicator) {
+                scrollIndicator.style.opacity = Math.max(0, 1 - y / 300);
+            }
+            // Active nav link tracking
+            var current = '';
+            sections.forEach(function(section) {
+                var top = section.offsetTop - 120;
+                if (y >= top) current = section.id;
+            });
+            navLinks.forEach(function(link) {
+                link.classList.remove('active');
+                var href = link.getAttribute('href');
+                if (href && href === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('.pub-nav-links a[href^="#"], .hero-buttons a[href^="#"], .pub-footer a[href^="#"]').forEach(function(a) {
+            a.addEventListener('click', function(e) {
+                var href = this.getAttribute('href');
+                if (href && href.startsWith('#') && href.length > 1) {
+                    e.preventDefault();
+                    var target = document.querySelector(href) || document.getElementById(href.slice(1));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        closePubNav();
+                    }
+                }
+            });
+        });
+
+        // Scroll-reveal IntersectionObserver
+        var revealObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+        document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger-children').forEach(function(el) {
+            revealObserver.observe(el);
+        });
+    })();
+
+    // ---- Join overlay ----
+    function showJoinOverlay() {
+        hideOverlays();
+        var container = document.getElementById('join-overlay-content');
+        if (AppState.user && AppState.token) {
+            var u = AppState.user;
+            container.innerHTML =
+                '<p class="join-user-hint">' + t('solicitude_info_usuario') + '</p>' +
+                '<div class="join-user-info">' +
+                    '<p><strong>' + t('nome') + ':</strong> ' + esc(u.nome_completo || u.username) + '</p>' +
+                    '<p><strong>' + t('email') + ':</strong> ' + esc(u.email || '-') + '</p>' +
+                    '<p><strong>' + t('telefono') + ':</strong> ' + esc(u.telefono || '-') + '</p>' +
+                    '<p><strong>' + t('instrumento') + ':</strong> ' + esc(u.instrumento || '-') + '</p>' +
+                '</div>' +
+                '<form class="overlay-form" onsubmit="submitJoinRequest(event)">' +
+                    '<div class="form-group">' +
+                        '<label>' + t('comentario_opcional') + '</label>' +
+                        '<textarea id="join-comentario" class="form-control" rows="3"></textarea>' +
+                    '</div>' +
+                    '<button type="submit" class="btn btn-primary">' + t('enviar_solicitude') + '</button>' +
+                    '<div id="join-error" class="overlay-error"></div>' +
+                '</form>';
+        } else {
+            container.innerHTML =
+                '<form class="overlay-form" onsubmit="submitJoinRequest(event)">' +
+                    '<div class="form-group">' +
+                        '<label>' + t('teu_nome') + ' *</label>' +
+                        '<input type="text" id="join-nome" class="form-control" required>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>' + t('teu_email') + ' *</label>' +
+                        '<input type="email" id="join-email" class="form-control" required>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>' + t('teu_telefono') + '</label>' +
+                        '<input type="tel" id="join-telefono" class="form-control">' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>' + t('comentario_opcional') + '</label>' +
+                        '<textarea id="join-comentario" class="form-control" rows="3"></textarea>' +
+                    '</div>' +
+                    '<button type="submit" class="btn btn-primary">' + t('enviar_solicitude') + '</button>' +
+                    '<div id="join-error" class="overlay-error"></div>' +
+                '</form>';
+        }
+        document.getElementById('overlay-join').classList.add('show');
+    }
+
+    async function submitJoinRequest(e) {
+        e.preventDefault();
+        var errEl = document.getElementById('join-error');
+        errEl.style.display = 'none';
+
+        var body = {};
+        if (AppState.user && AppState.token) {
+            body.comentario = (document.getElementById('join-comentario').value || '').trim();
+        } else {
+            body.nome = (document.getElementById('join-nome').value || '').trim();
+            body.email = (document.getElementById('join-email').value || '').trim();
+            body.telefono = (document.getElementById('join-telefono').value || '').trim();
+            body.comentario = (document.getElementById('join-comentario').value || '').trim();
+            if (!body.nome || !body.email) return;
+        }
+
+        try {
+            await api('/solicitude', { method: 'POST', body: body });
+            hideOverlays();
+            toast(t('solicitude_enviada'), 'success');
+        } catch (err) {
+            errEl.textContent = err.message || t('erro');
+            errEl.style.display = 'block';
+        }
+    }
+
+    // ---- Forgot password ----
+    async function onForgotSubmit(e) {
+        e.preventDefault();
+        var errEl = document.getElementById('forgot-error');
+        var okEl = document.getElementById('forgot-success');
+        errEl.style.display = 'none';
+        okEl.style.display = 'none';
+
+        var identifier = document.getElementById('forgot-identifier').value.trim();
+        if (!identifier) return;
+
+        try {
+            await api('/forgot-password', { method: 'POST', body: { identifier: identifier } });
+            okEl.textContent = t('reset_email_enviado');
+            okEl.style.display = 'block';
+            e.target.reset();
+        } catch (err) {
+            errEl.textContent = err.message || t('erro');
+            errEl.style.display = 'block';
+        }
+    }
+
+    // ---- Reset password (from email link) ----
+    var _resetToken = '';
+
+    function checkResetToken() {
+        var params = new URLSearchParams(window.location.search);
+        var token = params.get('reset_token');
+        if (token) {
+            _resetToken = token;
+            // Clean URL
+            history.replaceState(null, '', location.pathname + location.hash);
+            showOverlay('reset');
+        }
+    }
+
+    async function onResetSubmit(e) {
+        e.preventDefault();
+        var errEl = document.getElementById('reset-error');
+        var okEl = document.getElementById('reset-success');
+        errEl.style.display = 'none';
+        okEl.style.display = 'none';
+
+        var pw1 = document.getElementById('reset-password').value;
+        var pw2 = document.getElementById('reset-password2').value;
+
+        if (pw1 !== pw2) {
+            errEl.textContent = t('contrasinais_non_coinciden');
+            errEl.style.display = 'block';
+            return;
+        }
+        if (pw1.length < 4) {
+            errEl.textContent = t('min_caracteres').replace('{n}', '4');
+            errEl.style.display = 'block';
+            return;
+        }
+
+        try {
+            await api('/reset-password', { method: 'POST', body: { token: _resetToken, password: pw1 } });
+            okEl.textContent = t('contrasinal_restablecido');
+            okEl.style.display = 'block';
+            e.target.reset();
+            // After 2s redirect to login
+            setTimeout(function() {
+                hideOverlays();
+                showOverlay('login');
+            }, 2000);
+        } catch (err) {
+            errEl.textContent = err.message || t('erro');
+            errEl.style.display = 'block';
+        }
+    }
+
+    // ---- Session detection for landing ----
+    function detectSession() {
+        var hasSession = AppState.loadSession();
+        var authBtns = document.querySelectorAll('.pub-auth-btn');
+        var userInfo = document.getElementById('pub-nav-user');
+        var userNameEl = document.getElementById('pub-nav-username');
+        if (hasSession && AppState.user) {
+            authBtns.forEach(function(el) { el.style.display = 'none'; });
+            userNameEl.textContent = AppState.user.nome_completo || AppState.user.username;
+            userInfo.style.display = '';
+        } else {
+            authBtns.forEach(function(el) { el.style.display = ''; });
+            userInfo.style.display = 'none';
+        }
+    }
+
     // ---- Init ----
     (function init() {
         initLangSelector();
+        // Re-render dynamic content when language changes
+        document.querySelectorAll('.lang-selector button').forEach(function(btn) {
+            btn.addEventListener('click', function() { _pubRefreshLang(); });
+        });
         applyLang(AppState.lang);
+        detectSession();
+        checkResetToken();
         loadPublicContent();
     })();
 </script>

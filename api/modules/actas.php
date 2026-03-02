@@ -33,9 +33,21 @@ function handle_actas($method, $uri, $input) {
 
     // POST — create (admin)
     if ($method === 'POST' && !$id) {
-        require_admin();
+        require_socio();
 
-        $arquivos = isset($input['arquivos']) ? json_encode($input['arquivos']) : '[]';
+        $arquivos_clean = [];
+        if (!empty($input['arquivos'])) {
+            foreach ($input['arquivos'] as $f) {
+                if (is_array($f) && !empty($f['data']) && !empty($f['name'])) {
+                    $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $f['name']);
+                    $url = save_base64_file('actas', $safe, $f['data']);
+                    $arquivos_clean[] = ['name' => $f['name'], 'url' => $url];
+                } elseif (is_array($f) && !empty($f['url'])) {
+                    $arquivos_clean[] = $f;
+                }
+            }
+        }
+        $arquivos = json_encode($arquivos_clean);
 
         $stmt = $db->prepare(
             "INSERT INTO actas (titulo, data, contido, estado, arquivos, creado)
@@ -45,7 +57,7 @@ function handle_actas($method, $uri, $input) {
             $input['titulo'] ?? '',
             $input['data'] ?? date('Y-m-d'),
             $input['contido'] ?? '',
-            $input['estado'] ?? 'Borrador',
+            $input['estado'] ?? 'borrador',
             $arquivos
         ]);
         send_json(['ok' => true, 'id' => $db->lastInsertId()], 201);
@@ -53,14 +65,28 @@ function handle_actas($method, $uri, $input) {
 
     // PUT — update
     if ($method === 'PUT' && $id) {
-        require_admin();
+        require_socio();
 
         $stmt = $db->prepare("SELECT * FROM actas WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
         if (!$existing) send_json(['error' => 'Acta non atopada'], 404);
 
-        $arquivos = isset($input['arquivos']) ? json_encode($input['arquivos']) : $existing['arquivos'];
+        $arquivos_clean = [];
+        if (isset($input['arquivos'])) {
+            foreach ($input['arquivos'] as $f) {
+                if (is_array($f) && !empty($f['data']) && !empty($f['name'])) {
+                    $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $f['name']);
+                    $url = save_base64_file('actas', $safe, $f['data']);
+                    $arquivos_clean[] = ['name' => $f['name'], 'url' => $url];
+                } elseif (is_array($f) && !empty($f['url'])) {
+                    $arquivos_clean[] = $f;
+                }
+            }
+            $arquivos = json_encode($arquivos_clean);
+        } else {
+            $arquivos = $existing['arquivos'];
+        }
 
         $stmt = $db->prepare(
             "UPDATE actas SET titulo=?, data=?, contido=?, estado=?, arquivos=? WHERE id=?"
@@ -78,7 +104,7 @@ function handle_actas($method, $uri, $input) {
 
     // DELETE — admin
     if ($method === 'DELETE' && $id) {
-        require_admin();
+        require_socio();
         $stmt = $db->prepare("DELETE FROM actas WHERE id = ?");
         $stmt->execute([$id]);
         send_json(['ok' => true]);

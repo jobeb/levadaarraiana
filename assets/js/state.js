@@ -11,19 +11,14 @@ const AppState = {
     noticias: [],
     bolos: [],
     albums: [],
-    mensaxes: [],
     propostas: [],
     actas: [],
     documentos: [],
     votacions: [],
-    clientes: [],
-    proveedores: [],
-    facturas: [],
-    gastos: [],
+
     ensaios: [],
     instrumentos: [],
     repertorio: [],
-    setlists: [],
     config: {},
 
     // UI state
@@ -57,6 +52,10 @@ const AppState = {
     },
 
     isAdmin() {
-        return this.user && (this.user.role === 'Admin' || this.user.role === 'Director');
+        return this.user && this.user.role === 'Admin';
+    },
+
+    isSocio() {
+        return this.user && (this.user.role === 'Admin' || this.user.role === 'Socio');
     }
 };

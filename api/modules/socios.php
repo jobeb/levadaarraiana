@@ -37,7 +37,7 @@ function handle_socios($method, $uri, $input) {
         // Foto base64
         if (!empty($input['foto_data'])) {
             $ext = $input['foto_ext'] ?? 'jpg';
-            $path = save_base64_file('fotos', "socio_{$id}.{$ext}", $input['foto_data']);
+            $path = process_and_save_image('fotos', "socio_{$id}.{$ext}", $input['foto_data'], 'avatar');
             $fields[] = "foto = ?";
             $params[] = $path;
         }
@@ -138,7 +138,7 @@ function handle_socios($method, $uri, $input) {
             trim($input['email'] ?? ''),
             trim($input['telefono'] ?? ''),
             trim($input['instrumento'] ?? ''),
-            $input['role'] ?? 'Socio',
+            $input['role'] ?? 'Usuario',
             $input['estado'] ?? 'Pendente',
             $hashed,
             $input['foto'] ?? null,
@@ -160,7 +160,7 @@ function handle_socios($method, $uri, $input) {
         $foto_path = $input['foto'] ?? null;
         if (!empty($input['foto_data'])) {
             $ext = $input['foto_ext'] ?? 'jpg';
-            $foto_path = save_base64_file('fotos', "foto_{$id}.{$ext}", $input['foto_data']);
+            $foto_path = process_and_save_image('fotos', "foto_{$id}.{$ext}", $input['foto_data'], 'avatar');
         }
 
         $fields = [];

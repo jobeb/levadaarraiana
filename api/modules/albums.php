@@ -34,7 +34,7 @@ function handle_albums($method, $uri, $input) {
     // GET /albums → listar todos (público)
     if ($uri === '/albums' && $method === 'GET') {
         $rows = $db->query("SELECT * FROM albums ORDER BY data DESC, id DESC")->fetchAll();
-        $rows = fix_rows($rows, ['fotos']);
+        $rows = fix_rows($rows, ['fotos', 'i18n']);
         foreach ($rows as &$r) {
             $r['fotos'] = normalize_fotos($r['fotos']);
         }
@@ -48,39 +48,41 @@ function handle_albums($method, $uri, $input) {
         $stmt->execute([(int)$m[1]]);
         $row = $stmt->fetch();
         if (!$row) send_json(['error' => 'Album non atopado'], 404);
-        $row = fix_row($row, ['fotos']);
+        $row = fix_row($row, ['fotos', 'i18n']);
         $row['fotos'] = normalize_fotos($row['fotos']);
         send_json($row);
     }
 
     // POST /albums → crear
     if ($uri === '/albums' && $method === 'POST') {
-        require_admin();
+        require_socio();
 
         // Portada base64
-        $portada_path = $input['portada'] ?? null;
+        $portada_path = $input['portada'] ?? '';
         if (!empty($input['portada_data'])) {
             $ext = $input['portada_ext'] ?? 'jpg';
             $tmpName = 'portada_' . time() . '.' . $ext;
-            $portada_path = save_base64_file('albums', $tmpName, $input['portada_data']);
+            $portada_path = process_and_save_image('albums', $tmpName, $input['portada_data'], 'cover');
         }
 
+        $i18n = isset($input['i18n']) ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
         $stmt = $db->prepare(
-            "INSERT INTO albums (titulo, descricion, data, portada, fotos)
-             VALUES (?, ?, ?, ?, '[]')"
+            "INSERT INTO albums (titulo, descricion, data, portada, fotos, i18n)
+             VALUES (?, ?, ?, ?, '[]', ?)"
         );
         $stmt->execute([
             trim($input['titulo'] ?? ''),
             $input['descricion'] ?? '',
             $input['data'] ?? date('Y-m-d'),
             $portada_path,
+            $i18n,
         ]);
         $id = (int)$db->lastInsertId();
 
         // Renomear portada co ID real
         if (!empty($input['portada_data'])) {
             $ext = $input['portada_ext'] ?? 'jpg';
-            $newPath = save_base64_file('albums', "portada_{$id}.{$ext}", $input['portada_data']);
+            $newPath = process_and_save_image('albums', "portada_{$id}.{$ext}", $input['portada_data'], 'cover');
             $db->prepare("UPDATE albums SET portada = ? WHERE id = ?")->execute([$newPath, $id]);
         }
 
@@ -94,7 +96,7 @@ function handle_albums($method, $uri, $input) {
                 } elseif (!empty($foto['data'])) {
                     $ext  = $foto['ext'] ?? 'jpg';
                     $nome = $foto['nome'] ?? "foto_{$i}.{$ext}";
-                    $path = save_base64_file("albums/{$id}", $nome, $foto['data']);
+                    $path = process_and_save_image("albums/{$id}", $nome, $foto['data'], 'gallery');
                     $fotos[] = ['path' => $path, 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? ''];
                 } elseif (!empty($foto['path'])) {
                     $fotos[] = ['path' => $foto['path'], 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? ''];
@@ -102,6 +104,12 @@ function handle_albums($method, $uri, $input) {
             }
             $db->prepare("UPDATE albums SET fotos = ? WHERE id = ?")
                ->execute([json_encode($fotos, JSON_UNESCAPED_UNICODE), $id]);
+
+            // Auto-set first photo as portada if none was specified
+            if (empty($portada_path) && !empty($fotos[0]['path'])) {
+                $db->prepare("UPDATE albums SET portada = ? WHERE id = ?")
+                   ->execute([$fotos[0]['path'], $id]);
+            }
         }
 
         send_json(['ok' => true, 'id' => $id], 201);
@@ -109,7 +117,7 @@ function handle_albums($method, $uri, $input) {
 
     // PUT /albums/ID → actualizar
     if (preg_match('#^/albums/(\d+)$#', $uri, $m) && $method === 'PUT') {
-        require_admin();
+        require_socio();
         $id = (int)$m[1];
 
         $check = $db->prepare("SELECT id FROM albums WHERE id = ?");
@@ -126,11 +134,15 @@ function handle_albums($method, $uri, $input) {
                 $params[] = $input[$col];
             }
         }
+        if (array_key_exists('i18n', $input)) {
+            $fields[] = "i18n = ?";
+            $params[] = $input['i18n'] ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
+        }
 
         // Portada base64
         if (!empty($input['portada_data'])) {
             $ext = $input['portada_ext'] ?? 'jpg';
-            $path = save_base64_file('albums', "portada_{$id}.{$ext}", $input['portada_data']);
+            $path = process_and_save_image('albums', "portada_{$id}.{$ext}", $input['portada_data'], 'cover');
             $fields[] = "portada = ?";
             $params[] = $path;
         } elseif (!empty($input['portada_path'])) {
@@ -151,7 +163,7 @@ function handle_albums($method, $uri, $input) {
                 } elseif (!empty($foto['data'])) {
                     $ext  = $foto['ext'] ?? 'jpg';
                     $nome = $foto['nome'] ?? "foto_{$i}.{$ext}";
-                    $path = save_base64_file("albums/{$id}", $nome, $foto['data']);
+                    $path = process_and_save_image("albums/{$id}", $nome, $foto['data'], 'gallery');
                     $fotos[] = ['path' => $path, 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? ''];
                 } elseif (!empty($foto['path'])) {
                     $fotos[] = ['path' => $foto['path'], 'titulo' => $foto['titulo'] ?? '', 'alt' => $foto['alt'] ?? ''];
@@ -174,7 +186,7 @@ function handle_albums($method, $uri, $input) {
 
     // DELETE /albums/ID → eliminar
     if (preg_match('#^/albums/(\d+)$#', $uri, $m) && $method === 'DELETE') {
-        require_admin();
+        require_socio();
         $id   = (int)$m[1];
         $stmt = $db->prepare("DELETE FROM albums WHERE id = ?");
         $stmt->execute([$id]);

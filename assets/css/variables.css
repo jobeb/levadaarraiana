@@ -1,39 +1,42 @@
 /* ============================================================
    Variables — Tema Levada Arraiana
-   Paleta: batucada/percusión brasileña, tema oscuro
+   Paleta derivada do logo: #e3c300 #005f97 #000000 #a50d3d #009564
    ============================================================ */
 :root {
-    /* Base */
-    --bg-dark:       #1a1520;
-    --bg-surface:    #2a2235;
-    --bg-surface-2:  #342b40;
-    --bg-hover:      #3d3350;
+    /* Base (derivado do negro do logo) */
+    --bg-dark:       #0c0e14;
+    --bg-surface:    #181c26;
+    --bg-surface-2:  #222838;
+    --bg-hover:      #2a3244;
+    --bg-tertiary:   #1e2330;
 
-    /* Primario: ámbar dorado */
-    --primary:       #e8a832;
-    --primary-hover: #f0b840;
-    --primary-dim:   rgba(232, 168, 50, 0.15);
+    /* Primario: ouro do logo */
+    --primary:       #e3c300;
+    --primary-hover: #f0d020;
+    --primary-dim:   rgba(227, 195, 0, 0.15);
+    --on-primary:    #0c0e14;
 
-    /* Secundario: teal/turquesa (banda decorativa do logo) */
-    --secondary:     #2bb5a0;
-    --secondary-hover:#34cdb8;
+    /* Secundario: azul profundo do logo */
+    --secondary:     #005f97;
+    --secondary-hover:#0074b8;
 
-    /* Acentos */
-    --accent-magenta: #b5287a;
-    --accent-blue:    #4a7db5;
-    --success:       #4caf50;
+    /* Acentos (cores do logo) */
+    --accent-magenta: #a50d3d;
+    --accent-blue:    #005f97;
+    --accent-green:   #009564;
+    --success:       #009564;
     --warning:       #ff9800;
-    --danger:        #ef4444;
-    --info:          #42a5f5;
+    --danger:        #a50d3d;
+    --info:          #005f97;
 
     /* Texto */
-    --text:          #f0ece4;
-    --text-dim:      #a09aac;
-    --text-muted:    #6d6580;
+    --text:          #eef0f4;
+    --text-dim:      #8a92a4;
+    --text-muted:    #586070;
 
     /* Bordes */
-    --border:        #3d3350;
-    --border-light:  #4a4060;
+    --border:        #2a3244;
+    --border-light:  #354058;
 
     /* Radios */
     --radius:        8px;
@@ -61,4 +64,31 @@
     --z-header:      200;
     --z-modal:       1000;
     --z-toast:       2000;
+}
+
+/* ---- Light mode ---- */
+html.light-mode {
+    --bg-dark:       #f2f4f8;
+    --bg-surface:    #ffffff;
+    --bg-surface-2:  #e8ecf2;
+    --bg-hover:      #dce0ea;
+    --bg-tertiary:   #d4d8e2;
+
+    --primary:       #c5a800;
+    --primary-hover: #a89000;
+    --primary-dim:   rgba(197, 168, 0, 0.1);
+    --on-primary:    #1a1c26;
+
+    --secondary:     #005f97;
+    --secondary-hover:#004a76;
+
+    --text:          #1a1c26;
+    --text-dim:      #4a5068;
+    --text-muted:    #7a8494;
+
+    --border:        #d0d4de;
+    --border-light:  #bcc2d0;
+
+    --shadow:        0 2px 8px rgba(0,0,0,0.06);
+    --shadow-lg:     0 8px 32px rgba(0,0,0,0.1);
 }
