@@ -17,6 +17,9 @@
         margin-left: 0;
         padding-top: 62px;
     }
+    .app-footer {
+        margin-left: 0;
+    }
     .hamburger {
         display: block;
     }
@@ -74,6 +77,12 @@
     .overlay-card {
         padding: var(--gap);
         max-width: 95%;
+    }
+    .contacto-grid {
+        grid-template-columns: 1fr;
+    }
+    .contacto-form-row {
+        flex-direction: column;
     }
     .pub-footer-grid {
         grid-template-columns: 1fr;

@@ -306,12 +306,18 @@ CREATE TABLE `landing_seccions` (
   `bg_cor` VARCHAR(20) NOT NULL DEFAULT '',
   `parallax` TINYINT(1) NOT NULL DEFAULT 0,
   `overlay_opacidade` DECIMAL(3,2) NOT NULL DEFAULT 0.70,
-  `max_items` INT NOT NULL DEFAULT 0
+  `max_items` INT NOT NULL DEFAULT 0,
+  `max_items_mobile` INT NOT NULL DEFAULT 0,
+  `max_fotos_destacadas` INT NOT NULL DEFAULT 0,
+  `bg_size` VARCHAR(50) NOT NULL DEFAULT 'cover',
+  `bg_repeat` VARCHAR(20) NOT NULL DEFAULT 'no-repeat',
+  `bg_position` VARCHAR(50) NOT NULL DEFAULT 'center',
+  `orden` INT NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO landing_seccions (id) VALUES
-  ('hero'),('noticias'),('bolos'),('bolos_pasados'),
-  ('presuposto'),('galeria'),('instrumentos'),('sobre_nos');
+INSERT INTO landing_seccions (id, orden) VALUES
+  ('hero', 0),('noticias', 1),('bolos', 2),('bolos_pasados', 3),
+  ('presuposto', 4),('galeria', 5),('instrumentos', 6),('sobre_nos', 7),('contacto', 8);
 
 -- 25. Solicitudes de contratacion de bolos
 DROP TABLE IF EXISTS `solicitudes_bolos`;

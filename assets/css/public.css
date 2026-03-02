@@ -11,9 +11,6 @@
     position: absolute;
     inset: 0;
     z-index: 0;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
 }
 [data-landing-section] > .landing-bg.parallax {
     background-attachment: fixed;
@@ -395,8 +392,6 @@
 .hero {
     padding: 180px var(--gap-lg) 120px;
     text-align: center;
-    background: url('../img/pattern-levada.jpg') repeat center;
-    background-size: 1000px auto;
     position: relative;
     overflow: hidden;
     min-height: 100vh;
@@ -699,6 +694,73 @@
 #instrumentos-pub h2::after { background: linear-gradient(90deg, var(--accent-magenta), #d4155a); }
 #bolos-pasados-pub h2::after { background: linear-gradient(90deg, var(--secondary), #0098d4); }
 #sobre-nos h2::after { background: linear-gradient(90deg, var(--primary), #f0d020); }
+#contacto-pub h2::after { background: linear-gradient(90deg, var(--accent-green), #00c88a); }
+
+/* ---- Contacto section ---- */
+.contacto-info {
+    display: flex;
+    justify-content: center;
+    gap: var(--gap-xl);
+    flex-wrap: wrap;
+    margin-bottom: var(--gap-xl);
+}
+.contacto-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+.contacto-item svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--primary);
+}
+.contacto-item strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text);
+}
+.contacto-item p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.7;
+    margin: 0;
+}
+.contacto-item a {
+    color: var(--primary);
+}
+.contacto-item a:hover {
+    text-decoration: underline;
+}
+.contacto-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gap-xl);
+    align-items: start;
+}
+.contacto-map iframe {
+    width: 100%;
+    min-height: 400px;
+}
+.contacto-form h3 {
+    margin-bottom: var(--gap);
+    color: var(--text);
+    font-size: 1.1rem;
+}
+.contacto-form .form-control {
+    width: 100%;
+    margin-bottom: var(--gap-sm);
+}
+.contacto-form textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+.contacto-form-row {
+    display: flex;
+    gap: var(--gap-sm);
+}
+.contacto-form .btn {
+    margin-top: var(--gap-sm);
+}
 
 /* Alternate section backgrounds */
 .pub-section-alt {
@@ -831,6 +893,70 @@
     transform: translateY(-50%) rotate(calc(90deg + var(--t3-rot, 3deg)));
     width: var(--t3-w, 46px);
     background: linear-gradient(135deg, var(--t3-ca, #d2ffd2b3), var(--t3-cb, #b9f0b98d));
+}
+/* Pin — chincheta(s) realistas tipo tachuela de corcho */
+.pub-foto-destacada.frame-pin,
+.pub-foto-destacada.frame-pin2 {
+    border: none;
+    border-radius: 0;
+    box-shadow: 2px 4px 14px rgba(0,0,0,0.35);
+}
+/* Cabeza de la chincheta: domo plastico 3D */
+.pub-foto-destacada.frame-pin::before,
+.pub-foto-destacada.frame-pin2::before,
+.pub-foto-destacada.frame-pin2::after {
+    content: '';
+    position: absolute;
+    z-index: 3;
+    pointer-events: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 38% 28%, rgba(255,255,255,0.70) 0%, rgba(255,255,255,0) 45%),
+        radial-gradient(circle at 50% 50%, var(--pin-ca, #e84040) 30%, var(--pin-cb, #991a1a) 100%);
+    box-shadow:
+        0 3px 5px rgba(0,0,0,0.45),
+        0 1px 2px rgba(0,0,0,0.3),
+        inset 0 -3px 5px rgba(0,0,0,0.25),
+        inset 0 2px 3px rgba(255,255,255,0.2);
+    border: 1px solid rgba(0,0,0,0.15);
+}
+/* Aguja metalica que asoma bajo la cabeza */
+.pub-foto-destacada.frame-pin::after,
+.pub-foto-destacada.frame-pin2 .pin-2nd {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+    width: 4px;
+    height: 10px;
+    border-radius: 1px 1px 50% 50%;
+    background: linear-gradient(180deg, #c0c0c0, #808080 40%, #555);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.4);
+}
+/* Pin — 1 chincheta arriba centro */
+.pub-foto-destacada.frame-pin::before {
+    top: -10px;
+    left: var(--t1-pos, 50%);
+    transform: translateX(-50%);
+}
+.pub-foto-destacada.frame-pin::after {
+    top: 8px;
+    left: var(--t1-pos, 50%);
+    transform: translateX(-50%);
+}
+/* Pin2 — 2 chinchetas: esquina sup-izq y sup-der */
+.pub-foto-destacada.frame-pin2::before {
+    top: -8px;
+    left: calc(var(--t1-pos, 20%) - 4px);
+    transform: rotate(var(--t1-rot, -5deg));
+}
+.pub-foto-destacada.frame-pin2::after {
+    top: -8px;
+    right: calc(100% - var(--t2-pos, 80%) - 4px);
+    left: auto;
+    transform: rotate(var(--t2-rot, 5deg));
 }
 /* Rounded — bordes muy redondeados */
 .pub-foto-destacada.frame-rounded {
@@ -1368,6 +1494,29 @@
     margin-left: auto;
     margin-right: auto;
     letter-spacing: 0.02em;
+}
+
+/* ---- Footer dev credit ---- */
+.footer-dev {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.footer-dev a {
+    display: inline-flex;
+    align-items: center;
+}
+.footer-dev-logo {
+    height: 22px;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+.footer-dev-logo:hover {
+    opacity: 1;
 }
 
 /* ---- Mobile nav toggle (hamburger) ---- */

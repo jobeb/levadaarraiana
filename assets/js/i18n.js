@@ -427,10 +427,26 @@ const TRANSLATIONS = {
     fondo_cor:          { gl:'Cor de fondo', es:'Color de fondo', pt:'Cor de fundo', en:'Background color' },
     parallax:           { gl:'Efecto parallax', es:'Efecto parallax', pt:'Efeito parallax', en:'Parallax effect' },
     overlay_opacidade:  { gl:'Opacidade do overlay', es:'Opacidad del overlay', pt:'Opacidade do overlay', en:'Overlay opacity' },
+    bg_tamano:          { gl:'Tamano do fondo', es:'Tamano del fondo', pt:'Tamanho do fundo', en:'Background size' },
+    bg_tamano_custom:   { gl:'Ancho (px)', es:'Ancho (px)', pt:'Largura (px)', en:'Width (px)' },
+    personalizado:      { gl:'Personalizado', es:'Personalizado', pt:'Personalizado', en:'Custom' },
+    bg_repeticion:      { gl:'Repeticion', es:'Repeticion', pt:'Repeticao', en:'Repeat' },
+    bg_posicion:        { gl:'Posicion', es:'Posicion', pt:'Posicao', en:'Position' },
     quitar_imaxe:       { gl:'Quitar imaxe', es:'Quitar imagen', pt:'Remover imagem', en:'Remove image' },
     quitar_video:       { gl:'Quitar video', es:'Quitar video', pt:'Remover video', en:'Remove video' },
     gardado:            { gl:'Gardado', es:'Guardado', pt:'Salvo', en:'Saved' },
     max_elementos:      { gl:'Max. elementos', es:'Max. elementos', pt:'Max. elementos', en:'Max. items' },
+    max_elementos_movil:{ gl:'Max. movil', es:'Max. movil', pt:'Max. movel', en:'Max. mobile' },
+    solicitar_asistir:{ gl:'Solicitar asistir', es:'Solicitar asistir', pt:'Solicitar presenca', en:'Request attendance' },
+    confirmar_solicitar_asistencia:{ gl:'Enviar solicitude de asistencia?', es:'Enviar solicitud de asistencia?', pt:'Enviar pedido de presenca?', en:'Send attendance request?' },
+    solicitude_asistencia_enviada:{ gl:'Solicitude enviada', es:'Solicitud enviada', pt:'Pedido enviado', en:'Request sent' },
+    desarrollada_por:{ gl:'Desenvolvida por', es:'Desarrollada por', pt:'Desenvolvida por', en:'Developed by' },
+    contacto:{ gl:'Contacto', es:'Contacto', pt:'Contacto', en:'Contact' },
+    enderezo:{ gl:'Enderezo', es:'Dirección', pt:'Morada', en:'Address' },
+    enviar_mensaxe:{ gl:'Enviar mensaxe', es:'Enviar mensaje', pt:'Enviar mensagem', en:'Send message' },
+    asunto:{ gl:'Asunto', es:'Asunto', pt:'Assunto', en:'Subject' },
+    mensaxe:{ gl:'Mensaxe', es:'Mensaje', pt:'Mensagem', en:'Message' },
+    mensaxe_enviada:{ gl:'Mensaxe enviada correctamente', es:'Mensaje enviado correctamente', pt:'Mensagem enviada com sucesso', en:'Message sent successfully' },
 
     // ---- Traduccions i18n ----
     traduccions:        { gl:'Traducións', es:'Traducciones', pt:'Traduções', en:'Translations' },
@@ -456,6 +472,8 @@ const TRANSLATIONS = {
     sol_converter_bolo: { gl:'Converter en bolo', es:'Convertir en bolo', pt:'Converter em bolo', en:'Convert to gig' },
     cliente:            { gl:'Cliente', es:'Cliente', pt:'Cliente', en:'Client' },
     importe:            { gl:'Importe', es:'Importe', pt:'Montante', en:'Amount' },
+    orden_gardado:      { gl:'Orde gardada', es:'Orden guardado', pt:'Ordem salva', en:'Order saved' },
+    max_fotos_destacadas:{ gl:'Max. fotos destacadas', es:'Max. fotos destacadas', pt:'Max. fotos em destaque', en:'Max. featured photos' },
 };
 
 function t(key) {

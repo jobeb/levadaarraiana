@@ -259,6 +259,7 @@ function _showCalendarDayPopup(date, events) {
         votacion: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>'
     };
     var _calRoutes = { ensaio: 'ensaios', bolo: 'bolos', noticia: 'noticias', votacion: 'votacions' };
+    var _isSocio = AppState.isSocio();
     events.forEach(function(ev) {
         var icon = _calIcons[ev.type] || _calIcons.noticia;
         var route = _calRoutes[ev.type] || 'dashboard';
@@ -271,6 +272,9 @@ function _showCalendarDayPopup(date, events) {
         if (ev.label) meta = (meta ? meta + ' · ' : '') + ev.label;
         if (meta) html += '<span class="cal-day-popup-hora">' + esc(meta) + '</span>';
         html += '</div>';
+        if (ev.type === 'ensaio' && !_isSocio) {
+            html += '<button class="btn btn-sm btn-primary" style="margin-left:auto;flex-shrink:0;font-size:0.75rem;padding:2px 8px" onclick="event.stopPropagation(); _closeCalendarPopup(); ensaiosSolicitarAsistencia(' + ev.id + ')">' + t('solicitar_asistir') + '</button>';
+        }
         html += '</div>';
     });
     html += '</div></div>';

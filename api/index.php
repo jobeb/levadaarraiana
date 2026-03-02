@@ -54,6 +54,7 @@ try {
         '/landing-seccions' => 'landing',
         '/solicitude'    => 'solicitude',
         '/solicitudes-bolos' => 'solicitudes_bolos',
+        '/contacto'      => 'contacto',
         '/backup'        => 'backup',
         '/youtube'       => 'youtube',
     ];

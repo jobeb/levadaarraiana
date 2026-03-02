@@ -88,6 +88,9 @@
 .card:hover {
     box-shadow: var(--shadow);
 }
+.landing-sec-card.dragging {
+    opacity: 0.5;
+}
 .card-header {
     display: flex;
     justify-content: space-between;

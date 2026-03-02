@@ -377,6 +377,34 @@
     min-height: 100vh;
 }
 
+/* ---- App footer ---- */
+.app-footer {
+    margin-left: var(--sidebar-w);
+    padding: var(--gap) var(--gap-lg);
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+}
+.app-footer .footer-dev {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 12px;
+}
+.app-footer .footer-dev a {
+    display: inline-flex;
+    align-items: center;
+}
+.app-footer .footer-dev-logo {
+    height: 20px;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+.app-footer .footer-dev-logo:hover {
+    opacity: 1;
+}
+
 /* ---- Section containers ---- */
 .section {
     display: none;

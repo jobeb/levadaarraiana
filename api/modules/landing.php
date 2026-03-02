@@ -13,8 +13,22 @@ function handle_landing($method, $uri, $input) {
 
     // GET /landing-seccions — público
     if ($method === 'GET' && $uri === '/landing-seccions') {
-        $rows = $db->query("SELECT * FROM landing_seccions")->fetchAll(PDO::FETCH_ASSOC);
-        $rows = fix_rows($rows, [], ['parallax'], ['overlay_opacidade', 'max_items']);
+        $rows = $db->query("SELECT * FROM landing_seccions ORDER BY orden ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $rows = fix_rows($rows, [], ['parallax'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
+        send_json($rows);
+    }
+
+    // PUT /landing-seccions/reorder — admin only
+    if ($method === 'PUT' && $uri === '/landing-seccions/reorder') {
+        require_admin();
+        $ids = $input['ids'] ?? [];
+        if (!is_array($ids) || empty($ids)) send_json(['error' => 'ids requeridos'], 400);
+        $stmt = $db->prepare("UPDATE landing_seccions SET orden = ? WHERE id = ?");
+        foreach ($ids as $i => $id) {
+            $stmt->execute([$i, $id]);
+        }
+        $rows = $db->query("SELECT * FROM landing_seccions ORDER BY orden ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $rows = fix_rows($rows, [], ['parallax'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
         send_json($rows);
     }
 
@@ -92,6 +106,32 @@ function handle_landing($method, $uri, $input) {
             $updates[] = "max_items = ?";
             $params[] = intval($input['max_items']);
         }
+        if (array_key_exists('max_items_mobile', $input)) {
+            $updates[] = "max_items_mobile = ?";
+            $params[] = intval($input['max_items_mobile']);
+        }
+        if (array_key_exists('max_fotos_destacadas', $input)) {
+            $updates[] = "max_fotos_destacadas = ?";
+            $params[] = intval($input['max_fotos_destacadas']);
+        }
+        if (array_key_exists('bg_size', $input)) {
+            $v = $input['bg_size'];
+            $allowed_bg_size = ['cover', 'contain', 'auto'];
+            if (in_array($v, $allowed_bg_size) || preg_match('/^\d{2,4}px\s+auto$/', $v)) {
+                $updates[] = "bg_size = ?";
+                $params[] = $v;
+            }
+        }
+        $allowed_bg_repeat = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y'];
+        if (array_key_exists('bg_repeat', $input) && in_array($input['bg_repeat'], $allowed_bg_repeat)) {
+            $updates[] = "bg_repeat = ?";
+            $params[] = $input['bg_repeat'];
+        }
+        $allowed_bg_position = ['center', 'top', 'bottom', 'left', 'right', 'top left', 'top right', 'bottom left', 'bottom right'];
+        if (array_key_exists('bg_position', $input) && in_array($input['bg_position'], $allowed_bg_position)) {
+            $updates[] = "bg_position = ?";
+            $params[] = $input['bg_position'];
+        }
 
         if (!empty($updates)) {
             $params[] = $secId;
@@ -103,7 +143,7 @@ function handle_landing($method, $uri, $input) {
         // Return updated row
         $stmt = $db->prepare("SELECT * FROM landing_seccions WHERE id = ?");
         $stmt->execute([$secId]);
-        $row = fix_row($stmt->fetch(PDO::FETCH_ASSOC), [], ['parallax'], ['overlay_opacidade', 'max_items']);
+        $row = fix_row($stmt->fetch(PDO::FETCH_ASSOC), [], ['parallax'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
         send_json($row);
     }
 

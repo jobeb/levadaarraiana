@@ -52,6 +52,42 @@ function handle_ensaios($method, $uri, $input) {
             send_json($stmt->fetchAll());
         }
 
+        // POST /asistencia/solicitar — non-socio request to attend
+        if ($uri === '/asistencia/solicitar' && $method === 'POST') {
+            require_auth();
+            $user = get_session_user();
+
+            $ensaio_id = intval($input['ensaio_id'] ?? 0);
+            if (!$ensaio_id) send_json(['error' => 'ensaio_id requerido'], 400);
+
+            $stmt = $db->prepare("SELECT * FROM ensaios WHERE id = ?");
+            $stmt->execute([$ensaio_id]);
+            $ensaio = $stmt->fetch();
+            if (!$ensaio) send_json(['error' => 'Ensaio non atopado'], 404);
+
+            $cfg = $db->query("SELECT * FROM config WHERE id = 1")->fetch();
+            if (!$cfg || empty($cfg['email_dest'])) {
+                send_json(['error' => 'Email de destino non configurado'], 500);
+            }
+
+            $nome = $user['nome_completo'] ?: $user['username'];
+            $body  = "Solicitude de asistencia a ensaio\n";
+            $body .= "==================================\n\n";
+            $body .= "Usuario: $nome\n";
+            $body .= "Email: " . ($user['email'] ?: '-') . "\n";
+            $body .= "Ensaio: " . $ensaio['data'];
+            if ($ensaio['hora_inicio']) $body .= " " . $ensaio['hora_inicio'];
+            $body .= "\n";
+            if ($ensaio['lugar']) $body .= "Lugar: " . $ensaio['lugar'] . "\n";
+
+            $subject = "Solicitude asistencia ensaio — " . $nome;
+            $replyTo = $user['email'] ?: null;
+            $ok = send_email($cfg['email_dest'], $subject, $body, $replyTo);
+
+            if (!$ok) send_json(['error' => 'Erro ao enviar o correo'], 500);
+            send_json(['ok' => true]);
+        }
+
         // POST /asistencia — set attendance (INSERT ON DUPLICATE KEY UPDATE)
         if ($method === 'POST') {
             require_auth();

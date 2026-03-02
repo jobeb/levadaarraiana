@@ -35,7 +35,8 @@ function _showDayPopup(date, events) {
                 (estado ? ' ' + _ensaioEstadoBadge(estado) : '') +
             '</div>' +
             '<div style="display:flex;gap:4px;flex-shrink:0">' +
-                (ensaio ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + ev.id + ')">' + t('asistencia') + '</button>' : '') +
+                (ensaio && isAdmin ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + ev.id + ')">' + t('asistencia') + '</button>' :
+                    (ensaio ? '<button class="btn btn-sm btn-primary" onclick="ensaiosSolicitarAsistencia(' + ev.id + ')">' + t('solicitar_asistir') + '</button>' : '')) +
                 (ensaio && isAdmin ? '<button class="btn-icon" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + ev.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
                 (ensaio && isAdmin ? '<button class="btn-icon btn-danger" onclick="hideModal(\'modal-overlay\');ensaiosDelete(' + ev.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>' : '') +
             '</div>' +
@@ -47,6 +48,38 @@ function _showDayPopup(date, events) {
         (isAdmin ? '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');ensaiosModal();setTimeout(function(){var d=$(\'#ensaio-data\');if(d)d.value=\'' + date + '\';},50)">+ ' + t('novo_ensaio') + '</button> ' : '') +
         '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
     showModal('modal-overlay');
+}
+
+function ensaiosSolicitarAsistencia(id) {
+    var ensaio = (AppState.ensaios || []).find(function(x) { return x.id == id; });
+    if (!ensaio) return;
+
+    var detail = '<strong>' + formatDate(ensaio.data) + '</strong>';
+    if (ensaio.hora_inicio) detail += ' &mdash; ' + esc(ensaio.hora_inicio) + (ensaio.hora_fin ? ' - ' + esc(ensaio.hora_fin) : '');
+    if (ensaio.lugar) detail += '<br>' + esc(ensaio.lugar);
+
+    $('#modal-title').textContent = t('solicitar_asistir');
+    $('#modal-body').innerHTML =
+        '<p>' + t('confirmar_solicitar_asistencia') + '</p>' +
+        '<div style="padding:12px;background:var(--bg-surface-2);border-radius:var(--radius);margin-top:8px">' + detail + '</div>';
+    $('#modal-footer').innerHTML =
+        '<button class="btn btn-primary" id="btn-confirmar-solicitude">' + t('enviar') + '</button> ' +
+        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>';
+    showModal('modal-overlay');
+
+    $('#btn-confirmar-solicitude').onclick = function() {
+        this.disabled = true;
+        this.textContent = '...';
+        api('/asistencia/solicitar', { method: 'POST', body: { ensaio_id: id } })
+            .then(function() {
+                hideModal('modal-overlay');
+                toast(t('solicitude_asistencia_enviada'), 'success');
+            })
+            .catch(function(e) {
+                hideModal('modal-overlay');
+                toast(e.message || 'Error', 'error');
+            });
+    };
 }
 
 function ensaiosSetView(view) {
@@ -243,7 +276,7 @@ function ensaiosRender() {
                     ? '<button class="btn btn-sm btn-secondary" onclick="ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' +
                       '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
                       '<button class="btn-icon btn-danger" onclick="ensaiosDelete(' + e.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
-                    : '<button class="btn btn-sm btn-secondary" onclick="ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>') +
+                    : '') +
             '</div>' +
         '</div>';
     });
@@ -274,7 +307,7 @@ function ensaiosExpandGroup(grupo) {
             '<td>' + esc(e.hora_inicio || '') + ' - ' + esc(e.hora_fin || '') + '</td>' +
             '<td>' + _ensaioEstadoBadge(e.estado) + '</td>' +
             '<td style="text-align:right">' +
-                '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' +
+                (isAdmin ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' : '') +
                 (isAdmin ? ' <button class="btn-icon" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
             '</td>' +
         '</tr>';

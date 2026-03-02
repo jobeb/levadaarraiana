@@ -129,10 +129,13 @@ function _pubShowInstrumento(id) {
     _pubShowDetail(imgHtml, bodyHtml);
 }
 
-// Helper: get max_items for a section (0 = unlimited)
+// Helper: get max_items for a section (0 = unlimited), mobile-aware
 function _pubMaxItems(secId) {
     var cfg = _landingCfg[secId];
-    return (cfg && cfg.max_items) ? cfg.max_items : 0;
+    if (!cfg) return 0;
+    var isMobile = window.innerWidth < 768;
+    if (isMobile && cfg.max_items_mobile > 0) return cfg.max_items_mobile;
+    return cfg.max_items || 0;
 }
 
 // Helper: render a "Ver mais" button if items were truncated
@@ -147,7 +150,10 @@ function _pubVerMaisBtn(gridId, secId, total, shown) {
 // Expand section: show all items (remove limit)
 function _pubExpandSection(gridId, secId) {
     // Temporarily set max_items to 0 (unlimited) and re-render that section
-    if (_landingCfg[secId]) _landingCfg[secId].max_items = 0;
+    if (_landingCfg[secId]) {
+        _landingCfg[secId].max_items = 0;
+        _landingCfg[secId].max_items_mobile = 0;
+    }
 
     var grid = document.getElementById(gridId);
     if (!grid) return;
@@ -451,6 +457,9 @@ function _pubRenderFotosDestacadas(albums) {
         var j = Math.floor(Math.random() * (s + 1));
         var tmp = favFotos[s]; favFotos[s] = favFotos[j]; favFotos[j] = tmp;
     }
+    // Apply max featured photos limit
+    var maxDest = (_landingCfg['galeria'] && _landingCfg['galeria'].max_fotos_destacadas) || 0;
+    if (maxDest > 0) favFotos = favFotos.slice(0, maxDest);
     var favUrls = favFotos.map(function(f) { return f.src; });
     container.innerHTML = '<h3 class="pub-fotos-destacadas-title reveal">' + t('fotos_destacadas') + '</h3>' +
         '<div class="pub-fotos-destacadas stagger-children">' +
@@ -458,7 +467,7 @@ function _pubRenderFotosDestacadas(albums) {
             var angle = Math.round(Math.random() * 8 - 4);
             var sizes = ['size-xl','size-sm','size-lg','size-md','size-xl','size-sm','size-wide'];
             var sizeClass = sizes[Math.floor(Math.random() * sizes.length)];
-            var frames = ['frame-polaroid','frame-clean','frame-tape','frame-tape2','frame-tape3','frame-rounded','frame-thin','frame-shadow','frame-vintage','frame-torn'];
+            var frames = ['frame-polaroid','frame-clean','frame-tape','frame-tape2','frame-tape3','frame-pin','frame-pin2','frame-rounded','frame-thin','frame-shadow','frame-vintage','frame-torn'];
             var frameClass = frames[Math.floor(Math.random() * frames.length)];
             var m = Math.round(Math.random() * 24 - 10);
             var y = Math.round(Math.random() * 44 - 22);
@@ -476,6 +485,17 @@ function _pubRenderFotosDestacadas(albums) {
                 var col = tapeColors[Math.floor(Math.random() * tapeColors.length)];
                 tapeVars += ';--t' + ti + '-ca:' + col[0] + ';--t' + ti + '-cb:' + col[1];
             }
+            // Generar color aleatorio para chinchetas
+            var pinColors = [
+                ['#e84040','#991a1a'],  // rojo
+                ['#3b8bdb','#1a5a99'],  // azul
+                ['#4caf50','#2e7d32'],  // verde
+                ['#ff9800','#e65100'],  // naranja
+                ['#e3c300','#b8960a'],  // dorado
+                ['#9c27b0','#6a1b80']   // morado
+            ];
+            var pc = pinColors[Math.floor(Math.random() * pinColors.length)];
+            tapeVars += ';--pin-ca:' + pc[0] + ';--pin-cb:' + pc[1];
             var tape3Extra = (frameClass === 'frame-tape3') ? '<span class="tape-3rd"></span>' : '';
             return '<div class="pub-foto-destacada ' + sizeClass + ' ' + frameClass + '" style="--rot:' + angle + 'deg;--m:' + m + 'px;--y:' + y + 'px' + tapeVars + '" onclick="openLightbox([' +
                 favUrls.map(function(u) { return "'" + u + "'"; }).join(',') + '],' + i + ')">' +
@@ -498,9 +518,36 @@ function _pubRenderFotosDestacadas(albums) {
 // Landing config keyed by section id (populated by _applyLandingBackgrounds)
 var _landingCfg = {};
 
+// Re-render sections when crossing mobile/desktop breakpoint
+var _pubWasMobile = window.innerWidth < 768;
+window.addEventListener('resize', (function() {
+    var timer;
+    return function() {
+        clearTimeout(timer);
+        timer = setTimeout(function() {
+            var isMobile = window.innerWidth < 768;
+            if (isMobile !== _pubWasMobile) {
+                _pubWasMobile = isMobile;
+                _pubRefreshLang();
+            }
+        }, 200);
+    };
+})());
+
 async function _applyLandingBackgrounds() {
     try {
         var seccions = await api('/landing-seccions').catch(function() { return []; });
+
+        // Reorder sections in DOM based on API order
+        var parent = document.getElementById('pub-content');
+        if (parent) {
+            var footer = parent.querySelector('footer');
+            seccions.forEach(function(s) {
+                var el = document.querySelector('[data-landing-section="' + s.id + '"]');
+                if (el && el !== parent.firstElementChild) parent.insertBefore(el, footer);
+            });
+        }
+
         seccions.forEach(function(s) {
             _landingCfg[s.id] = s;
             var el = document.querySelector('[data-landing-section="' + s.id + '"]');
@@ -528,18 +575,28 @@ async function _applyLandingBackgrounds() {
                     bg.appendChild(video);
                 } else if (s.bg_imaxe) {
                     bg.style.backgroundImage = 'url(' + uploadUrl(s.bg_imaxe) + ')';
+                    bg.style.backgroundSize = s.bg_size || 'cover';
+                    bg.style.backgroundRepeat = s.bg_repeat || 'no-repeat';
+                    bg.style.backgroundPosition = s.bg_position || 'center';
                 }
                 el.prepend(bg);
-
-                // Overlay
-                var ov = document.createElement('div');
-                ov.className = 'landing-overlay';
-                ov.style.setProperty('--overlay-opacity', s.overlay_opacidade || 0.7);
-                el.insertBefore(ov, bg.nextSibling);
             }
 
-            // For hero: hide original ::before pattern if custom bg is set
-            if (s.id === 'hero' && (s.bg_imaxe || s.bg_video)) {
+            // Overlay (for image/video AND color-only)
+            if (s.bg_imaxe || s.bg_video || s.bg_cor) {
+                var existing = el.querySelector('.landing-overlay');
+                if (!existing) {
+                    var ov = document.createElement('div');
+                    ov.className = 'landing-overlay';
+                    ov.style.setProperty('--overlay-opacity', s.overlay_opacidade != null ? s.overlay_opacidade : 0.7);
+                    var bgEl = el.querySelector('.landing-bg');
+                    if (bgEl) el.insertBefore(ov, bgEl.nextSibling);
+                    else el.prepend(ov);
+                }
+            }
+
+            // For hero: hide original ::before when any custom bg is set
+            if (s.id === 'hero' && (s.bg_imaxe || s.bg_video || s.bg_cor)) {
                 el.classList.add('hero-custom-bg');
             }
         });
@@ -731,16 +788,60 @@ async function loadPublicContent() {
         // Instrumentos (dynamic from API)
         _renderInstrumentCards();
 
-        // Sobre nos
+        // Sobre nos + Contacto
         try {
             const cfg = await api('/config');
             const key = 'sobre_nos_' + AppState.lang;
             const txt = cfg[key] || cfg['sobre_nos_gl'] || '';
             const sn = document.getElementById('pub-sobre-nos');
             if (sn) sn.innerHTML = nl2br(txt);
+
+            // Contacto: email y telefono from config
+            var emailEl = document.getElementById('contacto-email');
+            if (emailEl && cfg.email_dest) {
+                emailEl.innerHTML = '<a href="mailto:' + esc(cfg.email_dest) + '">' + esc(cfg.email_dest) + '</a>';
+            } else if (emailEl) {
+                document.getElementById('contacto-email-row').style.display = 'none';
+            }
+            var telEl = document.getElementById('contacto-tel');
+            if (telEl && cfg.fiscal_telefono) {
+                telEl.textContent = cfg.fiscal_telefono;
+            } else if (telEl) {
+                document.getElementById('contacto-tel-row').style.display = 'none';
+            }
         } catch (e) { /* ignore */ }
 
     } catch (err) {
         console.error('Error loading public content:', err);
     }
+}
+
+// ---- Contacto form ----
+function _enviarContacto(e) {
+    e.preventDefault();
+    var btn = document.getElementById('contacto-submit-btn');
+    var oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    var data = {
+        nome: document.getElementById('contacto-nome').value.trim(),
+        email: document.getElementById('contacto-form-email').value.trim(),
+        asunto: document.getElementById('contacto-asunto').value.trim(),
+        mensaxe: document.getElementById('contacto-mensaxe').value.trim()
+    };
+
+    api('/contacto', { method: 'POST', body: data })
+        .then(function() {
+            document.getElementById('contacto-form').reset();
+            toast(t('mensaxe_enviada'), 'success');
+        })
+        .catch(function(err) {
+            toast(err.message || 'Error', 'error');
+        })
+        .finally(function() {
+            btn.disabled = false;
+            btn.textContent = oldText;
+        });
+    return false;
 }

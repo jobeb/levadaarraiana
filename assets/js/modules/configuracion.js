@@ -404,7 +404,8 @@ var _landingSecNames = {
     presuposto: 'Pedir presuposto',
     galeria: 'Galeria',
     instrumentos: 'Instrumentos',
-    sobre_nos: 'Sobre nos'
+    sobre_nos: 'Sobre nos',
+    contacto: 'Contacto'
 };
 
 var _landingSeccions = [];
@@ -430,8 +431,11 @@ function _renderLandingTab(seccions) {
         var hasImg = !!s.bg_imaxe;
         var hasVid = !!s.bg_video;
 
-        html += '<div class="card" style="margin-bottom:16px;padding:16px">' +
-            '<h4 style="margin-bottom:12px;color:var(--primary)">' + esc(name) + '</h4>';
+        html += '<div class="card landing-sec-card" draggable="true" data-sec-id="' + s.id + '" style="margin-bottom:16px;padding:16px">' +
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:grab">' +
+                '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>' +
+                '<h4 style="margin:0;color:var(--primary)">' + esc(name) + '</h4>' +
+            '</div>';
 
         // Preview
         if (hasVid) {
@@ -473,9 +477,54 @@ function _renderLandingTab(seccions) {
                 '<label>' + t('overlay_opacidade') + ': <span id="landing-opa-val-' + s.id + '">' + (s.overlay_opacidade || 0.7) + '</span></label>' +
                 '<input type="range" id="landing-opa-' + s.id + '" min="0" max="1" step="0.05" value="' + (s.overlay_opacidade || 0.7) + '" style="width:100%" oninput="document.getElementById(\'landing-opa-val-' + s.id + '\').textContent=this.value">' +
             '</div>' +
+        '</div>' +
+        '<div class="form-row" style="align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:8px">' +
+            '<div class="form-group" style="flex:0 0 auto;min-width:120px">' +
+                '<label>' + t('bg_tamano') + '</label>' +
+                '<div style="display:flex;gap:6px;align-items:center">' +
+                    '<select class="form-control" id="landing-bgsize-' + s.id + '" style="width:auto" onchange="_landingToggleBgSizeCustom(\'' + s.id + '\')">' +
+                        '<option value="cover"' + ((s.bg_size || 'cover') === 'cover' ? ' selected' : '') + '>cover</option>' +
+                        '<option value="contain"' + (s.bg_size === 'contain' ? ' selected' : '') + '>contain</option>' +
+                        '<option value="auto"' + (s.bg_size === 'auto' ? ' selected' : '') + '>auto</option>' +
+                        '<option value="custom"' + (['cover','contain','auto'].indexOf(s.bg_size) === -1 && s.bg_size ? ' selected' : '') + '>' + t('personalizado') + '</option>' +
+                    '</select>' +
+                    '<input type="number" class="form-control" id="landing-bgsize-custom-' + s.id + '" min="50" max="5000" step="10" placeholder="px" style="width:80px;display:' + (['cover','contain','auto',''].indexOf(s.bg_size) === -1 ? 'block' : 'none') + '" value="' + (['cover','contain','auto',''].indexOf(s.bg_size) === -1 ? parseInt(s.bg_size) || '' : '') + '">' +
+                '</div>' +
+            '</div>' +
+            '<div class="form-group" style="flex:0 0 auto;min-width:120px">' +
+                '<label>' + t('bg_repeticion') + '</label>' +
+                '<select class="form-control" id="landing-bgrepeat-' + s.id + '" style="width:auto">' +
+                    '<option value="no-repeat"' + ((s.bg_repeat || 'no-repeat') === 'no-repeat' ? ' selected' : '') + '>no-repeat</option>' +
+                    '<option value="repeat"' + (s.bg_repeat === 'repeat' ? ' selected' : '') + '>repeat</option>' +
+                    '<option value="repeat-x"' + (s.bg_repeat === 'repeat-x' ? ' selected' : '') + '>repeat-x</option>' +
+                    '<option value="repeat-y"' + (s.bg_repeat === 'repeat-y' ? ' selected' : '') + '>repeat-y</option>' +
+                '</select>' +
+            '</div>' +
+            '<div class="form-group" style="flex:0 0 auto;min-width:120px">' +
+                '<label>' + t('bg_posicion') + '</label>' +
+                '<select class="form-control" id="landing-bgpos-' + s.id + '" style="width:auto">' +
+                    '<option value="center"' + ((s.bg_position || 'center') === 'center' ? ' selected' : '') + '>center</option>' +
+                    '<option value="top"' + (s.bg_position === 'top' ? ' selected' : '') + '>top</option>' +
+                    '<option value="bottom"' + (s.bg_position === 'bottom' ? ' selected' : '') + '>bottom</option>' +
+                    '<option value="left"' + (s.bg_position === 'left' ? ' selected' : '') + '>left</option>' +
+                    '<option value="right"' + (s.bg_position === 'right' ? ' selected' : '') + '>right</option>' +
+                    '<option value="top left"' + (s.bg_position === 'top left' ? ' selected' : '') + '>top left</option>' +
+                    '<option value="top right"' + (s.bg_position === 'top right' ? ' selected' : '') + '>top right</option>' +
+                    '<option value="bottom left"' + (s.bg_position === 'bottom left' ? ' selected' : '') + '>bottom left</option>' +
+                    '<option value="bottom right"' + (s.bg_position === 'bottom right' ? ' selected' : '') + '>bottom right</option>' +
+                '</select>' +
+            '</div>' +
             (_hasItems ? '<div class="form-group" style="flex:0 0 auto;min-width:120px">' +
                 '<label>' + t('max_elementos') + '</label>' +
                 '<input type="number" class="form-control" id="landing-max-' + s.id + '" value="' + (s.max_items || 0) + '" min="0" step="1" style="width:80px" placeholder="0 = ' + t('todos') + '">' +
+            '</div>' +
+            '<div class="form-group" style="flex:0 0 auto;min-width:120px">' +
+                '<label>' + t('max_elementos_movil') + '</label>' +
+                '<input type="number" class="form-control" id="landing-max-mobile-' + s.id + '" value="' + (s.max_items_mobile || 0) + '" min="0" step="1" style="width:80px" placeholder="0 = ' + t('todos') + '">' +
+            '</div>' : '') +
+            (s.id === 'galeria' ? '<div class="form-group" style="flex:0 0 auto;min-width:140px">' +
+                '<label>' + t('max_fotos_destacadas') + '</label>' +
+                '<input type="number" class="form-control" id="landing-max-destacadas-' + s.id + '" value="' + (s.max_fotos_destacadas || 0) + '" min="0" step="1" style="width:80px" placeholder="0 = ' + t('todos') + '">' +
             '</div>' : '') +
         '</div>';
 
@@ -485,6 +534,43 @@ function _renderLandingTab(seccions) {
     });
 
     panel.innerHTML = html;
+
+    // Init drag-and-drop for section reordering
+    var dragEl = null;
+    panel.addEventListener('dragstart', function(e) {
+        dragEl = e.target.closest('.landing-sec-card');
+        if (dragEl) dragEl.classList.add('dragging');
+    });
+    panel.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        var target = e.target.closest('.landing-sec-card');
+        if (target && target !== dragEl) {
+            var rect = target.getBoundingClientRect();
+            var midY = rect.top + rect.height / 2;
+            if (e.clientY < midY) panel.insertBefore(dragEl, target);
+            else panel.insertBefore(dragEl, target.nextSibling);
+        }
+    });
+    panel.addEventListener('dragend', function() {
+        if (dragEl) dragEl.classList.remove('dragging');
+        dragEl = null;
+        _landingSaveOrder();
+    });
+}
+
+function _landingToggleBgSizeCustom(secId) {
+    var sel = $('#landing-bgsize-' + secId);
+    var inp = $('#landing-bgsize-custom-' + secId);
+    if (sel && inp) inp.style.display = sel.value === 'custom' ? 'block' : 'none';
+}
+
+async function _landingSaveOrder() {
+    var cards = $$('#cfg-landing .landing-sec-card');
+    var ids = cards.map(function(c) { return c.dataset.secId; });
+    try {
+        await api('/landing-seccions/reorder', { method: 'PUT', body: { ids: ids } });
+        toast(t('orden_gardado'), 'success');
+    } catch (e) { toast(e.message, 'error'); }
 }
 
 async function _landingSaveSec(secId) {
@@ -518,9 +604,34 @@ async function _landingSaveSec(secId) {
     var opaInput = $('#landing-opa-' + secId);
     body.overlay_opacidade = opaInput ? parseFloat(opaInput.value) : 0.7;
 
+    // Background options
+    var bgsizeInput = $('#landing-bgsize-' + secId);
+    if (bgsizeInput) {
+        if (bgsizeInput.value === 'custom') {
+            var customPx = parseInt($('#landing-bgsize-custom-' + secId)?.value) || 500;
+            body.bg_size = customPx + 'px auto';
+        } else {
+            body.bg_size = bgsizeInput.value;
+        }
+    }
+
+    var bgrepeatInput = $('#landing-bgrepeat-' + secId);
+    if (bgrepeatInput) body.bg_repeat = bgrepeatInput.value;
+
+    var bgposInput = $('#landing-bgpos-' + secId);
+    if (bgposInput) body.bg_position = bgposInput.value;
+
     // Max items
     var maxInput = $('#landing-max-' + secId);
     if (maxInput) body.max_items = parseInt(maxInput.value) || 0;
+
+    // Max items mobile
+    var maxMobileInput = $('#landing-max-mobile-' + secId);
+    if (maxMobileInput) body.max_items_mobile = parseInt(maxMobileInput.value) || 0;
+
+    // Max fotos destacadas (galeria only)
+    var maxDestInput = $('#landing-max-destacadas-' + secId);
+    if (maxDestInput) body.max_fotos_destacadas = parseInt(maxDestInput.value) || 0;
 
     try {
         await api('/landing-seccions/' + secId, { method: 'PUT', body: body });
