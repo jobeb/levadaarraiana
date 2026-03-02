@@ -25,7 +25,7 @@ function handle_solicitudes_bolos($method, $uri, $input) {
         if (!$nome || !$email) {
             send_json(['error' => 'Nome e email son obrigatorios'], 400);
         }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (strpos($email, '@') === false) {
             send_json(['error' => 'Email non valido'], 400);
         }
 

@@ -372,18 +372,6 @@ function bolosSolicitudesRender() {
                 estadoBadge = '<span class="badge">' + esc(s.estado) + '</span>';
         }
 
-        var tipoBadge = '';
-        if (s.tipo) {
-            var tipoKey = s.tipo === 'outro' ? 'outro' : s.tipo;
-            tipoBadge = ' <span class="badge">' + (TRANSLATIONS[tipoKey] ? t(tipoKey) : esc(s.tipo)) + '</span>';
-        }
-
-        var metaHtml = '';
-        if (s.data_evento) metaHtml += '<span>' + t('data') + ': ' + formatDate(s.data_evento) + '</span>';
-        if (s.lugar) metaHtml += '<span>' + esc(s.lugar) + '</span>';
-        metaHtml += '<span>' + esc(s.email) + '</span>';
-        if (s.telefono) metaHtml += '<span>' + esc(s.telefono) + '</span>';
-
         var estadoSelect =
             '<select class="form-control" style="max-width:160px;display:inline-block" onchange="bolosSolCambiarEstado(' + s.id + ', this.value)">' +
                 '<option value="pendente"' + (s.estado === 'pendente' ? ' selected' : '') + '>' + t('sol_pendente') + '</option>' +
@@ -396,18 +384,32 @@ function bolosSolicitudesRender() {
         actions += '<button class="btn-icon" onclick="bolosSolConverter(' + s.id + ')" title="' + t('sol_converter_bolo') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>';
         actions += '<button class="btn-icon btn-danger" onclick="bolosSolDelete(' + s.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>';
 
+        // Structured info rows
+        var infoHtml = '<div class="sol-info">';
+        infoHtml += '<div class="sol-info-row"><span class="sol-label">' + t('email') + '</span><span>' + esc(s.email) + '</span></div>';
+        if (s.telefono) infoHtml += '<div class="sol-info-row"><span class="sol-label">' + t('telefono') + '</span><span>' + esc(s.telefono) + '</span></div>';
+        if (s.data_evento) infoHtml += '<div class="sol-info-row"><span class="sol-label">' + t('data') + '</span><span>' + formatDate(s.data_evento) + '</span></div>';
+        if (s.lugar) infoHtml += '<div class="sol-info-row"><span class="sol-label">' + t('lugar') + '</span><span>' + esc(s.lugar) + '</span></div>';
+        infoHtml += '</div>';
+
         html += '<div class="card">' +
             '<div class="card-body">' +
-                '<h3 class="card-title">' + esc(s.nome) + '</h3>' +
-                '<div class="card-meta">' + metaHtml + '</div>' +
-                (s.descricion ? '<p class="card-text">' + esc(truncate(s.descricion, 150)) + '</p>' : '') +
-                '<div class="card-badges">' + estadoBadge + tipoBadge + '</div>' +
-                '<div style="margin-top:8px">' + estadoSelect + '</div>' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">' +
+                    '<h3 class="card-title" style="margin:0">' + esc(s.nome) + '</h3>' +
+                    estadoBadge +
+                '</div>' +
+                infoHtml +
+                (s.descricion ? '<div class="sol-descricion">' + esc(s.descricion) + '</div>' : '') +
+                '<div style="display:flex;align-items:center;gap:8px;margin-top:10px">' +
+                    '<span class="sol-label">' + t('estado') + '</span>' + estadoSelect +
+                '</div>' +
                 '<div class="form-group" style="margin-top:8px">' +
                     '<textarea class="form-control" rows="2" placeholder="' + t('notas') + '" onblur="bolosSolGuardarNotas(' + s.id + ', this)">' + esc(s.notas || '') + '</textarea>' +
                 '</div>' +
-                '<div style="font-size:0.8rem;color:var(--text-dim);margin-top:4px">' + formatDate(s.creado) + '</div>' +
-                '<div class="card-actions">' + actions + '</div>' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">' +
+                    '<span style="font-size:0.75rem;color:var(--text-muted)">' + formatDate(s.creado) + '</span>' +
+                    '<div class="card-actions" style="margin:0">' + actions + '</div>' +
+                '</div>' +
             '</div>' +
             '</div>';
     });

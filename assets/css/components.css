@@ -95,6 +95,16 @@
     font-weight: 600;
 }
 .card-body { font-size: 0.9rem; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 6px; }
+.card-text { color: var(--text-dim); font-size: 0.85rem; margin: 6px 0; }
+.card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.card-actions { display: flex; gap: 4px; margin-top: 8px; }
+
+/* Solicitude info rows */
+.sol-info { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; font-size: 0.85rem; }
+.sol-info-row { display: flex; gap: 8px; align-items: baseline; }
+.sol-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; min-width: 70px; flex-shrink: 0; }
+.sol-descricion { background: var(--bg-dark); border-radius: var(--radius); padding: 8px 10px; font-size: 0.85rem; color: var(--text-dim); margin-top: 8px; white-space: pre-wrap; word-break: break-word; }
 .card-footer {
     margin-top: var(--gap);
     padding-top: var(--gap-sm);

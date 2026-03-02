@@ -380,6 +380,7 @@ var _landingSecNames = {
     noticias: 'Noticias',
     bolos: 'Proximos bolos',
     bolos_pasados: 'Bolos realizados',
+    presuposto: 'Pedir presuposto',
     galeria: 'Galeria',
     instrumentos: 'Instrumentos',
     sobre_nos: 'Sobre nos'

@@ -312,7 +312,7 @@ CREATE TABLE `landing_seccions` (
 
 INSERT INTO landing_seccions (id) VALUES
   ('hero'),('noticias'),('bolos'),('bolos_pasados'),
-  ('galeria'),('instrumentos'),('sobre_nos');
+  ('presuposto'),('galeria'),('instrumentos'),('sobre_nos');
 
 -- 25. Solicitudes de contratacion de bolos
 DROP TABLE IF EXISTS `solicitudes_bolos`;

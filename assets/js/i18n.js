@@ -64,7 +64,7 @@ const TRANSLATIONS = {
     bolos:              { gl:'Bolos', es:'Bolos', pt:'Bolos', en:'Gigs' },
     bolo:               { gl:'Bolo', es:'Bolo', pt:'Bolo', en:'Gig' },
     galeria:            { gl:'Galería', es:'Galería', pt:'Galeria', en:'Gallery' },
-    propostas:          { gl:'Propostas', es:'Propuestas', pt:'Propostas', en:'Proposals' },
+    propostas:          { gl:'Xurxerencias', es:'Xurxerencias', pt:'Xurxestões', en:'Xurxxestions' },
     actas:              { gl:'Actas', es:'Actas', pt:'Atas', en:'Minutes' },
     documentos:         { gl:'Documentos', es:'Documentos', pt:'Documentos', en:'Documents' },
     votacions:          { gl:'Votacións', es:'Votaciones', pt:'Votações', en:'Votes' },
@@ -132,8 +132,8 @@ const TRANSLATIONS = {
     enviar:             { gl:'Enviar', es:'Enviar', pt:'Enviar', en:'Send' },
 
     // ---- Propostas ----
-    proposta:           { gl:'Proposta', es:'Propuesta', pt:'Proposta', en:'Proposal' },
-    nova_proposta:      { gl:'Nova proposta', es:'Nueva propuesta', pt:'Nova proposta', en:'New proposal' },
+    proposta:           { gl:'Xurxerencia', es:'Xurxerencia', pt:'Xurxestão', en:'Xurxxestion' },
+    nova_proposta:      { gl:'Nova xurxerencia', es:'Nova xurxerencia', pt:'Nova xurxestão', en:'New xurxxestion' },
     ficheiros:          { gl:'Ficheiros', es:'Archivos', pt:'Ficheiros', en:'Files' },
     proposta_aberta:    { gl:'Aberta', es:'Abierta', pt:'Aberta', en:'Open' },
     proposta_pechada:   { gl:'Pechada', es:'Cerrada', pt:'Fechada', en:'Closed' },
