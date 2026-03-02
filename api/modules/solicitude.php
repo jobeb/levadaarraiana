@@ -20,7 +20,6 @@ function handle_solicitude($method, $uri, $input) {
     }
 
     $to = $cfg['email_dest'];
-    $from = $cfg['smtp_from'] ?: $cfg['smtp_user'] ?: 'noreply@levadaarraiana.gal';
 
     // Check if authenticated user
     $user = get_session_user();
@@ -69,11 +68,8 @@ function handle_solicitude($method, $uri, $input) {
 
     $subject = "Solicitude de unirse — Levada Arraiana";
 
-    $headers  = "From: $from\r\n";
-    $headers .= "Reply-To: " . ($user ? ($user['email'] ?: $from) : $email) . "\r\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-
-    $ok = @mail($to, $subject, $body, $headers);
+    $replyTo = $user ? ($user['email'] ?: null) : $email;
+    $ok = send_email($to, $subject, $body, $replyTo);
     if (!$ok) {
         send_json(['error' => 'Erro ao enviar o correo'], 500);
     }

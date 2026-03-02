@@ -61,7 +61,7 @@ function repertorioRender() {
                 dificultadeBadge = '<span class="badge">' + esc(r.dificultade || '') + '</span>';
         }
 
-        var tipoLabel = (r.tipo || '').charAt(0).toUpperCase() + (r.tipo || '').slice(1);
+
 
         // Estructura sections
         var estructuraHtml = '';
@@ -95,11 +95,7 @@ function repertorioRender() {
         html += '<div class="card">' +
             '<div class="card-body">' +
                 '<h3 class="card-title">' + esc(r.nome) + '</h3>' +
-                '<p class="card-meta">' +
-                    esc(tipoLabel) +
-                    (r.tempo_bpm ? ' &middot; ' + r.tempo_bpm + ' BPM' : '') +
-                    ' &middot; ' + dificultadeBadge +
-                '</p>' +
+                '<p class="card-meta">' + dificultadeBadge + '</p>' +
                 (r.notas ? '<p class="card-text">' + esc(r.notas) + '</p>' : '') +
                 estructuraHtml +
                 audioHtml +
@@ -166,13 +162,6 @@ function repertorioModal(item) {
 
     $('#modal-title').textContent = title;
 
-    var tipoOptions = ['samba', 'funk', 'maracatu', 'axe', 'samba-reggae', 'outro'].map(function(tp) {
-        var sel = (isEdit && item.tipo === tp) ? ' selected' : '';
-        var label = tp.charAt(0).toUpperCase() + tp.slice(1);
-        if (tp === 'axe') label = 'Axe';
-        if (tp === 'samba-reggae') label = 'Samba-Reggae';
-        return '<option value="' + tp + '"' + sel + '>' + label + '</option>';
-    }).join('');
 
     var dificOptions = ['facil', 'media', 'dificil'].map(function(d) {
         var sel = (isEdit && item.dificultade === d) ? ' selected' : '';
@@ -195,16 +184,6 @@ function repertorioModal(item) {
         '<div class="form-group">' +
             '<label class="required">' + t('nome') + '</label>' +
             '<input type="text" class="form-control" id="repertorio-nome" value="' + esc(isEdit ? item.nome : '') + '">' +
-        '</div>' +
-        '<div class="form-row">' +
-            '<div class="form-group" style="flex:1">' +
-                '<label>' + t('tipo') + '</label>' +
-                '<select class="form-control" id="repertorio-tipo">' + tipoOptions + '</select>' +
-            '</div>' +
-            '<div class="form-group" style="flex:1">' +
-                '<label>' + t('tempo_bpm') + '</label>' +
-                '<input type="number" class="form-control" id="repertorio-bpm" min="1" max="300" value="' + (isEdit ? item.tempo_bpm || '' : '') + '">' +
-            '</div>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('dificultade') + '</label>' +
@@ -250,8 +229,6 @@ async function repertorioSave() {
 
     var body = {
         nome: ($('#repertorio-nome') || {}).value || '',
-        tipo: ($('#repertorio-tipo') || {}).value || 'samba',
-        tempo_bpm: parseInt(($('#repertorio-bpm') || {}).value) || null,
         dificultade: ($('#repertorio-dificultade') || {}).value || 'media',
         notas: ($('#repertorio-notas') || {}).value || '',
         estructura: _repEstructura
@@ -282,9 +259,9 @@ async function repertorioSave() {
 }
 
 function repertorioExport(format) {
-    var headers = [t('nome'), t('tipo'), t('tempo_bpm'), t('dificultade')];
+    var headers = [t('nome'), t('dificultade')];
     var rows = (AppState.repertorio || []).map(function(r) {
-        return [r.nome, r.tipo || '', r.tempo_bpm || '', r.dificultade || ''];
+        return [r.nome, r.dificultade || ''];
     });
     if (format === 'pdf') {
         exportPDF(t('repertorio'), headers, rows);
@@ -343,15 +320,15 @@ function _repMediosRender(repId, ritmo, medios, instrumentos) {
     var canEdit = AppState.isSocio();
     var html = '';
 
-    // Helper: find medio by slot
-    function findMedio(parteIdx, instrId) {
-        return medios.find(function(m) { return m.parte_idx == parteIdx && m.instrumento_id == instrId; });
+    // Helper: find medio by slot and type
+    function findMedio(parteIdx, instrId, tipoMedia) {
+        return medios.find(function(m) { return m.parte_idx == parteIdx && m.instrumento_id == instrId && m.tipo_media === tipoMedia; });
     }
 
     // --- Xeral (ritmo-level, parte_idx=-1, instrumento_id=0) ---
     html += '<div class="medios-section">';
     html += '<h4 class="medios-section-title">' + t('xeral') + ' — ' + esc(ritmo.nome) + '</h4>';
-    html += _repMedioSlotHtml(repId, -1, 0, findMedio(-1, 0), canEdit);
+    html += _repMedioDualSlotHtml(repId, -1, 0, findMedio(-1, 0, 'audio'), findMedio(-1, 0, 'youtube'), canEdit);
     html += '</div>';
 
     // --- Estructura (one card per parte) ---
@@ -374,7 +351,7 @@ function _repMediosRender(repId, ritmo, medios, instrumentos) {
             '</div>';
 
             // Parte-level slot (parte_idx=idx, instrumento_id=0)
-            html += _repMedioSlotHtml(repId, idx, 0, findMedio(idx, 0), canEdit);
+            html += _repMedioDualSlotHtml(repId, idx, 0, findMedio(idx, 0, 'audio'), findMedio(idx, 0, 'youtube'), canEdit);
 
             // Per-instrument (collapsible)
             if (instrumentos.length > 0) {
@@ -384,7 +361,7 @@ function _repMediosRender(repId, ritmo, medios, instrumentos) {
                 instrumentos.forEach(function(inst) {
                     html += '<div class="medios-instrumento-item">';
                     html += '<span class="medios-instrumento-label">' + esc(inst.nome) + '</span>';
-                    html += _repMedioSlotHtml(repId, idx, inst.id, findMedio(idx, inst.id), canEdit);
+                    html += _repMedioDualSlotHtml(repId, idx, inst.id, findMedio(idx, inst.id, 'audio'), findMedio(idx, inst.id, 'youtube'), canEdit);
                     html += '</div>';
                 });
                 html += '</div></details>';
@@ -408,89 +385,53 @@ function _repYoutubeIdFromUrl(src) {
     return m ? m[1] : '';
 }
 
-function _repMedioSlotHtml(repId, parteIdx, instrId, medio, canEdit) {
-    if (medio && medio.arquivo) {
-        var isYT = _repIsYoutubeUrl(medio.arquivo);
-        var player;
+function _repMedioDualSlotHtml(repId, parteIdx, instrId, medioAudio, medioYT, canEdit) {
+    var html = '';
 
-        if (isYT) {
-            var ytId = _repYoutubeIdFromUrl(medio.arquivo);
-            player = '<iframe width="280" height="158" src="' + esc(medio.arquivo) + '" frameborder="0" allowfullscreen style="border-radius:var(--radius);max-width:100%"></iframe>';
-        } else if (medio.tipo_media === 'video') {
-            var url = uploadUrl(medio.arquivo);
-            player = '<video controls preload="none" style="max-height:200px;max-width:100%;border-radius:var(--radius)"><source src="' + esc(url) + '"></video>';
-        } else {
-            var url = uploadUrl(medio.arquivo);
-            player = '<audio controls preload="none" style="height:36px;flex:1;min-width:0"><source src="' + esc(url) + '"></audio>';
-        }
-
+    // --- Audio slot ---
+    if (medioAudio && medioAudio.arquivo) {
+        var url = uploadUrl(medioAudio.arquivo);
+        var player = '<audio controls preload="none" style="height:36px;flex:1;min-width:0"><source src="' + esc(url) + '"></audio>';
         var deleteBtn = canEdit
-            ? '<button class="btn-icon btn-danger btn-sm" onclick="_repMedioDelete(' + repId + ',' + medio.id + ')" title="' + t('eliminar') + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
+            ? '<button class="btn-icon btn-danger btn-sm" onclick="_repMedioDelete(' + repId + ',' + medioAudio.id + ')" title="' + t('eliminar') + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
             : '';
-
-        return '<div class="medios-slot">' + player +
-            '<span class="medios-slot-name" title="' + esc(medio.arquivo_nome) + '">' + esc(medio.arquivo_nome) + '</span>' +
+        html += '<div class="medios-slot">' + player +
+            '<span class="medios-slot-name" title="' + esc(medioAudio.arquivo_nome) + '">' + esc(medioAudio.arquivo_nome) + '</span>' +
             deleteBtn + '</div>';
-    }
-
-    if (canEdit) {
-        var inputId = 'medio-input-' + parteIdx + '-' + instrId;
-        return '<div class="medios-slot">' +
-            '<input type="file" class="form-control" id="' + inputId + '" accept="audio/*,video/*" ' +
+    } else if (canEdit) {
+        var inputId = 'medio-audio-' + parteIdx + '-' + instrId;
+        html += '<div class="medios-slot">' +
+            '<input type="file" class="form-control" id="' + inputId + '" accept="audio/*" ' +
             'onchange="_repMedioUpload(' + repId + ',' + parteIdx + ',' + instrId + ',this)">' +
             '</div>';
     }
 
-    return '';
-}
+    // --- YouTube/Video slot ---
+    if (medioYT && medioYT.arquivo) {
+        var deleteBtn2 = canEdit
+            ? '<button class="btn-icon btn-danger btn-sm" onclick="_repMedioDelete(' + repId + ',' + medioYT.id + ')" title="' + t('eliminar') + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
+            : '';
+        html += '<div class="medios-slot">' +
+            '<iframe width="280" height="158" src="' + esc(medioYT.arquivo) + '" frameborder="0" allowfullscreen style="border-radius:var(--radius);max-width:100%"></iframe>' +
+            deleteBtn2 + '</div>';
+    } else if (canEdit) {
+        var vidInputId = 'medio-video-' + parteIdx + '-' + instrId;
+        html += '<div class="medios-slot">' +
+            '<input type="file" class="form-control" id="' + vidInputId + '" accept="video/*" ' +
+            'onchange="_repVideoUpload(' + repId + ',' + parteIdx + ',' + instrId + ',this)">' +
+            '</div>';
+    }
 
-var _repVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
+    return html;
+}
 
 async function _repMedioUpload(repId, parteIdx, instrId, input) {
     if (!input.files || !input.files.length) return;
     var file = input.files[0];
     input.disabled = true;
 
-    var ext = (file.name.split('.').pop() || '').toLowerCase();
-    var isVideo = _repVideoExts.indexOf(ext) !== -1 || file.type.startsWith('video/');
-
     try {
         var f = await fileToBase64(file);
-
-        if (isVideo) {
-            // Upload video to YouTube
-            var ritmo = (AppState.repertorio || []).find(function(x) { return x.id == repId; });
-            var title = ritmo ? ritmo.nome : 'Levada Arraiana';
-            toast('Subindo vídeo a YouTube...', 'info');
-
-            var ytResult = await api('/youtube/upload', {
-                method: 'POST',
-                body: {
-                    title: title,
-                    description: 'Levada Arraiana — ' + title,
-                    video_data: f.data,
-                    video_ext: ext || 'mp4'
-                }
-            });
-
-            if (ytResult.youtube_url) {
-                await api('/repertorio/' + repId + '/medios', {
-                    method: 'PUT',
-                    body: {
-                        parte_idx: parteIdx,
-                        instrumento_id: instrId,
-                        youtube_url: ytResult.youtube_url,
-                        nome: f.name,
-                        tipo_media: 'youtube'
-                    }
-                });
-                toast(t('exito'), 'success');
-                repertorioMediosModal(repId);
-                return;
-            }
-        }
-
-        // Audio file — store locally
         await api('/repertorio/' + repId + '/medios', {
             method: 'PUT',
             body: {
@@ -503,6 +444,51 @@ async function _repMedioUpload(repId, parteIdx, instrId, input) {
         });
         toast(t('exito'), 'success');
         repertorioMediosModal(repId);
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+        input.disabled = false;
+    }
+}
+
+var _repVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
+
+async function _repVideoUpload(repId, parteIdx, instrId, input) {
+    if (!input.files || !input.files.length) return;
+    var file = input.files[0];
+    input.disabled = true;
+
+    var ext = (file.name.split('.').pop() || '').toLowerCase();
+    var ritmo = (AppState.repertorio || []).find(function(x) { return x.id == repId; });
+    var title = ritmo ? ritmo.nome : 'Levada Arraiana';
+
+    try {
+        var f = await fileToBase64(file);
+        toast('Subindo vídeo a YouTube...', 'info');
+
+        var ytResult = await api('/youtube/upload', {
+            method: 'POST',
+            body: {
+                title: title,
+                description: 'Levada Arraiana — ' + title,
+                video_data: f.data,
+                video_ext: ext || 'mp4'
+            }
+        });
+
+        if (ytResult.youtube_url) {
+            await api('/repertorio/' + repId + '/medios', {
+                method: 'PUT',
+                body: {
+                    parte_idx: parteIdx,
+                    instrumento_id: instrId,
+                    youtube_url: ytResult.youtube_url,
+                    nome: f.name,
+                    tipo_media: 'youtube'
+                }
+            });
+            toast(t('exito'), 'success');
+            repertorioMediosModal(repId);
+        }
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
         input.disabled = false;

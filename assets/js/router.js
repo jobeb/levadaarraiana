@@ -18,8 +18,11 @@ const Router = {
     },
 
     _resolve() {
-        const hash = window.location.hash.slice(1) || 'dashboard';
+        const raw = window.location.hash.slice(1) || 'dashboard';
+        const slashIdx = raw.indexOf('/');
+        const hash = slashIdx === -1 ? raw : raw.substring(0, slashIdx);
         AppState.currentSection = hash;
+        AppState.routeParam = slashIdx === -1 ? null : decodeURIComponent(raw.substring(slashIdx + 1));
 
         // Hide all sections, show target
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));

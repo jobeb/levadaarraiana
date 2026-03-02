@@ -42,8 +42,8 @@ function handle_repertorio($method, $uri, $input) {
             if (!$youtube_url && (!$data || !$nome)) send_json(['error' => 'Faltan data ou nome'], 400);
 
             // Check if slot exists — delete old local file
-            $stmt = $db->prepare("SELECT * FROM repertorio_medios WHERE repertorio_id = ? AND parte_idx = ? AND instrumento_id = ?");
-            $stmt->execute([$id, $parte_idx, $instrumento_id]);
+            $stmt = $db->prepare("SELECT * FROM repertorio_medios WHERE repertorio_id = ? AND parte_idx = ? AND instrumento_id = ? AND tipo_media = ?");
+            $stmt->execute([$id, $parte_idx, $instrumento_id, $tipo_media]);
             $existing = $stmt->fetch();
             if ($existing && $existing['arquivo'] && strpos($existing['arquivo'], 'youtube.com/') === false) {
                 $old = UPLOADS_DIR . '/' . $existing['arquivo'];

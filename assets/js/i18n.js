@@ -174,6 +174,7 @@ const TRANSLATIONS = {
     xa_votaches:        { gl:'Xa votaches', es:'Ya votaste', pt:'Já votou', en:'Already voted' },
     resultados:         { gl:'Resultados', es:'Resultados', pt:'Resultados', en:'Results' },
     pechar:             { gl:'Pechar', es:'Cerrar', pt:'Fechar', en:'Close' },
+    compartir_whatsapp: { gl:'Compartir en WhatsApp', es:'Compartir en WhatsApp', pt:'Compartilhar no WhatsApp', en:'Share on WhatsApp' },
 
     // ---- Contratos (reused in bolos) ----
     contrato:           { gl:'Contrato', es:'Contrato', pt:'Contrato', en:'Contract' },
@@ -384,6 +385,9 @@ const TRANSLATIONS = {
     admin_comentarios:      { gl:'Xestión de comentarios', es:'Gestión de comentarios', pt:'Gestão de comentários', en:'Comment management' },
 
     // ---- Moderación de comentarios ----
+    metodo_envio:       { gl:'Método de envío de correo', es:'Método de envío de correo', pt:'Método de envio de email', en:'Email sending method' },
+    cifrado:            { gl:'Cifrado', es:'Cifrado', pt:'Encriptação', en:'Encryption' },
+    ningunha:           { gl:'Ningunha', es:'Ninguna', pt:'Nenhuma', en:'None' },
     moderacion_comentarios: { gl:'Moderación de comentarios', es:'Moderación de comentarios', pt:'Moderação de comentários', en:'Comment moderation' },
     publicar_automaticamente: { gl:'Publicar automaticamente', es:'Publicar automáticamente', pt:'Publicar automaticamente', en:'Auto-publish' },
     requirir_aprobacion: { gl:'Requirir aprobación', es:'Requerir aprobación', pt:'Requerer aprovação', en:'Require approval' },

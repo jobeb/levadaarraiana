@@ -70,6 +70,12 @@
 .btn-icon.btn-success:hover {
     color: var(--accent-green);
 }
+.btn-icon.btn-whatsapp {
+    color: #25D366;
+}
+.btn-icon.btn-whatsapp:hover {
+    color: #128C7E;
+}
 
 /* ---- Cards ---- */
 .card {

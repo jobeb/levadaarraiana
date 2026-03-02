@@ -61,32 +61,46 @@ function configuracionRender() {
     '</div>';
 
     /* ---- SMTP tab ---- */
+    var metodo = cfg.email_metodo || 'php_mail';
     html += '<div class="config-tab-panel" id="cfg-smtp" style="display:none">' +
-        '<div class="form-row">' +
-            '<div class="form-group" style="flex:2">' +
-                '<label>SMTP Host</label>' +
-                '<input type="text" class="form-control" id="cfg-smtp-host" value="' + esc(cfg.smtp_host || '') + '">' +
+        '<div class="form-group">' +
+            '<label>' + t('metodo_envio') + '</label>' +
+            '<select class="form-control" id="cfg-email-metodo" onchange="_cfgToggleSmtp()">' +
+                '<option value="php_mail"' + (metodo === 'php_mail' ? ' selected' : '') + '>PHP mail()</option>' +
+                '<option value="smtp"' + (metodo === 'smtp' ? ' selected' : '') + '>SMTP</option>' +
+            '</select>' +
+        '</div>' +
+        '<div id="cfg-smtp-fields" style="' + (metodo === 'smtp' ? '' : 'display:none') + '">' +
+            '<div class="form-row">' +
+                '<div class="form-group" style="flex:2">' +
+                    '<label>SMTP Host</label>' +
+                    '<input type="text" class="form-control" id="cfg-smtp-host" value="' + esc(cfg.smtp_host || '') + '">' +
+                '</div>' +
+                '<div class="form-group" style="flex:1">' +
+                    '<label>SMTP Port</label>' +
+                    '<input type="number" class="form-control" id="cfg-smtp-port" value="' + (cfg.smtp_port || 587) + '">' +
+                '</div>' +
             '</div>' +
-            '<div class="form-group" style="flex:1">' +
-                '<label>SMTP Port</label>' +
-                '<input type="number" class="form-control" id="cfg-smtp-port" value="' + (cfg.smtp_port || 587) + '">' +
+            '<div class="form-group">' +
+                '<label>SMTP User</label>' +
+                '<input type="text" class="form-control" id="cfg-smtp-user" value="' + esc(cfg.smtp_user || '') + '">' +
             '</div>' +
-        '</div>' +
-        '<div class="form-group">' +
-            '<label>SMTP User</label>' +
-            '<input type="text" class="form-control" id="cfg-smtp-user" value="' + esc(cfg.smtp_user || '') + '">' +
-        '</div>' +
-        '<div class="form-group">' +
-            '<label>SMTP Pass</label>' +
-            '<input type="password" class="form-control" id="cfg-smtp-pass" value="' + esc(cfg.smtp_pass || '') + '">' +
-        '</div>' +
-        '<div class="form-group">' +
-            '<label>SMTP From</label>' +
-            '<input type="text" class="form-control" id="cfg-smtp-from" value="' + esc(cfg.smtp_from || '') + '">' +
-        '</div>' +
-        '<div class="form-group">' +
-            '<label>Cifrado (tls/ssl/none)</label>' +
-            '<input type="text" class="form-control" id="cfg-smtp-cifrado" value="' + esc(cfg.smtp_cifrado || 'tls') + '">' +
+            '<div class="form-group">' +
+                '<label>SMTP Pass</label>' +
+                '<input type="password" class="form-control" id="cfg-smtp-pass" value="' + esc(cfg.smtp_pass || '') + '">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>SMTP From</label>' +
+                '<input type="text" class="form-control" id="cfg-smtp-from" value="' + esc(cfg.smtp_from || '') + '">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>' + t('cifrado') + '</label>' +
+                '<select class="form-control" id="cfg-smtp-cifrado">' +
+                    '<option value="TLS"' + ((cfg.smtp_cifrado || 'TLS').toUpperCase() === 'TLS' ? ' selected' : '') + '>TLS</option>' +
+                    '<option value="SSL"' + ((cfg.smtp_cifrado || '').toUpperCase() === 'SSL' ? ' selected' : '') + '>SSL</option>' +
+                    '<option value="none"' + ((cfg.smtp_cifrado || '').toLowerCase() === 'none' ? ' selected' : '') + '>' + t('ningunha') + '</option>' +
+                '</select>' +
+            '</div>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>Email destino</label>' +
@@ -244,8 +258,9 @@ async function configuracionSave() {
         smtp_user: ($('#cfg-smtp-user') || {}).value || '',
         smtp_pass: ($('#cfg-smtp-pass') || {}).value || '',
         smtp_from: ($('#cfg-smtp-from') || {}).value || '',
-        smtp_cifrado: ($('#cfg-smtp-cifrado') || {}).value || 'tls',
+        smtp_cifrado: ($('#cfg-smtp-cifrado') || {}).value || 'TLS',
         email_dest: ($('#cfg-email-dest') || {}).value || '',
+        email_metodo: ($('#cfg-email-metodo') || {}).value || 'php_mail',
         // Fiscal
         fiscal_nome: ($('#cfg-fiscal-nome') || {}).value || '',
         fiscal_nif: ($('#cfg-fiscal-nif') || {}).value || '',
@@ -282,6 +297,12 @@ async function configuracionSave() {
 }
 
 // ---- Calendar color helpers ----
+
+function _cfgToggleSmtp() {
+    var metodo = ($('#cfg-email-metodo') || {}).value || 'php_mail';
+    var fields = $('#cfg-smtp-fields');
+    if (fields) fields.style.display = metodo === 'smtp' ? '' : 'none';
+}
 
 function _calResetColors() {
     var defaults = { ensaios: '#e3c300', bolos: '#ff9800', noticias: '#005f97', votacions: '#a50d3d' };

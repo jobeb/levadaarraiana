@@ -94,8 +94,7 @@ function _sol_bolos_send_email($db, $nome, $email, $telefono, $data_evento, $lug
     $cfg = $db->query("SELECT * FROM config WHERE id = 1")->fetch();
     if (!$cfg || empty($cfg['email_dest'])) return;
 
-    $to   = $cfg['email_dest'];
-    $from = $cfg['smtp_from'] ?: $cfg['smtp_user'] ?: 'noreply@levadaarraiana.gal';
+    $to = $cfg['email_dest'];
 
     $body  = "Nova solicitude de contratacion\n";
     $body .= "================================\n\n";
@@ -109,9 +108,5 @@ function _sol_bolos_send_email($db, $nome, $email, $telefono, $data_evento, $lug
 
     $subject = "Solicitude de contratacion — Levada Arraiana";
 
-    $headers  = "From: $from\r\n";
-    $headers .= "Reply-To: $email\r\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-
-    @mail($to, $subject, $body, $headers);
+    send_email($to, $subject, $body, $email);
 }

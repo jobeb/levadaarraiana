@@ -113,6 +113,31 @@ function ensure_dirs() {
     }
 }
 
+// ---- Email dispatcher (php_mail or smtp based on config) ----
+function send_email($to, $subject, $body, $replyTo = null) {
+    $cfg = get_db()->query("SELECT * FROM config WHERE id = 1")->fetch();
+    if (!$cfg) return false;
+
+    $from = ($cfg['smtp_from'] ?: $cfg['smtp_user']) ?: 'noreply@levadaarraiana.gal';
+    $metodo = $cfg['email_metodo'] ?? 'php_mail';
+
+    if ($metodo === 'smtp') {
+        try {
+            smtp_send($cfg, $to, $subject, $body);
+            return true;
+        } catch (Exception $e) {
+            error_log("SMTP send failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // Default: PHP mail()
+    $headers  = "From: $from\r\n";
+    if ($replyTo) $headers .= "Reply-To: $replyTo\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    return @mail($to, $subject, $body, $headers);
+}
+
 // ---- SMTP helper ----
 function smtp_send($cfg, $to, $subject, $body, $attachments = []) {
     $host = $cfg['smtp_host'];

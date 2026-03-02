@@ -50,7 +50,7 @@ function handle_configuracion($method, $uri, $input) {
         $stmt = $db->prepare(
             "UPDATE config SET
                 nome_asociacion=?, smtp_host=?, smtp_port=?, smtp_user=?, smtp_pass=?,
-                smtp_from=?, smtp_cifrado=?, email_dest=?,
+                smtp_from=?, smtp_cifrado=?, email_dest=?, email_metodo=?,
                 fiscal_nome=?, fiscal_nif=?, fiscal_enderezo=?, fiscal_cp=?,
                 fiscal_localidade=?, fiscal_provincia=?, fiscal_telefono=?, fiscal_email=?,
                 sobre_nos_gl=?, sobre_nos_es=?, sobre_nos_pt=?, sobre_nos_en=?,
@@ -68,6 +68,7 @@ function handle_configuracion($method, $uri, $input) {
             $input['smtp_from'] ?? $row['smtp_from'],
             $input['smtp_cifrado'] ?? $row['smtp_cifrado'],
             $input['email_dest'] ?? $row['email_dest'],
+            $input['email_metodo'] ?? $row['email_metodo'] ?? 'php_mail',
             $input['fiscal_nome'] ?? $row['fiscal_nome'],
             $input['fiscal_nif'] ?? $row['fiscal_nif'],
             $input['fiscal_enderezo'] ?? $row['fiscal_enderezo'],

@@ -206,8 +206,6 @@ DROP TABLE IF EXISTS `repertorio`;
 CREATE TABLE `repertorio` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nome` varchar(255) NOT NULL DEFAULT '',
-  `tipo` varchar(100) NOT NULL DEFAULT '',
-  `tempo_bpm` int(11) DEFAULT NULL,
   `dificultade` varchar(50) NOT NULL DEFAULT 'media',
   `notas` text DEFAULT NULL,
   `arquivo_audio` varchar(512) NOT NULL DEFAULT '',
@@ -227,7 +225,7 @@ CREATE TABLE `repertorio_medios` (
   `arquivo_nome` VARCHAR(255) NOT NULL DEFAULT '',
   `tipo_media` VARCHAR(20) NOT NULL DEFAULT 'audio',
   `creado` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY `unique_slot` (`repertorio_id`, `parte_idx`, `instrumento_id`),
+  UNIQUE KEY `unique_slot` (`repertorio_id`, `parte_idx`, `instrumento_id`, `tipo_media`),
   CONSTRAINT `fk_medio_rep` FOREIGN KEY (`repertorio_id`) REFERENCES `repertorio`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -243,6 +241,7 @@ CREATE TABLE `config` (
   `smtp_from` varchar(255) NOT NULL DEFAULT '',
   `smtp_cifrado` varchar(10) NOT NULL DEFAULT 'TLS',
   `email_dest` varchar(255) NOT NULL DEFAULT '',
+  `email_metodo` varchar(20) NOT NULL DEFAULT 'php_mail',
   `fiscal_nome` varchar(255) DEFAULT '',
   `fiscal_nif` varchar(50) DEFAULT '',
   `fiscal_enderezo` varchar(255) DEFAULT '',

@@ -593,24 +593,25 @@
     function showJoinOverlay() {
         hideOverlays();
         var container = document.getElementById('join-overlay-content');
-        if (AppState.user && AppState.token) {
+        if (AppState.user && AppState.token && AppState.isSocio()) {
             container.innerHTML =
                 '<p class="join-user-hint" style="text-align:center;font-size:1.1rem;margin:var(--gap-lg) 0">' + t('xa_formas_parte') + '</p>' +
                 '<div style="text-align:center"><a href="app.html" class="btn btn-primary">' + t('ir_ao_panel') + '</a></div>';
         } else {
+            var u = AppState.user || {};
             container.innerHTML =
                 '<form class="overlay-form" onsubmit="submitJoinRequest(event)">' +
                     '<div class="form-group">' +
                         '<label>' + t('teu_nome') + ' *</label>' +
-                        '<input type="text" id="join-nome" class="form-control" required>' +
+                        '<input type="text" id="join-nome" class="form-control" required value="' + esc(u.nome_completo || '') + '">' +
                     '</div>' +
                     '<div class="form-group">' +
                         '<label>' + t('teu_email') + ' *</label>' +
-                        '<input type="email" id="join-email" class="form-control" required>' +
+                        '<input type="email" id="join-email" class="form-control" required value="' + esc(u.email || '') + '">' +
                     '</div>' +
                     '<div class="form-group">' +
                         '<label>' + t('teu_telefono') + '</label>' +
-                        '<input type="tel" id="join-telefono" class="form-control">' +
+                        '<input type="tel" id="join-telefono" class="form-control" value="' + esc(u.telefono || '') + '">' +
                     '</div>' +
                     '<div class="form-group">' +
                         '<label>' + t('comentario_opcional') + '</label>' +

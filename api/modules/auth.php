@@ -104,9 +104,6 @@ function handle_auth($uri, $method, $input) {
         $resetUrl = $protocol . '://' . $host . $basePath . '/index.html?reset_token=' . $token;
 
         // Send email
-        $cfg = get_db()->query("SELECT * FROM config WHERE id = 1")->fetch();
-        $from = ($cfg['smtp_from'] ?? '') ?: (($cfg['smtp_user'] ?? '') ?: 'noreply@levadaarraiana.gal');
-
         $subject = 'Restablecer contrasinal — Levada Arraiana';
         $body  = "Ola " . ($user['username']) . ",\n\n";
         $body .= "Recibiches esta mensaxe porque solicitaches restablecer o teu contrasinal.\n\n";
@@ -116,10 +113,7 @@ function handle_auth($uri, $method, $input) {
         $body .= "Se non solicitaches este cambio, ignora esta mensaxe.\n\n";
         $body .= "— Levada Arraiana";
 
-        $headers  = "From: $from\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-
-        @mail($user['email'], $subject, $body, $headers);
+        send_email($user['email'], $subject, $body);
 
         send_json(['ok' => true]);
     }

@@ -28,12 +28,12 @@ const AppState = {
         this.user = user;
         if (user && user.token) {
             this.token = user.token;
-            sessionStorage.setItem('session', JSON.stringify(user));
+            localStorage.setItem('session', JSON.stringify(user));
         }
     },
 
     loadSession() {
-        const s = sessionStorage.getItem('session');
+        const s = localStorage.getItem('session');
         if (s) {
             try {
                 const data = JSON.parse(s);
@@ -48,7 +48,7 @@ const AppState = {
     clearSession() {
         this.user = null;
         this.token = null;
-        sessionStorage.removeItem('session');
+        localStorage.removeItem('session');
     },
 
     isAdmin() {
