@@ -105,7 +105,7 @@ function repertorioRender() {
             '</div>' +
             '<div class="card-actions">' +
                 '<button class="btn-icon" onclick="repertorioMediosModal(' + r.id + ')" title="' + t('medios') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>' +
-                '<button class="btn-icon" onclick="_repDownloadZip(' + r.id + ')" title="' + t('descargar_medios') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>' +
+                (isAdmin ? '<button class="btn-icon" onclick="_repDownloadZip(' + r.id + ')" title="' + t('descargar_medios') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>' : '') +
                 (isAdmin
                     ? '<button class="btn-icon" onclick="repertorioModal(AppState.repertorio.find(function(x){return x.id==' + r.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
                       '<button class="btn-icon btn-danger" onclick="repertorioDelete(' + r.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
@@ -412,9 +412,13 @@ function _repMedioDualSlotHtml(repId, parteIdx, instrId, medioAudio, medioYT, ca
             dlBtn + deleteBtn + '</div>';
     } else if (canEdit) {
         var inputId = 'medio-audio-' + parteIdx + '-' + instrId;
+        var recAudioId = 'rec-audio-' + parteIdx + '-' + instrId;
         html += '<div class="medios-slot"><label class="medios-slot-label">' + t('audio') + '</label>' +
             '<input type="file" class="form-control" id="' + inputId + '" accept="audio/*" ' +
             'onchange="_repMedioQueue(' + parteIdx + ',' + instrId + ',this,\'audio\')">' +
+            '<button class="btn-icon btn-sm" id="' + recAudioId + '" onclick="_repStartRec(' + parteIdx + ',' + instrId + ',\'audio\',this)" title="' + t('gravar') + '">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>' +
+            '</button>' +
             '</div>';
     }
 
@@ -432,9 +436,13 @@ function _repMedioDualSlotHtml(repId, parteIdx, instrId, medioAudio, medioYT, ca
             dlBtn2 + deleteBtn2 + '</div>';
     } else if (canEdit) {
         var vidInputId = 'medio-video-' + parteIdx + '-' + instrId;
+        var recVideoId = 'rec-video-' + parteIdx + '-' + instrId;
         html += '<div class="medios-slot"><label class="medios-slot-label">' + t('video') + '</label>' +
             '<input type="file" class="form-control" id="' + vidInputId + '" accept="video/*" ' +
             'onchange="_repMedioQueue(' + parteIdx + ',' + instrId + ',this,\'video\')">' +
+            '<button class="btn-icon btn-sm" id="' + recVideoId + '" onclick="_repStartRec(' + parteIdx + ',' + instrId + ',\'video\',this)" title="' + t('gravar') + '">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>' +
+            '</button>' +
             '</div>';
     }
 
@@ -608,5 +616,80 @@ async function _repDownloadZip(repId) {
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }
+}
+
+// ---- Recording ----
+
+var _repRecorder = null;
+var _repRecChunks = [];
+var _repRecStream = null;
+
+async function _repStartRec(parteIdx, instrId, tipo, btn) {
+    // If already recording, stop
+    if (_repRecorder && _repRecorder.state === 'recording') {
+        _repRecorder.stop();
+        return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast(t('erro_permiso_micro') + ' (getUserMedia non dispoñible — require HTTPS)', 'error');
+        return;
+    }
+    var constraints = tipo === 'video' ? { audio: true, video: true } : { audio: true };
+    try {
+        _repRecStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (e) {
+        toast(t('erro_permiso_micro') + ': ' + e.message, 'error');
+        return;
+    }
+
+    _repRecChunks = [];
+    var mimeType = tipo === 'video'
+        ? (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm')
+        : (MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm');
+
+    _repRecorder = new MediaRecorder(_repRecStream, { mimeType: mimeType });
+
+    _repRecorder.ondataavailable = function(e) {
+        if (e.data.size > 0) _repRecChunks.push(e.data);
+    };
+
+    _repRecorder.onstop = function() {
+        _repRecStream.getTracks().forEach(function(tk) { tk.stop(); });
+
+        var ext = 'webm';
+        var blob = new Blob(_repRecChunks, { type: mimeType });
+        var file = new File([blob], 'gravacion_' + Date.now() + '.' + ext, { type: mimeType });
+
+        // Show preview in the slot
+        var slotDiv = btn.closest('.medios-slot');
+        if (slotDiv) {
+            var playerHtml = tipo === 'video'
+                ? '<video controls src="' + URL.createObjectURL(blob) + '" class="rec-preview-player"></video>'
+                : '<audio controls src="' + URL.createObjectURL(blob) + '" class="rec-preview-player"></audio>';
+            var existing = slotDiv.querySelector('.rec-preview');
+            if (existing) existing.remove();
+            var preview = document.createElement('div');
+            preview.className = 'rec-preview';
+            preview.innerHTML = playerHtml + '<span class="medios-slot-name">' + esc(file.name) + '</span>';
+            slotDiv.appendChild(preview);
+        }
+
+        // Queue the file
+        _repPendingUploads = _repPendingUploads.filter(function(p) {
+            return !(p.parteIdx === parteIdx && p.instrId === instrId && p.tipo === tipo);
+        });
+        _repPendingUploads.push({ parteIdx: parteIdx, instrId: instrId, file: file, tipo: tipo });
+
+        btn.classList.remove('rec-active');
+        btn.title = t('gravar');
+        _repRecorder = null;
+        _repRecStream = null;
+    };
+
+    _repRecorder.start();
+    btn.classList.add('rec-active');
+    btn.title = t('gravando_pulsa_parar');
+    toast(t('gravando'), 'info');
 }
 

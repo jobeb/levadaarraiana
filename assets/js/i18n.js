@@ -233,6 +233,10 @@ const TRANSLATIONS = {
     abrir_youtube:      { gl:'Abrir en YouTube', es:'Abrir en YouTube', pt:'Abrir no YouTube', en:'Open on YouTube' },
     preparando_descarga:{ gl:'Preparando descarga...', es:'Preparando descarga...', pt:'Preparando download...', en:'Preparing download...' },
     sen_medios:         { gl:'Non hai medios para descargar', es:'No hay medios para descargar', pt:'Não há médias para descarregar', en:'No media to download' },
+    gravar:             { gl:'Gravar', es:'Grabar', pt:'Gravar', en:'Record' },
+    gravando:           { gl:'Gravando... Pulsa de novo para parar', es:'Grabando... Pulsa de nuevo para parar', pt:'Gravando... Clique novamente para parar', en:'Recording... Click again to stop' },
+    gravando_pulsa_parar: { gl:'Gravando — pulsa para parar', es:'Grabando — pulsa para parar', pt:'Gravando — clique para parar', en:'Recording — click to stop' },
+    erro_permiso_micro: { gl:'Non se puido acceder ao micrófono/cámara', es:'No se pudo acceder al micrófono/cámara', pt:'Não foi possível aceder ao microfone/câmera', en:'Could not access microphone/camera' },
 
     // ---- Config ----
     nome_asociacion:    { gl:'Nome asociación', es:'Nombre asociación', pt:'Nome associação', en:'Association name' },

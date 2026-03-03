@@ -922,6 +922,26 @@ iframe.instrumento-yt-embed { height: 220px; border: none; }
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.rec-active {
+    color: var(--danger) !important;
+    animation: rec-pulse 1s infinite;
+}
+@keyframes rec-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+.rec-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+.rec-preview-player {
+    max-width: 280px;
+    border-radius: var(--radius);
+}
+audio.rec-preview-player { height: 36px; }
+video.rec-preview-player { max-height: 160px; }
 .medios-instrumentos summary {
     cursor: pointer;
     font-size: 0.85rem;
