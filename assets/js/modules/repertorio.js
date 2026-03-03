@@ -671,8 +671,21 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
 
             var player = document.createElement(tipo === 'video' ? 'video' : 'audio');
             player.controls = true;
+            player.preload = 'metadata';
             player.className = 'rec-preview-player';
-            player.src = URL.createObjectURL(blob);
+            var blobUrl = URL.createObjectURL(blob);
+            player.src = blobUrl;
+
+            // Fix WebM missing duration: seek to end to force browser to calculate it
+            player.addEventListener('loadedmetadata', function() {
+                if (player.duration === Infinity || isNaN(player.duration)) {
+                    player.currentTime = 1e101;
+                    player.addEventListener('timeupdate', function onSeek() {
+                        player.removeEventListener('timeupdate', onSeek);
+                        player.currentTime = 0;
+                    });
+                }
+            });
 
             var nameSpan = document.createElement('span');
             nameSpan.className = 'medios-slot-name';
