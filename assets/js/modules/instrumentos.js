@@ -14,6 +14,19 @@ var _instrumentoIcons = {
     outro: 'assets/img/instrumentos/outro.png'
 };
 
+function _instrumentoMediaPlayer(path) {
+    if (!path) return '';
+    if (path.indexOf('youtube.com/embed/') !== -1) {
+        return '<iframe src="' + esc(path) + '?rel=0&modestbranding=1" class="instrumento-media-player instrumento-yt-embed" allowfullscreen></iframe>';
+    }
+    var url = uploadUrl(path);
+    var ext = (path.split('.').pop() || '').toLowerCase();
+    if (['mp4','webm','mov'].indexOf(ext) !== -1) {
+        return '<video controls class="instrumento-media-player"><source src="' + esc(url) + '"></video>';
+    }
+    return '<audio controls class="instrumento-media-player"><source src="' + esc(url) + '"></audio>';
+}
+
 async function instrumentosLoad() {
     try {
         AppState.instrumentos = await api('/instrumentos');
@@ -76,7 +89,7 @@ function instrumentosRender() {
             '<div class="instrumento-card-header">' +
                 '<img src="' + esc(iconSrc) + '" alt="' + esc(i.tipo || '') + '" class="instrumento-card-icon">' +
                 '<div class="instrumento-card-info">' +
-                    '<h4>' + esc(i.nome) + '</h4>' +
+                    '<h4>' + esc(i.nome) + (i.audio_mostra ? ' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;opacity:0.7" title="' + t('audio_mostra') + '"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>' : '') + '</h4>' +
                     notasHtml +
                 '</div>' +
                 (actions ? '<div class="instrumento-card-actions" onclick="event.stopPropagation()">' + actions + '</div>' : '') +
@@ -119,6 +132,11 @@ function instrumentosModal(item) {
         '<div class="form-group">' +
             '<label>' + t('descricion') + '</label>' +
             '<div class="rt-wrap" id="instrumento-descricion-editor"></div>' +
+        '</div>' +
+        '<div class="form-group">' +
+            '<label>' + t('audio_mostra') + '</label>' +
+            '<input type="file" class="form-control" id="instrumento-audio" accept="audio/*,video/mp4,video/webm">' +
+            (isEdit && item.audio_mostra ? '<div id="instrumento-audio-preview" class="instrumento-audio-preview">' + _instrumentoMediaPlayer(item.audio_mostra) + '<button type="button" class="btn btn-sm btn-danger" style="margin-top:6px" onclick="$(\'#instrumento-audio-remove\').value=\'1\';this.parentNode.innerHTML=\'<em class=text-muted>' + t('eliminado') + '</em>\'">' + t('eliminar') + '</button><input type="hidden" id="instrumento-audio-remove" value=""></div>' : '<div id="instrumento-audio-preview"></div>') +
         '</div>';
 
     initRichTextEditor('instrumento-descricion-editor', isEdit ? item.descricion || '' : '', { uploadDir: 'instrumentos' });
@@ -142,6 +160,25 @@ function instrumentosModal(item) {
                     imaxeInput.parentNode.appendChild(preview);
                 }
                 preview.src = URL.createObjectURL(imaxeInput.files[0]);
+            }
+        });
+    }
+
+    // Live preview when selecting audio/video
+    var audioInput = $('#instrumento-audio');
+    if (audioInput) {
+        audioInput.addEventListener('change', function() {
+            var preview = $('#instrumento-audio-preview');
+            if (!preview) return;
+            if (audioInput.files && audioInput.files[0]) {
+                var file = audioInput.files[0];
+                var objUrl = URL.createObjectURL(file);
+                var isVideo = file.type.startsWith('video/');
+                if (isVideo) {
+                    preview.innerHTML = '<video controls class="instrumento-media-player"><source src="' + objUrl + '"></video>';
+                } else {
+                    preview.innerHTML = '<audio controls class="instrumento-media-player"><source src="' + objUrl + '"></audio>';
+                }
             }
         });
     }
@@ -172,6 +209,47 @@ async function instrumentosSave() {
         var imgB64 = await imageToBase64(fileInput.files[0]);
         body.imaxe_data = imgB64.data;
         body.imaxe_ext = 'jpg';
+    }
+
+    // Audio/video sample
+    var audioInput = $('#instrumento-audio');
+    if (audioInput && audioInput.files && audioInput.files.length > 0) {
+        var mediaFile = audioInput.files[0];
+        var mediaExt = (mediaFile.name.split('.').pop() || '').toLowerCase();
+        var isVideoFile = mediaFile.type.startsWith('video/') || ['mp4','webm','ogg','mov','avi'].indexOf(mediaExt) !== -1;
+
+        if (isVideoFile) {
+            // Videos go to YouTube
+            toast('Subindo vídeo a YouTube...', 'info');
+            try {
+                var vidB64 = await fileToBase64(mediaFile);
+                var ytResult = await api('/youtube/upload', {
+                    method: 'POST',
+                    body: {
+                        title: body.nome || 'Levada Arraiana',
+                        description: 'Levada Arraiana — ' + (body.nome || ''),
+                        video_data: vidB64.data,
+                        video_ext: mediaExt || 'mp4'
+                    }
+                });
+                if (ytResult.youtube_url) {
+                    body.audio_mostra_youtube = ytResult.youtube_url;
+                    toast('Vídeo subido a YouTube', 'success');
+                }
+            } catch (ytErr) {
+                toast('Erro YouTube: ' + ytErr.message, 'error');
+                return;
+            }
+        } else {
+            // Audio files stay local
+            var audioB64 = await fileToBase64(mediaFile);
+            body.audio_mostra_data = audioB64.data;
+            body.audio_mostra_name = audioB64.name;
+        }
+    }
+    var removeAudio = ($('#instrumento-audio-remove') || {}).value;
+    if (removeAudio === '1') {
+        body.audio_mostra_remove = true;
     }
 
     try {
@@ -209,11 +287,13 @@ function instrumentosView(id) {
 
     var notasHtml = item.notas ? '<p class="text-muted" style="margin:0 0 8px">' + esc(item.notas) + '</p>' : '';
     var descHtml = item.descricion ? '<div class="rt-content instrumento-view-desc">' + sanitizeHtml(item.descricion) + '</div>' : '';
+    var audioHtml = item.audio_mostra ? '<div class="instrumento-view-audio"><label style="font-size:0.85rem;color:var(--text-dim);display:block;margin-bottom:4px">' + t('audio_mostra') + '</label>' + _instrumentoMediaPlayer(item.audio_mostra) + '</div>' : '';
 
     $('#modal-body').innerHTML =
         '<img src="' + esc(iconSrc) + '" alt="' + esc(item.nome) + '" class="instrumento-view-img">' +
         notasHtml +
-        descHtml;
+        descHtml +
+        audioHtml;
 
     var footerHtml = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
     if (AppState.isSocio()) {

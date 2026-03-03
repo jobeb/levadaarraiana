@@ -11,30 +11,6 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'instrumentos.php') {
 function handle_instrumentos($method, $uri, $input) {
     $db = get_db();
 
-    // POST /instrumentos/ID/mantemento — add maintenance entry
-    if (preg_match('#^/instrumentos/(\d+)/mantemento$#', $uri, $m) && $method === 'POST') {
-        require_socio();
-        $inst_id = (int)$m[1];
-
-        $stmt = $db->prepare("SELECT historial_mantemento FROM instrumentos WHERE id = ?");
-        $stmt->execute([$inst_id]);
-        $row = $stmt->fetch();
-        if (!$row) send_json(['error' => 'Instrumento non atopado'], 404);
-
-        $historial = json_decode($row['historial_mantemento'], true) ?? [];
-        $historial[] = [
-            'data' => $input['data'] ?? date('Y-m-d'),
-            'tipo' => $input['tipo'] ?? '',
-            'descricion' => $input['descricion'] ?? '',
-            'autor' => $input['autor'] ?? ''
-        ];
-
-        $db->prepare("UPDATE instrumentos SET historial_mantemento = ? WHERE id = ?")
-           ->execute([json_encode($historial, JSON_UNESCAPED_UNICODE), $inst_id]);
-
-        send_json(['ok' => true, 'historial' => $historial]);
-    }
-
     // Extract ID from URI: /instrumentos/123
     $id = null;
     if (preg_match('#^/instrumentos/(\d+)#', $uri, $m)) {
@@ -65,10 +41,21 @@ function handle_instrumentos($method, $uri, $input) {
             $imaxe_path = process_and_save_image('instrumentos', $tmpName, $input['imaxe_data']);
         }
 
+        // Audio/video sample
+        $audio_path = '';
+        if (!empty($input['audio_mostra_youtube'])) {
+            // YouTube URL (video uploaded to YouTube by client)
+            $audio_path = $input['audio_mostra_youtube'];
+        } elseif (!empty($input['audio_mostra_data']) && !empty($input['audio_mostra_name'])) {
+            validate_file_extension($input['audio_mostra_name'], 'media');
+            $aext = pathinfo($input['audio_mostra_name'], PATHINFO_EXTENSION);
+            $audio_path = save_base64_file('instrumentos', 'mostra_' . time() . '.' . $aext, $input['audio_mostra_data']);
+        }
+
         $i18n = isset($input['i18n']) ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
         $stmt = $db->prepare(
-            "INSERT INTO instrumentos (nome, tipo, notas, descricion, imaxe, i18n)
-             VALUES (?, ?, ?, ?, ?, ?)"
+            "INSERT INTO instrumentos (nome, tipo, notas, descricion, imaxe, audio_mostra, i18n)
+             VALUES (?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             $input['nome'] ?? '',
@@ -76,6 +63,7 @@ function handle_instrumentos($method, $uri, $input) {
             $input['notas'] ?? '',
             $input['descricion'] ?? null,
             $imaxe_path,
+            $audio_path,
             $i18n
         ]);
         $newId = $db->lastInsertId();
@@ -84,6 +72,12 @@ function handle_instrumentos($method, $uri, $input) {
         if (!empty($input['imaxe_data'])) {
             $imaxe_path = process_and_save_image('instrumentos', "instrumento_{$newId}.{$ext}", $input['imaxe_data']);
             $db->prepare("UPDATE instrumentos SET imaxe = ? WHERE id = ?")->execute([$imaxe_path, $newId]);
+        }
+        // Re-save audio with proper ID (skip for YouTube URLs)
+        if (empty($input['audio_mostra_youtube']) && !empty($input['audio_mostra_data']) && !empty($input['audio_mostra_name'])) {
+            $aext = pathinfo($input['audio_mostra_name'], PATHINFO_EXTENSION);
+            $audio_path = save_base64_file('instrumentos', "mostra_{$newId}.{$aext}", $input['audio_mostra_data']);
+            $db->prepare("UPDATE instrumentos SET audio_mostra = ? WHERE id = ?")->execute([$audio_path, $newId]);
         }
 
         send_json(['ok' => true, 'id' => $newId], 201);
@@ -103,13 +97,30 @@ function handle_instrumentos($method, $uri, $input) {
             $imaxe = process_and_save_image('instrumentos', "instrumento_{$id}.{$ext}", $input['imaxe_data']);
         }
 
+        $audio = $existing['audio_mostra'];
+        if (!empty($input['audio_mostra_youtube'])) {
+            // YouTube URL (video uploaded to YouTube by client)
+            $audio = $input['audio_mostra_youtube'];
+        } elseif (!empty($input['audio_mostra_data']) && !empty($input['audio_mostra_name'])) {
+            validate_file_extension($input['audio_mostra_name'], 'media');
+            $aext = pathinfo($input['audio_mostra_name'], PATHINFO_EXTENSION);
+            $audio = save_base64_file('instrumentos', "mostra_{$id}.{$aext}", $input['audio_mostra_data']);
+        }
+        if (isset($input['audio_mostra_remove']) && $input['audio_mostra_remove']) {
+            // Delete file if exists
+            if ($audio && file_exists(UPLOADS_DIR . '/' . $audio)) {
+                unlink(UPLOADS_DIR . '/' . $audio);
+            }
+            $audio = '';
+        }
+
         $i18n_val = $existing['i18n'];
         if (array_key_exists('i18n', $input)) {
             $i18n_val = $input['i18n'] ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
         }
 
         $stmt = $db->prepare(
-            "UPDATE instrumentos SET nome=?, tipo=?, notas=?, descricion=?, imaxe=?, i18n=? WHERE id=?"
+            "UPDATE instrumentos SET nome=?, tipo=?, notas=?, descricion=?, imaxe=?, audio_mostra=?, i18n=? WHERE id=?"
         );
         $stmt->execute([
             $input['nome'] ?? $existing['nome'],
@@ -117,6 +128,7 @@ function handle_instrumentos($method, $uri, $input) {
             $input['notas'] ?? $existing['notas'],
             array_key_exists('descricion', $input) ? $input['descricion'] : $existing['descricion'],
             $imaxe,
+            $audio,
             $i18n_val,
             $id
         ]);

@@ -162,6 +162,11 @@ const TRANSLATIONS = {
     tamano:             { gl:'Tama\u00f1o', es:'Tama\u00f1o', pt:'Tamanho', en:'Size' },
     todas_carpetas:     { gl:'Todas', es:'Todas', pt:'Todas', en:'All' },
     arquivos:           { gl:'Arquivos', es:'Archivos', pt:'Ficheiros', en:'Files' },
+    subir_arquivos:     { gl:'Subir arquivos', es:'Subir archivos', pt:'Enviar ficheiros', en:'Upload files' },
+    arrastra_arquivos:  { gl:'Arrastra os arquivos aquí', es:'Arrastra los archivos aquí', pt:'Arraste os ficheiros aqui', en:'Drag files here' },
+    seleccionar_arquivos: { gl:'Seleccionar arquivos', es:'Seleccionar archivos', pt:'Selecionar ficheiros', en:'Select files' },
+    subir:              { gl:'Subir', es:'Subir', pt:'Enviar', en:'Upload' },
+    subidos:            { gl:'Subidos', es:'Subidos', pt:'Enviados', en:'Uploaded' },
 
     // ---- Votacións ----
     votacion:           { gl:'Votación', es:'Votación', pt:'Votação', en:'Vote' },
@@ -191,15 +196,19 @@ const TRANSLATIONS = {
     confirmado:         { gl:'Confirmado', es:'Confirmado', pt:'Confirmado', en:'Confirmed' },
     ausente:            { gl:'Ausente', es:'Ausente', pt:'Ausente', en:'Absent' },
     xustificado:        { gl:'Xustificado', es:'Justificado', pt:'Justificado', en:'Excused' },
+    vista_tarxetas:     { gl:'Tarxetas', es:'Tarjetas', pt:'Cartões', en:'Cards' },
+    hora_fin_antes:     { gl:'A hora fin debe ser posterior á hora inicio', es:'La hora fin debe ser posterior a la hora inicio', pt:'A hora fim deve ser posterior à hora início', en:'End time must be after start time' },
+    conflicto_horario:  { gl:'Xa existe un ensaio nese lugar e horario. Continuar?', es:'Ya existe un ensayo en ese lugar y horario. ¿Continuar?', pt:'Já existe um ensaio nesse local e horário. Continuar?', en:'A rehearsal already exists at that place and time. Continue?' },
+    confirmo:           { gl:'Confirmo', es:'Confirmo', pt:'Confirmo', en:'I confirm' },
+    non_podo:           { gl:'Non podo', es:'No puedo', pt:'Não posso', en:'Cannot attend' },
+    n_sesions_previstas:{ gl:'{n} sesións previstas', es:'{n} sesiones previstas', pt:'{n} sessões previstas', en:'{n} sessions planned' },
+    todos_estados:      { gl:'Todos os estados', es:'Todos los estados', pt:'Todos os estados', en:'All statuses' },
+    meses_curtos:       { gl:['Xan','Feb','Mar','Abr','Mai','Xuñ','Xul','Ago','Set','Out','Nov','Dec'], es:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'], pt:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], en:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] },
 
     // ---- Instrumentos ----
     novo_instrumento:   { gl:'Novo instrumento', es:'Nuevo instrumento', pt:'Novo instrumento', en:'New instrument' },
-    numero_serie:       { gl:'Nº serie', es:'Nº serie', pt:'Nº série', en:'Serial No.' },
-    asignado_a:         { gl:'Asignado a', es:'Asignado a', pt:'Atribuído a', en:'Assigned to' },
-    bo:                 { gl:'Bo', es:'Bueno', pt:'Bom', en:'Good' },
-    reparacion:         { gl:'En reparación', es:'En reparación', pt:'Em reparação', en:'Under repair' },
-    baixa:              { gl:'Baixa', es:'Baja', pt:'Baixa', en:'Retired' },
-    sen_asignar:        { gl:'Sen asignar', es:'Sin asignar', pt:'Sem atribuir', en:'Unassigned' },
+    audio_mostra:       { gl:'Audio/vídeo de mostra', es:'Audio/vídeo de muestra', pt:'Áudio/vídeo de amostra', en:'Sample audio/video' },
+    escoitar:           { gl:'Escoitar', es:'Escuchar', pt:'Ouvir', en:'Listen' },
 
     // ---- Repertorio ----
     ritmo:              { gl:'Ritmo', es:'Ritmo', pt:'Ritmo', en:'Rhythm' },
@@ -340,7 +349,6 @@ const TRANSLATIONS = {
     votos_emitidos:     { gl:'votos emitidos', es:'votos emitidos', pt:'votos emitidos', en:'votes cast' },
     unha_por_lina:      { gl:'unha por liña', es:'una por línea', pt:'uma por linha', en:'one per line' },
     imaxe:              { gl:'Imaxe', es:'Imagen', pt:'Imagem', en:'Image' },
-    historial_mantemento: { gl:'Historial mantemento', es:'Historial mantenimiento', pt:'Histórico manutenção', en:'Maintenance history' },
 
     // ---- Landing: secciones extra ----
     os_nosos_instrumentos: { gl:'Os nosos instrumentos', es:'Nuestros instrumentos', pt:'Os nossos instrumentos', en:'Our instruments' },

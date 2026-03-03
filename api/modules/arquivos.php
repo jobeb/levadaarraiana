@@ -39,6 +39,40 @@ function handle_arquivos($method, $uri, $input) {
         send_json(['ok' => true, 'url' => $url]);
     }
 
+    // POST /arquivos/upload — multi-file upload
+    if ($method === 'POST' && $uri === '/arquivos/upload') {
+        require_socio();
+        $dir = preg_replace('/[^a-zA-Z0-9_-]/', '', $input['dir'] ?? 'documentos');
+        $name = $input['name'] ?? '';
+        $data = $input['data'] ?? '';
+        $type = $input['type'] ?? '';
+        if (!$name || !$data) send_json(['error' => 'Faltan datos'], 400);
+
+        // Determine if it's an image
+        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        $image_exts = ['jpg','jpeg','png','gif','webp'];
+        $is_image = in_array($ext, $image_exts);
+
+        // Validate extension (allow images + documents + media)
+        $allowed = ['jpg','jpeg','png','gif','webp','svg',
+                     'pdf','doc','docx','xls','xlsx','ppt','pptx','txt','odt','ods',
+                     'mp4','webm','ogg','mov','avi',
+                     'mp3','wav','m4a'];
+        if (!in_array($ext, $allowed)) {
+            send_json(['error' => 'Tipo de arquivo non permitido: .' . $ext], 400);
+        }
+
+        $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $name);
+
+        if ($is_image) {
+            $url = process_and_save_image($dir, $safe, $data);
+        } else {
+            $url = save_base64_file($dir, $safe, $data);
+        }
+
+        send_json(['ok' => true, 'url' => $url]);
+    }
+
     // DELETE — remove a file
     if ($method === 'DELETE') {
         require_socio();

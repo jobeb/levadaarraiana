@@ -45,13 +45,12 @@ function handle_documentos($method, $uri, $input) {
         }
 
         $stmt = $db->prepare(
-            "INSERT INTO documentos (titulo, descricion, visibilidade, arquivo, arquivo_nome, creado)
-             VALUES (?, ?, ?, ?, ?, NOW())"
+            "INSERT INTO documentos (titulo, descricion, arquivo, arquivo_nome, creado)
+             VALUES (?, ?, ?, ?, NOW())"
         );
         $stmt->execute([
             $input['titulo'] ?? '',
             $input['descricion'] ?? '',
-            $input['visibilidade'] ?? 'socios',
             $arquivo,
             $arquivo_nome
         ]);
@@ -77,12 +76,11 @@ function handle_documentos($method, $uri, $input) {
         }
 
         $stmt = $db->prepare(
-            "UPDATE documentos SET titulo=?, descricion=?, visibilidade=?, arquivo=?, arquivo_nome=? WHERE id=?"
+            "UPDATE documentos SET titulo=?, descricion=?, arquivo=?, arquivo_nome=? WHERE id=?"
         );
         $stmt->execute([
             $input['titulo'] ?? $existing['titulo'],
             $input['descricion'] ?? $existing['descricion'],
-            $input['visibilidade'] ?? $existing['visibilidade'],
             $arquivo,
             $arquivo_nome,
             $id

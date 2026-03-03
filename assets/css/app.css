@@ -99,6 +99,67 @@
     text-transform: uppercase;
 }
 
+/* ---- Ensaio date-box (replaces inline styles) ---- */
+.ensaio-date-box {
+    text-align: center;
+    min-width: 50px;
+    padding: 8px;
+    background: var(--bg-surface-2);
+    border-radius: 8px;
+}
+.ensaio-date-box .day {
+    font-size: 1.5em;
+    font-weight: 700;
+    line-height: 1;
+}
+.ensaio-date-box .month {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+/* ---- Ensaio card layout (replaces inline styles) ---- */
+.ensaio-card-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+.ensaio-card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.ensaio-recurrence-box {
+    text-align: center;
+    min-width: 50px;
+    padding: 10px 8px;
+    background: var(--primary-dim);
+    border-radius: 8px;
+}
+
+/* ---- Ensaio card estado borders ---- */
+.ensaio-card-programado { border-left: 3px solid var(--primary); }
+.ensaio-card-realizado  { border-left: 3px solid var(--success); }
+.ensaio-card-cancelado  { border-left: 3px solid var(--danger); }
+
+/* ---- Recurrence preview ---- */
+.recorrencia-preview {
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 8px 10px;
+    background: var(--bg-surface-2);
+    border-radius: var(--radius);
+    margin-top: 8px;
+    font-size: 0.85rem;
+}
+.recorrencia-preview-item {
+    padding: 3px 0;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+}
+.recorrencia-preview-item:last-child { border-bottom: none; }
+
 /* ---- Ensaio notes preview on cards ---- */
 .ensaio-notas-preview {
     margin-top: 8px;
@@ -624,6 +685,78 @@ th.sortable:hover { color: var(--primary); }
     .file-browser-folders .folder-item { padding: 4px 8px; }
 }
 
+/* ---- File browser: icons, preview, upload ---- */
+.file-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.file-icon { flex-shrink: 0; }
+.file-icon-image { color: var(--accent-green); }
+.file-icon-pdf   { color: var(--danger); }
+.file-icon-video { color: var(--secondary); }
+.file-icon-audio { color: var(--primary); }
+.file-icon-doc   { color: #0dcaf0; }
+.file-icon-other { color: var(--text-muted); }
+.file-preview-link {
+    color: var(--primary);
+    text-decoration: none;
+    cursor: pointer;
+    word-break: break-all;
+}
+.file-preview-link:hover { text-decoration: underline; }
+.sort-arrow { font-size: 0.75em; color: var(--primary); }
+
+/* Drop zone */
+.drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--gap-xl) var(--gap);
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+}
+.drop-zone p { color: var(--text-dim); margin: var(--gap-sm) 0; }
+.drop-zone.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+}
+
+/* Upload file list */
+.upload-file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+}
+.upload-file-item:last-child { border-bottom: none; }
+.upload-file-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-file-size { color: var(--text-dim); font-size: 0.8rem; flex-shrink: 0; }
+#upload-summary {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    padding: 8px 0 0;
+    font-weight: 500;
+}
+
+/* Upload progress bar */
+.upload-progress {
+    height: 6px;
+    background: var(--bg-dark);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: var(--gap-sm);
+}
+.upload-progress-bar {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
 /* ---- Votación header image ---- */
 .votacion-imaxe { border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; }
 .votacion-imaxe img { width: 100%; height: 200px; object-fit: cover; display: block; }
@@ -714,6 +847,26 @@ th.sortable:hover { color: var(--primary); }
     max-width: 100%;
     border-radius: var(--radius-sm);
     margin: 8px 0;
+}
+
+/* ---- Instrumento audio/video sample ---- */
+.instrumento-media-player {
+    width: 100%;
+    max-width: 400px;
+    border-radius: var(--radius);
+    margin-top: 6px;
+}
+.instrumento-media-player:focus { outline: none; }
+audio.instrumento-media-player { height: 40px; }
+video.instrumento-media-player { max-height: 220px; }
+iframe.instrumento-yt-embed { height: 220px; border: none; }
+.instrumento-audio-preview {
+    margin-top: 8px;
+}
+.instrumento-view-audio {
+    margin-top: var(--gap);
+    padding-top: var(--gap-sm);
+    border-top: 1px solid var(--border);
 }
 
 /* ---- Medios (repertorio audio/video) ---- */

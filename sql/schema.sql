@@ -189,16 +189,12 @@ CREATE TABLE `instrumentos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nome` varchar(255) NOT NULL DEFAULT '',
   `tipo` varchar(100) NOT NULL DEFAULT '',
-  `numero_serie` varchar(255) NOT NULL DEFAULT '',
-  `estado` varchar(50) NOT NULL DEFAULT 'bo',
-  `asignado_a` int(11) DEFAULT NULL,
   `notas` text DEFAULT NULL,
   `descricion` longtext DEFAULT NULL,
   `imaxe` varchar(512) NOT NULL DEFAULT '',
-  `historial_mantemento` JSON DEFAULT NULL,
+  `audio_mostra` varchar(512) NOT NULL DEFAULT '',
   `i18n` JSON DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `fk_instrum_usuario` FOREIGN KEY (`asignado_a`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 21. Repertorio (ritmos/canciones)

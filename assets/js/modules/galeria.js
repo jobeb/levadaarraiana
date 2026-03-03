@@ -542,15 +542,7 @@ async function _handleNewPhotos(files) {
                     toast('Vídeo subido a YouTube', 'success');
                 }
             } catch (ytErr) {
-                toast('Erro YouTube: ' + ytErr.message + '. Gardando como ficheiro.', 'error');
-                var b64fallback = await fileToBase64(file);
-                var objUrl = URL.createObjectURL(file);
-                _editorPhotos.push({
-                    path: '',
-                    titulo: '', alt: '', destacada: false,
-                    _data: b64fallback.data, _ext: ext, _nome: file.name,
-                    _objectUrl: objUrl, _isVideo: true
-                });
+                toast('Erro YouTube: ' + ytErr.message, 'error');
             }
         } else {
             var b64 = await imageToBase64(file);

@@ -2,6 +2,8 @@
  * Ensaios — Rehearsals module
  */
 var _ensaiosView = 'list';
+
+var _ensaiosPager = new Paginator('ensaios-pagination', { perPage: 12, onChange: function() { ensaiosRender(); } });
 var _ensaiosCalendar = new CalendarWidget('ensaios-calendar', {
     onDayClick: function(date, events) {
         if (events.length > 0) {
@@ -14,14 +16,13 @@ var _ensaiosCalendar = new CalendarWidget('ensaios-calendar', {
     onEventClick: function(id) {
         var e = (AppState.ensaios || []).find(function(x) { return x.id == id; });
         if (!e) return;
-        // Single click on event in calendar — show day popup with that event
         _showDayPopup(e.data, _ensaiosCalendar._eventsForDay(e.data));
     }
 });
 
 function _showDayPopup(date, events) {
     $('#modal-title').textContent = formatDate(date);
-    var isAdmin = AppState.isSocio();
+    var isSocio = AppState.isSocio();
     var html = '';
 
     events.forEach(function(ev) {
@@ -34,20 +35,33 @@ function _showDayPopup(date, events) {
                 (ev.time ? '<br><span style="color:var(--text-dim);font-size:0.85rem">' + esc(ev.time) + '</span>' : '') +
                 (estado ? ' ' + _ensaioEstadoBadge(estado) : '') +
             '</div>' +
-            '<div style="display:flex;gap:4px;flex-shrink:0">' +
-                (ensaio && isAdmin ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + ev.id + ')">' + t('asistencia') + '</button>' :
-                    (ensaio ? '<button class="btn btn-sm btn-primary" onclick="ensaiosSolicitarAsistencia(' + ev.id + ')">' + t('solicitar_asistir') + '</button>' : '')) +
-                (ensaio && isAdmin ? '<button class="btn-icon" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + ev.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
-                (ensaio && isAdmin ? '<button class="btn-icon btn-danger" onclick="hideModal(\'modal-overlay\');ensaiosDelete(' + ev.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>' : '') +
+            '<div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap">' +
+                (ensaio && isSocio ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + ev.id + ')">' + t('asistencia') + '</button>' : '') +
+                (ensaio ? '<button class="btn btn-sm btn-success" onclick="ensaiosAsistenciaRapida(' + ev.id + ',\'confirmado\')">' + t('confirmo') + '</button>' : '') +
+                (ensaio ? '<button class="btn btn-sm btn-danger" onclick="ensaiosAsistenciaRapida(' + ev.id + ',\'ausente\')">' + t('non_podo') + '</button>' : '') +
+                (ensaio && isSocio ? '<button class="btn-icon" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + ev.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
+                (ensaio && isSocio ? '<button class="btn-icon btn-danger" onclick="hideModal(\'modal-overlay\');ensaiosDelete(' + ev.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>' : '') +
             '</div>' +
         '</div>';
     });
 
     $('#modal-body').innerHTML = html;
     $('#modal-footer').innerHTML =
-        (isAdmin ? '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');ensaiosModal();setTimeout(function(){var d=$(\'#ensaio-data\');if(d)d.value=\'' + date + '\';},50)">+ ' + t('novo_ensaio') + '</button> ' : '') +
+        (isSocio ? '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');ensaiosModal();setTimeout(function(){var d=$(\'#ensaio-data\');if(d)d.value=\'' + date + '\';},50)">+ ' + t('novo_ensaio') + '</button> ' : '') +
         '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
     showModal('modal-overlay');
+}
+
+/* ---- Quick attendance from calendar popup (Mejora 5) ---- */
+function ensaiosAsistenciaRapida(id, estado) {
+    api('/asistencia', { method: 'POST', body: { ensaio_id: id, socio_id: AppState.user.id, estado: estado } })
+        .then(function() {
+            hideModal('modal-overlay');
+            toast(t('exito'), 'success');
+        })
+        .catch(function(e) {
+            toast(e.message || 'Error', 'error');
+        });
 }
 
 function ensaiosSolicitarAsistencia(id) {
@@ -87,8 +101,13 @@ function ensaiosSetView(view) {
     var btns = $$('#ensaios-view-toggle button');
     btns.forEach(function(b, i) { b.classList.toggle('active', (i === 0 && view === 'list') || (i === 1 && view === 'calendar') || (i === 2 && view === 'notas')); });
     $('#ensaios-grid').style.display = view === 'list' ? '' : 'none';
+    var paginationEl = $('#ensaios-pagination');
+    if (paginationEl) paginationEl.style.display = view === 'list' ? '' : 'none';
+    var filtersEl = $('#ensaios-filters');
+    if (filtersEl) filtersEl.style.display = view === 'list' ? '' : 'none';
     $('#ensaios-calendar').style.display = view === 'calendar' ? '' : 'none';
     $('#ensaios-notas-list').style.display = view === 'notas' ? '' : 'none';
+    if (view === 'list') ensaiosRender();
     if (view === 'calendar') ensaiosRenderCalendar();
     if (view === 'notas') ensaiosRenderNotas();
 }
@@ -134,6 +153,28 @@ function ensaiosRenderNotas() {
     container.innerHTML = html;
 }
 
+/* ---- Filters (Mejora 14) ---- */
+function _ensaiosFilterChange() {
+    _ensaiosPager.currentPage = 1;
+    ensaiosRender();
+}
+
+function _ensaiosApplyFilters(list) {
+    var searchEl = $('#ensaios-search');
+    var estadoEl = $('#ensaios-estado-filter');
+    var search = searchEl ? searchEl.value.trim().toLowerCase() : '';
+    var estado = estadoEl ? estadoEl.value : '';
+
+    return list.filter(function(e) {
+        if (estado && e.estado !== estado) return false;
+        if (search) {
+            var haystack = ((e.lugar || '') + ' ' + (e.data || '')).toLowerCase();
+            if (haystack.indexOf(search) === -1) return false;
+        }
+        return true;
+    });
+}
+
 async function ensaiosLoad() {
     try {
         var results = await Promise.all([
@@ -151,9 +192,8 @@ async function ensaiosLoad() {
         ensaiosSetView('calendar');
         return;
     }
-    ensaiosRender();
-    if (_ensaiosView === 'calendar') ensaiosRenderCalendar();
-    if (_ensaiosView === 'notas') ensaiosRenderNotas();
+    // Bugfix A: Always go through ensaiosSetView so toggle buttons get .active
+    ensaiosSetView(_ensaiosView);
 }
 
 function _ensaioEstadoBadge(estado) {
@@ -165,28 +205,46 @@ function _ensaioEstadoBadge(estado) {
     }
 }
 
+/* ---- Date box with i18n months (Mejora 12 + 13) ---- */
 function _ensaioDateBox(dateStr) {
     var parts = (dateStr || '').split('-');
     var day = parts.length === 3 ? parts[2] : '';
-    var monthNames = ['Xan','Feb','Mar','Abr','Mai','Xun','Xul','Ago','Set','Out','Nov','Dec'];
+    var monthNames = t('meses_curtos');
+    if (!Array.isArray(monthNames)) monthNames = ['Xan','Feb','Mar','Abr','Mai','Xuñ','Xul','Ago','Set','Out','Nov','Dec'];
     var month = parts.length === 3 ? monthNames[parseInt(parts[1], 10) - 1] || '' : '';
-    return '<div style="text-align:center;min-width:50px;padding:8px;background:var(--bg-surface-2);border-radius:8px">' +
-        '<div style="font-size:1.5em;font-weight:700;line-height:1">' + esc(day) + '</div>' +
-        '<div style="font-size:0.85em;text-transform:uppercase;color:var(--text-muted)">' + esc(month) + '</div>' +
+    return '<div class="ensaio-date-box">' +
+        '<div class="day">' + esc(day) + '</div>' +
+        '<div class="month">' + esc(month) + '</div>' +
     '</div>';
+}
+
+/* ---- Card estado class helper (Mejora 3) ---- */
+function _ensaioCardClass(estado) {
+    switch (estado) {
+        case 'programado': return ' ensaio-card-programado';
+        case 'realizado':  return ' ensaio-card-realizado';
+        case 'cancelado':  return ' ensaio-card-cancelado';
+        default: return '';
+    }
 }
 
 function ensaiosRender() {
     var grid = $('#ensaios-grid');
     if (!grid) return;
 
-    var list = AppState.ensaios || [];
+    var allList = AppState.ensaios || [];
+
+    // Apply filters (Mejora 14)
+    var list = _ensaiosApplyFilters(allList);
+
     if (list.length === 0) {
         grid.innerHTML = '<p class="text-center">' + t('sen_resultados') + '</p>';
+        var pEl = $('#ensaios-pagination');
+        if (pEl) pEl.innerHTML = '';
         return;
     }
 
-    var isAdmin = AppState.isSocio();
+    var isSocio = AppState.isSocio();
 
     // Separate: recurring groups vs single ensaios
     var groups = {};
@@ -209,79 +267,89 @@ function ensaiosRender() {
     // Sort singles by date desc
     singles.sort(function(a, b) { return (b.data || '').localeCompare(a.data || ''); });
 
+    // Build combined array for pagination: groups first, then singles
+    var allCards = [];
+    Object.keys(groups).forEach(function(g) { allCards.push({ type: 'group', key: g, items: groups[g] }); });
+    singles.forEach(function(e) { allCards.push({ type: 'single', item: e }); });
+
+    // Paginate
+    var page = _ensaiosPager.slice(allCards);
+
     var html = '';
 
-    // Render recurring groups
-    Object.keys(groups).forEach(function(g) {
-        var items = groups[g];
-        var first = items[0];
-        var last = items[items.length - 1];
-        var todayStr = today();
-        var next = items.find(function(e) { return e.data >= todayStr; }) || last;
-        var realizados = items.filter(function(e) { return e.estado === 'realizado'; }).length;
-        var programados = items.filter(function(e) { return e.estado === 'programado'; }).length;
-        var cancelados = items.filter(function(e) { return e.estado === 'cancelado'; }).length;
+    page.forEach(function(card) {
+        if (card.type === 'group') {
+            var items = card.items;
+            var first = items[0];
+            var last = items[items.length - 1];
+            var todayStr = today();
+            var next = items.find(function(e) { return e.data >= todayStr; }) || last;
+            var realizados = items.filter(function(e) { return e.estado === 'realizado'; }).length;
+            var programados = items.filter(function(e) { return e.estado === 'programado'; }).length;
+            var cancelados = items.filter(function(e) { return e.estado === 'cancelado'; }).length;
+            // Color based on next ensaio estado
+            var groupEstado = next.estado || 'programado';
 
-        html += '<div class="card">' +
-            '<div class="card-body" style="padding:16px">' +
-                '<div style="display:flex;gap:16px;align-items:flex-start">' +
-                    '<div style="text-align:center;min-width:50px;padding:10px 8px;background:var(--primary-dim);border-radius:8px">' +
-                        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>' +
-                    '</div>' +
-                    '<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
-                        '<h3 style="font-size:1rem;margin:0">' + esc(first.lugar || t('ensaio')) + '</h3>' +
-                        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-                            '<span class="badge badge-info">' + t(first.recorrencia || 'semanal') + '</span>' +
-                            '<span style="color:var(--text-dim);font-size:0.85rem">' + esc(first.hora_inicio || '') + ' - ' + esc(first.hora_fin || '') + '</span>' +
+            html += '<div class="card' + _ensaioCardClass(groupEstado) + '">' +
+                '<div class="card-body" style="padding:16px">' +
+                    '<div class="ensaio-card-layout">' +
+                        '<div class="ensaio-recurrence-box">' +
+                            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>' +
                         '</div>' +
-                        '<div style="font-size:0.85rem;color:var(--text-dim)">' +
-                            formatDate(first.data) + ' &rarr; ' + formatDate(last.data) +
-                            ' &middot; ' + items.length + ' ' + t('sesions') +
+                        '<div class="ensaio-card-info">' +
+                            '<h3 style="font-size:1rem;margin:0">' + esc(first.lugar || t('ensaio')) + '</h3>' +
+                            '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+                                '<span class="badge badge-info">' + t(first.recorrencia || 'semanal') + '</span>' +
+                                '<span style="color:var(--text-dim);font-size:0.85rem">' + esc(first.hora_inicio || '') + ' - ' + esc(first.hora_fin || '') + '</span>' +
+                            '</div>' +
+                            '<div style="font-size:0.85rem;color:var(--text-dim)">' +
+                                formatDate(first.data) + ' &rarr; ' + formatDate(last.data) +
+                                ' &middot; ' + items.length + ' ' + t('sesions') +
+                            '</div>' +
+                            '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+                                (programados ? '<span class="badge badge-primary">' + programados + ' ' + t('programado') + '</span>' : '') +
+                                (realizados ? '<span class="badge badge-success">' + realizados + ' ' + t('realizado') + '</span>' : '') +
+                                (cancelados ? '<span class="badge badge-danger">' + cancelados + ' ' + t('cancelado') + '</span>' : '') +
+                            '</div>' +
+                            (first.notas ? '<div class="ensaio-notas-preview" onclick="event.stopPropagation();ensaiosViewNotas(' + first.id + ')">' + esc(truncate(stripHtml(first.notas), 150)) + '<span class="ensaio-notas-more">' + t('ver_mais') + '</span></div>' : '') +
                         '</div>' +
-                        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
-                            (programados ? '<span class="badge badge-primary">' + programados + ' ' + t('programado') + '</span>' : '') +
-                            (realizados ? '<span class="badge badge-success">' + realizados + ' ' + t('realizado') + '</span>' : '') +
-                            (cancelados ? '<span class="badge badge-danger">' + cancelados + ' ' + t('cancelado') + '</span>' : '') +
-                        '</div>' +
-                        (first.notas ? '<div class="ensaio-notas-preview" onclick="event.stopPropagation();ensaiosViewNotas(' + first.id + ')">' + esc(truncate(stripHtml(first.notas), 150)) + '<span class="ensaio-notas-more">' + t('ver_mais') + '</span></div>' : '') +
                     '</div>' +
                 '</div>' +
-            '</div>' +
-            '<div class="card-actions">' +
-                '<button class="btn btn-sm btn-secondary" onclick="ensaiosExpandGroup(' + g + ')">' + t('ver_sesions') + '</button>' +
-                (isAdmin
-                    ? '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + next.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
-                      '<button class="btn-icon btn-danger" onclick="ensaiosDeleteGroup(' + g + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
-                    : '') +
-            '</div>' +
-        '</div>';
-    });
-
-    // Render single ensaios
-    singles.forEach(function(e) {
-        html += '<div class="card">' +
-            '<div class="card-body" style="padding:16px">' +
-                '<div style="display:flex;gap:16px;align-items:flex-start">' +
-                    _ensaioDateBox(e.data) +
-                    '<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
-                        '<div style="font-size:0.9rem;font-weight:600">' + esc(e.lugar || '') + '</div>' +
-                        '<div style="color:var(--text-dim);font-size:0.85rem">' + esc(e.hora_inicio || '') + ' - ' + esc(e.hora_fin || '') + '</div>' +
-                        '<div>' + _ensaioEstadoBadge(e.estado) + '</div>' +
-                        (e.notas ? '<div class="ensaio-notas-preview" onclick="event.stopPropagation();ensaiosViewNotas(' + e.id + ')">' + esc(truncate(stripHtml(e.notas), 150)) + '<span class="ensaio-notas-more">' + t('ver_mais') + '</span></div>' : '') +
+                '<div class="card-actions">' +
+                    '<button class="btn btn-sm btn-secondary" onclick="ensaiosExpandGroup(' + card.key + ')">' + t('ver_sesions') + '</button>' +
+                    (isSocio
+                        ? '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + next.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+                          '<button class="btn-icon btn-danger" onclick="ensaiosDeleteGroup(' + card.key + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
+                        : '') +
+                '</div>' +
+            '</div>';
+        } else {
+            var e = card.item;
+            html += '<div class="card' + _ensaioCardClass(e.estado) + '">' +
+                '<div class="card-body" style="padding:16px">' +
+                    '<div class="ensaio-card-layout">' +
+                        _ensaioDateBox(e.data) +
+                        '<div class="ensaio-card-info">' +
+                            '<div style="font-size:0.9rem;font-weight:600">' + esc(e.lugar || '') + '</div>' +
+                            '<div style="color:var(--text-dim);font-size:0.85rem">' + esc(e.hora_inicio || '') + ' - ' + esc(e.hora_fin || '') + '</div>' +
+                            '<div>' + _ensaioEstadoBadge(e.estado) + '</div>' +
+                            (e.notas ? '<div class="ensaio-notas-preview" onclick="event.stopPropagation();ensaiosViewNotas(' + e.id + ')">' + esc(truncate(stripHtml(e.notas), 150)) + '<span class="ensaio-notas-more">' + t('ver_mais') + '</span></div>' : '') +
+                        '</div>' +
                     '</div>' +
                 '</div>' +
-            '</div>' +
-            '<div class="card-actions">' +
-                (isAdmin
-                    ? '<button class="btn btn-sm btn-secondary" onclick="ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' +
-                      '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
-                      '<button class="btn-icon btn-danger" onclick="ensaiosDelete(' + e.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
-                    : '') +
-            '</div>' +
-        '</div>';
+                '<div class="card-actions">' +
+                    (isSocio
+                        ? '<button class="btn btn-sm btn-secondary" onclick="ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' +
+                          '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+                          '<button class="btn-icon btn-danger" onclick="ensaiosDelete(' + e.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
+                        : '') +
+                '</div>' +
+            '</div>';
+        }
     });
 
     grid.innerHTML = html;
+    _ensaiosPager.render();
 }
 
 // Expand a recurring group — show all sessions in a modal
@@ -291,7 +359,7 @@ function ensaiosExpandGroup(grupo) {
     }).sort(function(a, b) { return (a.data || '').localeCompare(b.data || ''); });
 
     if (!items.length) return;
-    var isAdmin = AppState.isSocio();
+    var isSocio = AppState.isSocio();
     var todayStr = today();
 
     $('#modal-title').textContent = esc(items[0].lugar || t('ensaio')) + ' — ' + t(items[0].recorrencia || 'semanal');
@@ -307,8 +375,8 @@ function ensaiosExpandGroup(grupo) {
             '<td>' + esc(e.hora_inicio || '') + ' - ' + esc(e.hora_fin || '') + '</td>' +
             '<td>' + _ensaioEstadoBadge(e.estado) + '</td>' +
             '<td style="text-align:right">' +
-                (isAdmin ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' : '') +
-                (isAdmin ? ' <button class="btn-icon" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
+                (isSocio ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' : '') +
+                (isSocio ? ' <button class="btn-icon" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
             '</td>' +
         '</tr>';
     });
@@ -354,7 +422,6 @@ async function ensaiosDeleteGroup(grupo) {
     if (!items.length) return;
     if (!await confirmAction(t('confirmar_eliminar_grupo'), {danger:true})) return;
     try {
-        // Delete via the first item with scope=future
         var first = items.sort(function(a, b) { return (a.data || '').localeCompare(b.data || ''); })[0];
         await api('/ensaios/' + first.id + '?scope=future', { method: 'DELETE' });
         toast(t('exito'), 'success');
@@ -362,6 +429,53 @@ async function ensaiosDeleteGroup(grupo) {
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }
+}
+
+/* ---- Recurrence preview (Mejora 4) ---- */
+function _updateRecurrenciaPreview() {
+    var previewEl = $('#recorrencia-preview');
+    if (!previewEl) return;
+
+    var rec = ($('#ensaio-recorrencia') || {}).value || '';
+    var startStr = ($('#ensaio-data') || {}).value || '';
+    var finStr = ($('#ensaio-recorrencia-fin') || {}).value || '';
+
+    if (!rec || !startStr || !finStr) {
+        previewEl.innerHTML = '';
+        return;
+    }
+
+    var start = new Date(startStr);
+    var fin = new Date(finStr);
+    if (isNaN(start.getTime()) || isNaN(fin.getTime()) || fin <= start) {
+        previewEl.innerHTML = '';
+        return;
+    }
+
+    var dates = [];
+    var current = new Date(start);
+    var max = 52;
+    while (current <= fin && dates.length < max) {
+        dates.push(new Date(current));
+        if (rec === 'semanal') current.setDate(current.getDate() + 7);
+        else if (rec === 'bisemanal') current.setDate(current.getDate() + 14);
+        else if (rec === 'mensual') current.setMonth(current.getMonth() + 1);
+        else break;
+    }
+
+    if (dates.length === 0) {
+        previewEl.innerHTML = '';
+        return;
+    }
+
+    var html = '<div class="recorrencia-preview">' +
+        '<div style="margin-bottom:6px"><span class="badge badge-info">' + t('n_sesions_previstas').replace('{n}', dates.length) + '</span></div>';
+    dates.forEach(function(d) {
+        html += '<div class="recorrencia-preview-item">' + formatDate(d.toISOString().split('T')[0]) + '</div>';
+    });
+    html += '</div>';
+
+    previewEl.innerHTML = html;
 }
 
 function ensaiosModal(item) {
@@ -428,7 +542,8 @@ function ensaiosModal(item) {
         '<div class="form-group" id="recorrencia-fin-group" style="display:none">' +
             '<label>' + t('data_fin_recorrencia') + '</label>' +
             '<input type="date" class="form-control" id="ensaio-recorrencia-fin">' +
-        '</div>'
+        '</div>' +
+        '<div id="recorrencia-preview"></div>'
         ) : '');
 
     $('#modal-footer').innerHTML =
@@ -439,7 +554,7 @@ function ensaiosModal(item) {
 
     initRichTextEditor('ensaio-notas-editor', isEdit ? item.notas || '' : '', { uploadDir: 'ensaios' });
 
-    // Toggle recurrence end date visibility + auto-fill 6 months ahead
+    // Toggle recurrence end date visibility + auto-fill 6 months ahead + preview
     var recSel = $('#ensaio-recorrencia');
     if (recSel) {
         recSel.addEventListener('change', function() {
@@ -454,8 +569,32 @@ function ensaiosModal(item) {
                     finInput.value = d.toISOString().split('T')[0];
                 }
             }
+            _updateRecorrenciaPreview();
         });
     }
+    // Update preview when date or end date changes
+    var dataInput = $('#ensaio-data');
+    var finInput = $('#ensaio-recorrencia-fin');
+    if (dataInput) dataInput.addEventListener('change', _updateRecorrenciaPreview);
+    if (finInput) finInput.addEventListener('change', _updateRecorrenciaPreview);
+}
+
+/* ---- Time validation + conflict check (Mejora 8) ---- */
+function _ensaiosCheckTimeConflict(body, currentId) {
+    var existing = (AppState.ensaios || []).filter(function(e) {
+        if (currentId && e.id == currentId) return false;
+        if (e.data !== body.data) return false;
+        if (!e.lugar || !body.lugar) return false;
+        if (e.lugar.toLowerCase() !== body.lugar.toLowerCase()) return false;
+        // Check time overlap
+        if (!e.hora_inicio || !body.hora_inicio) return false;
+        var eStart = e.hora_inicio;
+        var eEnd = e.hora_fin || '23:59';
+        var bStart = body.hora_inicio;
+        var bEnd = body.hora_fin || '23:59';
+        return bStart < eEnd && bEnd > eStart;
+    });
+    return existing.length > 0;
 }
 
 async function ensaiosSave() {
@@ -470,6 +609,17 @@ async function ensaiosSave() {
         notas: getRichTextContent('ensaio-notas-editor'),
         estado: ($('#ensaio-estado') || {}).value || 'programado'
     };
+
+    // Mejora 8: Validate end time > start time
+    if (body.hora_inicio && body.hora_fin && body.hora_fin <= body.hora_inicio) {
+        toast(t('hora_fin_antes'), 'error');
+        return;
+    }
+
+    // Mejora 8: Check for schedule conflicts
+    if (_ensaiosCheckTimeConflict(body, id)) {
+        if (!await confirmAction(t('conflicto_horario'))) return;
+    }
 
     var recFinInput = $('#ensaio-recorrencia-fin');
     if (recFinInput && recFinInput.value) {
@@ -503,10 +653,9 @@ async function ensaiosDelete(id) {
     var scope = 'single';
 
     if (ensaio && ensaio.grupo_recorrencia) {
-        // Ask user for scope
         var msg = t('solo_este') + ' / ' + t('este_e_futuros') + '?';
         var choice = await _showConfirmDialog(msg, { confirmText: t('este_e_futuros'), cancelText: t('solo_este') });
-        if (choice === null) return; // cancelled via escape — we'll treat it as cancel
+        if (choice === null) return;
         scope = choice ? 'future' : 'single';
     } else {
         if (!await confirmAction(t('confirmar_eliminar'), {danger:true})) return;
@@ -524,7 +673,6 @@ async function ensaiosDelete(id) {
 async function ensaiosAsistencia(id) {
     $('#modal-title').textContent = t('asistencia');
 
-    // Load usuarios if not cached
     if (!AppState.usuarios || AppState.usuarios.length === 0) {
         try {
             AppState.usuarios = await api('/usuarios');
@@ -535,7 +683,6 @@ async function ensaiosAsistencia(id) {
 
     var socios = (AppState.usuarios || []).filter(function(s) { return s.estado === 'Activo'; });
 
-    // Load existing attendance
     var asistencia = [];
     try {
         asistencia = await api('/asistencia/' + id);
@@ -544,7 +691,6 @@ async function ensaiosAsistencia(id) {
         asistencia = [];
     }
 
-    // Build a lookup map
     var asistMap = {};
     asistencia.forEach(function(a) {
         asistMap[a.socio_id || a.username] = a.estado || '';

@@ -368,10 +368,10 @@
             <div class="file-browser-folders" id="documentos-folders"></div>
             <div class="file-browser-content">
                 <div class="table-wrap"><table id="documentos-table"><thead><tr>
-                    <th data-i18n="nome">Nome</th>
-                    <th data-i18n="carpeta">Carpeta</th>
-                    <th data-i18n="tamano">Tamaño</th>
-                    <th data-i18n="data">Data</th>
+                    <th class="sortable" data-sort="name" data-i18n="nome">Nome</th>
+                    <th class="sortable" data-sort="folder" data-i18n="carpeta">Carpeta</th>
+                    <th class="sortable" data-sort="size" data-i18n="tamano">Tamaño</th>
+                    <th class="sortable" data-sort="modified" data-i18n="data">Data</th>
                     <th data-i18n="accions">Accións</th>
                 </tr></thead><tbody></tbody></table></div>
                 <div id="documentos-pagination"></div>
@@ -438,7 +438,7 @@
         <div class="section-header"><h2 data-i18n="ensaios">Ensaios</h2></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
             <div class="view-toggle" id="ensaios-view-toggle">
-                <button class="socio-only" onclick="ensaiosSetView('list')" data-i18n="vista_lista">Lista</button>
+                <button class="socio-only" onclick="ensaiosSetView('list')" data-i18n="vista_tarxetas">Tarxetas</button>
                 <button onclick="ensaiosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
                 <button class="socio-only" onclick="ensaiosSetView('notas')" data-i18n="notas">Notas</button>
             </div>
@@ -454,7 +454,17 @@
             </div>
             <button class="btn btn-primary socio-only" onclick="ensaiosModal()">+ <span data-i18n="novo_ensaio">Novo ensaio</span></button>
         </div>
+        <div id="ensaios-filters" class="socio-only" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <input type="text" class="form-control" id="ensaios-search" data-i18n-placeholder="buscar" placeholder="Buscar..." style="max-width:240px" oninput="_ensaiosFilterChange()">
+            <select class="form-control" id="ensaios-estado-filter" style="max-width:180px" onchange="_ensaiosFilterChange()">
+                <option value="" data-i18n="todos_estados">Todos os estados</option>
+                <option value="programado" data-i18n="programado">Programado</option>
+                <option value="realizado" data-i18n="realizado">Realizado</option>
+                <option value="cancelado" data-i18n="cancelado">Cancelado</option>
+            </select>
+        </div>
         <div class="card-grid" id="ensaios-grid"></div>
+        <div id="ensaios-pagination"></div>
         <div id="ensaios-calendar" style="display:none"></div>
         <div id="ensaios-notas-list" style="display:none"></div>
     </div>
