@@ -644,11 +644,22 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
     }
 
     _repRecChunks = [];
-    var mimeType = tipo === 'video'
-        ? (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm')
-        : (MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm');
 
-    _repRecorder = new MediaRecorder(_repRecStream, { mimeType: mimeType });
+    // Determine best supported mime type
+    var mimeType = '';
+    var tryTypes = tipo === 'video'
+        ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
+        : ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+    for (var i = 0; i < tryTypes.length; i++) {
+        if (MediaRecorder.isTypeSupported(tryTypes[i])) { mimeType = tryTypes[i]; break; }
+    }
+
+    _repRecorder = mimeType
+        ? new MediaRecorder(_repRecStream, { mimeType: mimeType })
+        : new MediaRecorder(_repRecStream);
+
+    // Ensure we have a mime - read back from recorder if needed
+    if (!mimeType) mimeType = _repRecorder.mimeType || (tipo === 'video' ? 'video/webm' : 'audio/webm');
 
     _repRecorder.ondataavailable = function(e) {
         if (e.data.size > 0) _repRecChunks.push(e.data);
@@ -657,9 +668,13 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
     _repRecorder.onstop = function() {
         _repRecStream.getTracks().forEach(function(tk) { tk.stop(); });
 
-        var ext = 'webm';
         var blob = new Blob(_repRecChunks, { type: mimeType });
+        var ext = mimeType.indexOf('mp4') !== -1 ? 'mp4'
+                : mimeType.indexOf('ogg') !== -1 ? 'ogg'
+                : 'webm';
         var file = new File([blob], 'gravacion_' + Date.now() + '.' + ext, { type: mimeType });
+
+        // Debug removed — blob is valid
 
         // Show preview below the slot
         var slotDiv = btn.closest('.medios-slot');
@@ -667,28 +682,23 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
             var existing = slotDiv.parentNode.querySelector('.rec-preview[data-slot="' + parteIdx + '-' + instrId + '-' + tipo + '"]');
             if (existing) existing.remove();
 
-            // Convert blob to data URL for reliable mobile playback
-            var reader = new FileReader();
-            reader.onload = function() {
-                var dataUrl = reader.result;
-                var preview = document.createElement('div');
-                preview.className = 'rec-preview';
-                preview.setAttribute('data-slot', parteIdx + '-' + instrId + '-' + tipo);
+            var blobUrl = URL.createObjectURL(blob);
+            var preview = document.createElement('div');
+            preview.className = 'rec-preview';
+            preview.setAttribute('data-slot', parteIdx + '-' + instrId + '-' + tipo);
 
-                var player = document.createElement(tipo === 'video' ? 'video' : 'audio');
-                player.controls = true;
-                player.className = tipo === 'video' ? 'rec-preview-video' : 'rec-preview-audio';
-                player.src = dataUrl;
+            var player = document.createElement(tipo === 'video' ? 'video' : 'audio');
+            player.controls = true;
+            player.className = tipo === 'video' ? 'rec-preview-video' : 'rec-preview-audio';
+            player.src = blobUrl;
 
-                var nameSpan = document.createElement('span');
-                nameSpan.className = 'medios-slot-name';
-                nameSpan.textContent = file.name;
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'medios-slot-name';
+            nameSpan.textContent = file.name;
 
-                preview.appendChild(player);
-                preview.appendChild(nameSpan);
-                slotDiv.parentNode.insertBefore(preview, slotDiv.nextSibling);
-            };
-            reader.readAsDataURL(blob);
+            preview.appendChild(player);
+            preview.appendChild(nameSpan);
+            slotDiv.parentNode.insertBefore(preview, slotDiv.nextSibling);
         }
 
         // Queue the file

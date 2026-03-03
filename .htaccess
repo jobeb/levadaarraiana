@@ -4,6 +4,9 @@ RewriteEngine On
     # Allow microphone and camera for recording features
     Header set Permissions-Policy "microphone=(self), camera=(self)"
 
+    # CSP: override hosting default to allow blob: media, YouTube embeds, CDN scripts
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.quilljs.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.quilljs.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' blob:; frame-src https://www.google.com https://maps.google.com https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' https://accounts.google.com https://www.googleapis.com"
+
     # No cache for dev (JS, CSS, HTML)
     <FilesMatch "\.(js|css|html)$">
         Header set Cache-Control "no-cache, no-store, must-revalidate"
