@@ -43,7 +43,7 @@ function validate_file_extension($filename, $type = 'document') {
         'image'    => ['jpg','jpeg','png','gif','webp'],
         'document' => ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','odt','ods'],
         'video'    => ['mp4','webm','ogg','mov','avi'],
-        'audio'    => ['mp3','wav','ogg','m4a'],
+        'audio'    => ['mp3','wav','ogg','m4a','webm'],
         'media'    => ['mp3','wav','ogg','m4a','mp4','webm','mov'],
     ];
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
