@@ -28,12 +28,28 @@ function handle_configuracion($method, $uri, $input) {
         send_json($row);
     }
 
-    // PUT /config — update all fields (admin only)
+    // PUT /config — update fields (socio+ with field whitelist)
     if ($method === 'PUT') {
-        require_admin();
+        $user = require_socio();
+        $isAdmin = ($user['role'] === 'Admin');
 
         $row = $db->query("SELECT * FROM config WHERE id = 1")->fetch();
         if (!$row) send_json(['error' => 'Configuración non atopada'], 404);
+
+        // Fields that Socio can modify
+        $socio_allowed = [
+            'nome_asociacion',
+            'fiscal_nome','fiscal_nif','fiscal_enderezo','fiscal_cp',
+            'fiscal_localidade','fiscal_provincia','fiscal_telefono','fiscal_email',
+            'sobre_nos_gl','sobre_nos_es','sobre_nos_pt','sobre_nos_en',
+            'cal_cor_ensaios','cal_cor_bolos','cal_cor_noticias','cal_cor_votacions',
+            'comentarios_moderacion'
+        ];
+
+        // If not admin, strip fields not in whitelist
+        if (!$isAdmin) {
+            $input = array_intersect_key($input, array_flip($socio_allowed));
+        }
 
         // Do not overwrite smtp_pass if the masked value is sent back
         $smtp_pass = $input['smtp_pass'] ?? $row['smtp_pass'];

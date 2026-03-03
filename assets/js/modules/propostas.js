@@ -148,7 +148,7 @@ async function propostasDetail(id) {
     html += '</div>';
 
     // Full text
-    html += '<div class="rt-content" style="margin-bottom:16px">' + (p.texto || '') + '</div>';
+    html += '<div class="rt-content" style="margin-bottom:16px">' + sanitizeHtml(p.texto) + '</div>';
 
     // Files
     if (p.ficheiros && p.ficheiros.length) {

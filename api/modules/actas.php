@@ -39,6 +39,7 @@ function handle_actas($method, $uri, $input) {
         if (!empty($input['arquivos'])) {
             foreach ($input['arquivos'] as $f) {
                 if (is_array($f) && !empty($f['data']) && !empty($f['name'])) {
+                    validate_file_extension($f['name'], 'document');
                     $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $f['name']);
                     $url = save_base64_file('actas', $safe, $f['data']);
                     $arquivos_clean[] = ['name' => $f['name'], 'url' => $url];
@@ -76,6 +77,7 @@ function handle_actas($method, $uri, $input) {
         if (isset($input['arquivos'])) {
             foreach ($input['arquivos'] as $f) {
                 if (is_array($f) && !empty($f['data']) && !empty($f['name'])) {
+                    validate_file_extension($f['name'], 'document');
                     $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $f['name']);
                     $url = save_base64_file('actas', $safe, $f['data']);
                     $arquivos_clean[] = ['name' => $f['name'], 'url' => $url];

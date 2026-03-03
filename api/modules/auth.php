@@ -5,6 +5,7 @@
 
 function handle_auth($uri, $method, $input) {
     if ($uri === '/login' && $method === 'POST') {
+        rate_limit('login:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 10, 300);
         $username = $input['username'] ?? '';
         $password = $input['password'] ?? '';
         if (empty($username) || empty($password)) {
@@ -37,6 +38,7 @@ function handle_auth($uri, $method, $input) {
     }
 
     if ($uri === '/register' && $method === 'POST') {
+        rate_limit('register:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 5, 600);
         $username = trim($input['username'] ?? '');
         $password = $input['password'] ?? '';
         $nome     = trim($input['nome_completo'] ?? '');
@@ -46,6 +48,9 @@ function handle_auth($uri, $method, $input) {
 
         if (empty($username) || empty($password)) {
             send_json(['error' => 'Username e contrasinal obrigatorios'], 400);
+        }
+        if (strlen($password) < 8) {
+            send_json(['error' => 'O contrasinal debe ter polo menos 8 caracteres'], 400);
         }
 
         // Check unique username
@@ -75,6 +80,7 @@ function handle_auth($uri, $method, $input) {
 
     // ---- Forgot password ----
     if ($uri === '/forgot-password' && $method === 'POST') {
+        rate_limit('forgot:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 3, 600);
         $identifier = trim($input['identifier'] ?? '');
         if (empty($identifier)) {
             send_json(['error' => 'Introduce o teu usuario ou email'], 400);
@@ -126,8 +132,8 @@ function handle_auth($uri, $method, $input) {
         if (empty($token) || empty($password)) {
             send_json(['error' => 'Token e contrasinal obrigatorios'], 400);
         }
-        if (strlen($password) < 4) {
-            send_json(['error' => 'O contrasinal debe ter polo menos 4 caracteres'], 400);
+        if (strlen($password) < 8) {
+            send_json(['error' => 'O contrasinal debe ter polo menos 8 caracteres'], 400);
         }
 
         $stmt = get_db()->prepare(

@@ -98,7 +98,7 @@ function actasView(id) {
 
     $('#modal-body').innerHTML =
         '<p class="card-meta">' + formatDate(acta.data) + '</p>' +
-        '<div class="rt-content" style="margin-top:12px">' + (acta.contido || '') + '</div>' +
+        '<div class="rt-content" style="margin-top:12px">' + sanitizeHtml(acta.contido) + '</div>' +
         arquivosHtml;
 
     $('#modal-footer').innerHTML =

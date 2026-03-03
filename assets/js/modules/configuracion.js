@@ -28,16 +28,18 @@ function configuracionRender() {
 
     var cfg = AppState.config || {};
 
+    var _isAdmin = AppState.user && AppState.user.role === 'Admin';
+
     /* ---- Tabs ---- */
     var html = '<div class="tabs" id="config-tabs">' +
         '<button class="tab-btn" data-tab="cfg-landing" onclick="_configTab(\'cfg-landing\')">' + t('paxina_inicio') + '</button>' +
         '<button class="tab-btn active" data-tab="cfg-xeral" onclick="_configTab(\'cfg-xeral\')">' + t('sec_xeral') + '</button>' +
-        '<button class="tab-btn" data-tab="cfg-smtp" onclick="_configTab(\'cfg-smtp\')">' + t('smtp') + '</button>' +
+        (_isAdmin ? '<button class="tab-btn" data-tab="cfg-smtp" onclick="_configTab(\'cfg-smtp\')">' + t('smtp') + '</button>' : '') +
         '<button class="tab-btn" data-tab="cfg-fiscal" onclick="_configTab(\'cfg-fiscal\')">' + t('datos_fiscais') + '</button>' +
         '<button class="tab-btn" data-tab="cfg-about" onclick="_configTab(\'cfg-about\')">' + t('sobre_nos') + '</button>' +
         '<button class="tab-btn" data-tab="cfg-calendario" onclick="_configTab(\'cfg-calendario\')">' + t('calendario') + '</button>' +
-        '<button class="tab-btn" data-tab="cfg-youtube" onclick="_configTab(\'cfg-youtube\')">YouTube</button>' +
-        '<button class="tab-btn" data-tab="cfg-backup" onclick="_configTab(\'cfg-backup\')">' + t('copias_seguridade') + '</button>' +
+        (_isAdmin ? '<button class="tab-btn" data-tab="cfg-youtube" onclick="_configTab(\'cfg-youtube\')">YouTube</button>' : '') +
+        (_isAdmin ? '<button class="tab-btn" data-tab="cfg-backup" onclick="_configTab(\'cfg-backup\')">' + t('copias_seguridade') + '</button>' : '') +
     '</div>';
 
     /* ---- Landing tab ---- */
@@ -60,7 +62,8 @@ function configuracionRender() {
         '</div>' +
     '</div>';
 
-    /* ---- SMTP tab ---- */
+    /* ---- SMTP tab (admin only) ---- */
+    if (_isAdmin) {
     var metodo = cfg.email_metodo || 'php_mail';
     html += '<div class="config-tab-panel" id="cfg-smtp" style="display:none">' +
         '<div class="form-group">' +
@@ -107,6 +110,7 @@ function configuracionRender() {
             '<input type="email" class="form-control" id="cfg-email-dest" value="' + esc(cfg.email_dest || '') + '">' +
         '</div>' +
     '</div>';
+    }
 
     /* ---- Fiscal tab ---- */
     html += '<div class="config-tab-panel" id="cfg-fiscal" style="display:none">' +
@@ -187,7 +191,8 @@ function configuracionRender() {
         '<button class="btn btn-sm" style="margin-top:12px" onclick="_calResetColors()">' + t('restablecer') + '</button>' +
     '</div>';
 
-    /* ---- YouTube tab ---- */
+    /* ---- YouTube tab (admin only) ---- */
+    if (_isAdmin) {
     html += '<div class="config-tab-panel" id="cfg-youtube" style="display:none">' +
         '<div class="form-group">' +
             '<label>' + t('youtube_client_id') + '</label>' +
@@ -205,12 +210,15 @@ function configuracionRender() {
             '<button class="btn btn-danger" id="cfg-yt-disconnect-btn" onclick="youtubeDisconnect()" style="display:none">' + t('youtube_desconectar') + '</button>' +
         '</div>' +
     '</div>';
+    }
 
-    /* ---- Backup tab ---- */
+    /* ---- Backup tab (admin only) ---- */
+    if (_isAdmin) {
     html += '<div class="config-tab-panel" id="cfg-backup" style="display:none">' +
         '<p style="color:var(--text-muted);margin-bottom:16px">' + t('descargar_backup_desc') + '</p>' +
         '<button class="btn btn-primary" onclick="_downloadBackup()">' + t('descargar_backup') + '</button>' +
     '</div>';
+    }
 
     /* ---- Save button (not shown in backup tab) ---- */
     html += '<div style="margin-top:20px" id="cfg-save-wrap">' +
@@ -228,8 +236,8 @@ function configuracionRender() {
         }
     });
 
-    // Check YouTube status after render
-    _loadYoutubeStatus();
+    // Check YouTube status after render (admin only)
+    if (_isAdmin) _loadYoutubeStatus();
 }
 
 function _configTab(tabId) {
@@ -249,18 +257,11 @@ function _configTab(tabId) {
 }
 
 async function configuracionSave() {
+    var isAdmin = AppState.user && AppState.user.role === 'Admin';
+
     var body = {
         // General
         nome_asociacion: ($('#cfg-nome-asociacion') || {}).value || '',
-        // SMTP
-        smtp_host: ($('#cfg-smtp-host') || {}).value || '',
-        smtp_port: parseInt(($('#cfg-smtp-port') || {}).value) || 587,
-        smtp_user: ($('#cfg-smtp-user') || {}).value || '',
-        smtp_pass: ($('#cfg-smtp-pass') || {}).value || '',
-        smtp_from: ($('#cfg-smtp-from') || {}).value || '',
-        smtp_cifrado: ($('#cfg-smtp-cifrado') || {}).value || 'TLS',
-        email_dest: ($('#cfg-email-dest') || {}).value || '',
-        email_metodo: ($('#cfg-email-metodo') || {}).value || 'php_mail',
         // Fiscal
         fiscal_nome: ($('#cfg-fiscal-nome') || {}).value || '',
         fiscal_nif: ($('#cfg-fiscal-nif') || {}).value || '',
@@ -275,9 +276,6 @@ async function configuracionSave() {
         sobre_nos_es: ($('#cfg-sobre-nos-es') || {}).value || '',
         sobre_nos_pt: ($('#cfg-sobre-nos-pt') || {}).value || '',
         sobre_nos_en: ($('#cfg-sobre-nos-en') || {}).value || '',
-        // YouTube
-        youtube_client_id: ($('#cfg-yt-client-id') || {}).value || '',
-        youtube_client_secret: ($('#cfg-yt-client-secret') || {}).value || '',
         // Moderación
         comentarios_moderacion: parseInt(($('#cfg-comentarios-moderacion') || {}).value) || 0,
         // Calendar colors
@@ -287,10 +285,25 @@ async function configuracionSave() {
         cal_cor_votacions: ($('#cfg-cal-cor-votacions') || {}).value || '#a50d3d'
     };
 
+    // Admin-only fields (SMTP, YouTube)
+    if (isAdmin) {
+        body.smtp_host = ($('#cfg-smtp-host') || {}).value || '';
+        body.smtp_port = parseInt(($('#cfg-smtp-port') || {}).value) || 587;
+        body.smtp_user = ($('#cfg-smtp-user') || {}).value || '';
+        body.smtp_pass = ($('#cfg-smtp-pass') || {}).value || '';
+        body.smtp_from = ($('#cfg-smtp-from') || {}).value || '';
+        body.smtp_cifrado = ($('#cfg-smtp-cifrado') || {}).value || 'TLS';
+        body.email_dest = ($('#cfg-email-dest') || {}).value || '';
+        body.email_metodo = ($('#cfg-email-metodo') || {}).value || 'php_mail';
+        body.youtube_client_id = ($('#cfg-yt-client-id') || {}).value || '';
+        body.youtube_client_secret = ($('#cfg-yt-client-secret') || {}).value || '';
+    }
+
     try {
         await api('/config', { method: 'PUT', body: body });
         toast(t('exito'), 'success');
-        AppState.config = body;
+        // Merge into config state (keep existing values for fields not sent)
+        Object.assign(AppState.config, body);
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }

@@ -13,6 +13,8 @@ function handle_contacto($method, $uri, $input) {
         send_json(['error' => 'Método non permitido'], 405);
     }
 
+    rate_limit('contacto:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 5, 600);
+
     $db  = get_db();
     $cfg = $db->query("SELECT * FROM config WHERE id = 1")->fetch();
     if (!$cfg || empty($cfg['email_dest'])) {
@@ -29,6 +31,9 @@ function handle_contacto($method, $uri, $input) {
     }
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         send_json(['error' => 'Email non válido'], 400);
+    }
+    if (preg_match('/[\r\n]/', $email) || preg_match('/[\r\n]/', $nome)) {
+        send_json(['error' => 'Datos non válidos'], 400);
     }
 
     $body  = "Mensaxe de contacto\n";

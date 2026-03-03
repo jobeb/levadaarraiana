@@ -78,7 +78,8 @@ try {
     send_json(['error' => 'Ruta non atopada: ' . $uri], 404);
 
 } catch (PDOException $e) {
-    send_json(['error' => 'Erro de base de datos', 'detail' => $e->getMessage()], 500);
+    error_log('PDO Error: ' . $e->getMessage());
+    send_json(['error' => 'Erro de base de datos'], 500);
 } catch (Exception $e) {
     send_json(['error' => $e->getMessage()], 500);
 }

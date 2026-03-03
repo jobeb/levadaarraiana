@@ -31,6 +31,13 @@ function handle_backup($method, $uri, $input) {
     $sql .= "SET NAMES utf8mb4;\n";
     $sql .= "SET FOREIGN_KEY_CHECKS = 0;\n\n";
 
+    // Columns with sensitive data to redact
+    $sensitive_cols = [
+        'usuarios'       => ['password','session_token','session_expires','password_reset_token','password_reset_expires'],
+        'youtube_tokens'  => ['access_token','refresh_token'],
+        'config'         => ['smtp_pass','youtube_client_secret'],
+    ];
+
     foreach ($tables as $table) {
         // Check table exists
         $check = $db->query("SHOW TABLES LIKE '$table'")->fetch();
@@ -47,13 +54,15 @@ function handle_backup($method, $uri, $input) {
 
         // INSERT rows
         $rows = $db->query("SELECT * FROM `$table`")->fetchAll();
+        $redact = $sensitive_cols[$table] ?? [];
         if (count($rows) > 0) {
             foreach ($rows as $row) {
                 $cols = array_keys($row);
-                $vals = array_map(function($v) use ($db) {
+                $vals = array_map(function($v, $col) use ($db, $redact) {
                     if ($v === null) return 'NULL';
+                    if (in_array($col, $redact)) return 'NULL';
                     return $db->quote($v);
-                }, array_values($row));
+                }, array_values($row), $cols);
 
                 $sql .= "INSERT INTO `$table` (`" . implode('`, `', $cols) . "`) VALUES (" . implode(', ', $vals) . ");\n";
             }

@@ -56,6 +56,7 @@ function handle_repertorio($method, $uri, $input) {
                 $tipo_media = 'youtube';
             } else {
                 // Local file (audio or video fallback)
+                validate_file_extension($nome, 'audio');
                 $safe = $id . '_' . $parte_idx . '_' . $instrumento_id . '_' . time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $nome);
                 $arquivo = save_base64_file('repertorio/medios', $safe, $data);
             }
@@ -109,12 +110,14 @@ function handle_repertorio($method, $uri, $input) {
 
         $arquivo_audio = null;
         if (!empty($input['arquivo_audio']) && !empty($input['arquivo_audio_nome'])) {
+            validate_file_extension($input['arquivo_audio_nome'], 'audio');
             $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $input['arquivo_audio_nome']);
             $arquivo_audio = save_base64_file('repertorio', $safe, $input['arquivo_audio']);
         }
 
         $arquivo_partitura = null;
         if (!empty($input['arquivo_partitura']) && !empty($input['arquivo_partitura_nome'])) {
+            validate_file_extension($input['arquivo_partitura_nome'], 'document');
             $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $input['arquivo_partitura_nome']);
             $arquivo_partitura = save_base64_file('repertorio', $safe, $input['arquivo_partitura']);
         }
@@ -149,12 +152,14 @@ function handle_repertorio($method, $uri, $input) {
 
         $arquivo_audio = $existing['arquivo_audio'];
         if (!empty($input['arquivo_audio']) && !empty($input['arquivo_audio_nome'])) {
+            validate_file_extension($input['arquivo_audio_nome'], 'audio');
             $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $input['arquivo_audio_nome']);
             $arquivo_audio = save_base64_file('repertorio', $safe, $input['arquivo_audio']);
         }
 
         $arquivo_partitura = $existing['arquivo_partitura'];
         if (!empty($input['arquivo_partitura']) && !empty($input['arquivo_partitura_nome'])) {
+            validate_file_extension($input['arquivo_partitura_nome'], 'document');
             $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $input['arquivo_partitura_nome']);
             $arquivo_partitura = save_base64_file('repertorio', $safe, $input['arquivo_partitura']);
         }

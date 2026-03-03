@@ -140,7 +140,7 @@ function handle_usuarios($method, $uri, $input) {
             $input['role'] ?? 'Usuario',
             $input['estado'] ?? 'Activo',
             $hashed,
-            null,
+            '',
         ]);
         $newId = (int)$db->lastInsertId();
 

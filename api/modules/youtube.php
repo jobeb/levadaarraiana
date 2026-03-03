@@ -52,6 +52,13 @@ function _youtube_auth() {
 
     $redirect_uri = _youtube_redirect_uri();
 
+    // Generate CSRF state token
+    $state = bin2hex(random_bytes(16));
+    $db->prepare(
+        "INSERT INTO youtube_tokens (id, oauth_state) VALUES (1, ?)
+         ON DUPLICATE KEY UPDATE oauth_state = VALUES(oauth_state)"
+    )->execute([$state]);
+
     $params = http_build_query([
         'client_id'     => $cfg['youtube_client_id'],
         'redirect_uri'  => $redirect_uri,
@@ -59,6 +66,7 @@ function _youtube_auth() {
         'scope'         => 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly',
         'access_type'   => 'offline',
         'prompt'        => 'consent',
+        'state'         => $state,
     ]);
 
     send_json(['url' => 'https://accounts.google.com/o/oauth2/v2/auth?' . $params]);
@@ -68,6 +76,7 @@ function _youtube_auth() {
 function _youtube_callback() {
     $code = $_GET['code'] ?? '';
     $error = $_GET['error'] ?? '';
+    $state = $_GET['state'] ?? '';
 
     if ($error || empty($code)) {
         header('Location: ../../app.html#configuracion?yt=error');
@@ -75,6 +84,16 @@ function _youtube_callback() {
     }
 
     $db = get_db();
+
+    // Verify CSRF state token
+    $row = $db->query("SELECT oauth_state FROM youtube_tokens WHERE id = 1")->fetch();
+    if (!$row || empty($state) || !hash_equals($row['oauth_state'] ?? '', $state)) {
+        header('Location: ../../app.html#configuracion?yt=error');
+        exit;
+    }
+    // Clear used state
+    $db->exec("UPDATE youtube_tokens SET oauth_state = NULL WHERE id = 1");
+
     $cfg = $db->query("SELECT youtube_client_id, youtube_client_secret FROM config WHERE id = 1")->fetch();
 
     if (empty($cfg['youtube_client_id'])) {

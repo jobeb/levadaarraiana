@@ -219,7 +219,7 @@ function usuariosModal(usuario) {
         '<input type="hidden" id="usuario-id" value="' + (isEdit ? usuario.id : '') + '">' +
         '<div class="form-group">' +
             '<label class="required">' + t('username') + '</label>' +
-            '<input type="text" class="form-control" id="usuario-username" value="' + esc(isEdit ? usuario.username : '') + '"' + (isEdit ? ' readonly' : '') + '>' +
+            '<input type="text" class="form-control" id="usuario-username" value="' + esc(isEdit ? usuario.username : '') + '">' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('nome_completo') + '</label>' +

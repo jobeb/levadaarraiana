@@ -127,7 +127,7 @@ function ensaiosRenderNotas() {
                 '</div>' +
                 _ensaioEstadoBadge(e.estado) +
             '</div>' +
-            '<div class="ensaio-nota-body rt-content">' + (e.notas || '') + '</div>' +
+            '<div class="ensaio-nota-body rt-content">' + sanitizeHtml(e.notas) + '</div>' +
         '</div>';
     });
 
@@ -333,7 +333,7 @@ function ensaiosViewNotas(id) {
                 esc(item.hora_inicio || '') + ' - ' + esc(item.hora_fin || '') +
             '</span>' +
         '</div>' +
-        '<div class="rt-content">' + (item.notas || '') + '</div>';
+        '<div class="rt-content">' + sanitizeHtml(item.notas) + '</div>';
 
     $('#modal-body').innerHTML = html;
 

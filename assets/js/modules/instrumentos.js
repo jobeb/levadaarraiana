@@ -63,7 +63,7 @@ function instrumentosRender() {
 
         var descricionHtml = '';
         if (i.descricion) {
-            descricionHtml = '<div class="rt-content instrumento-desc">' + i.descricion + '</div>';
+            descricionHtml = '<div class="rt-content instrumento-desc">' + sanitizeHtml(i.descricion) + '</div>';
         }
 
         var actions = '';
@@ -208,7 +208,7 @@ function instrumentosView(id) {
     $('#modal-title').textContent = item.nome;
 
     var notasHtml = item.notas ? '<p class="text-muted" style="margin:0 0 8px">' + esc(item.notas) + '</p>' : '';
-    var descHtml = item.descricion ? '<div class="rt-content instrumento-view-desc">' + item.descricion + '</div>' : '';
+    var descHtml = item.descricion ? '<div class="rt-content instrumento-view-desc">' + sanitizeHtml(item.descricion) + '</div>' : '';
 
     $('#modal-body').innerHTML =
         '<img src="' + esc(iconSrc) + '" alt="' + esc(item.nome) + '" class="instrumento-view-img">' +

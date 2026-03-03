@@ -118,6 +118,7 @@ function handle_propostas($method, $uri, $input) {
         if (!empty($input['ficheiros'])) {
             foreach ($input['ficheiros'] as $f) {
                 if (is_array($f) && !empty($f['data']) && !empty($f['name'])) {
+                    validate_file_extension($f['name'], 'document');
                     $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $f['name']);
                     $url = save_base64_file('propostas', $safe, $f['data']);
                     $ficheiros_clean[] = ['name' => $f['name'], 'url' => $url];
@@ -157,6 +158,7 @@ function handle_propostas($method, $uri, $input) {
         if (isset($input['ficheiros'])) {
             foreach ($input['ficheiros'] as $f) {
                 if (is_array($f) && !empty($f['data']) && !empty($f['name'])) {
+                    validate_file_extension($f['name'], 'document');
                     $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $f['name']);
                     $url = save_base64_file('propostas', $safe, $f['data']);
                     $ficheiros_clean[] = ['name' => $f['name'], 'url' => $url];

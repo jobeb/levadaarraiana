@@ -27,6 +27,12 @@ function esc(str) {
     return d.innerHTML;
 }
 
+function sanitizeHtml(html) {
+    if (!html) return '';
+    if (typeof DOMPurify !== 'undefined') return DOMPurify.sanitize(html);
+    return esc(html);
+}
+
 function today() {
     return new Date().toISOString().slice(0, 10);
 }

@@ -18,9 +18,9 @@ function handle_landing($method, $uri, $input) {
         send_json($rows);
     }
 
-    // PUT /landing-seccions/reorder — admin only
+    // PUT /landing-seccions/reorder — socio+
     if ($method === 'PUT' && $uri === '/landing-seccions/reorder') {
-        require_admin();
+        require_socio();
         $ids = $input['ids'] ?? [];
         if (!is_array($ids) || empty($ids)) send_json(['error' => 'ids requeridos'], 400);
         $stmt = $db->prepare("UPDATE landing_seccions SET orden = ? WHERE id = ?");
@@ -32,9 +32,9 @@ function handle_landing($method, $uri, $input) {
         send_json($rows);
     }
 
-    // PUT /landing-seccions/:id — admin only
+    // PUT /landing-seccions/:id — socio+
     if ($method === 'PUT' && preg_match('#^/landing-seccions/([a-z_]+)$#', $uri, $m)) {
-        require_admin();
+        require_socio();
         $secId = $m[1];
 
         // Validate section exists
@@ -72,6 +72,7 @@ function handle_landing($method, $uri, $input) {
         if (!empty($input['bg_video_data'])) {
             $ext = $input['bg_video_ext'] ?? 'mp4';
             $ext = preg_replace('/[^a-zA-Z0-9]/', '', $ext);
+            validate_file_extension('video.' . $ext, 'video');
             $path = save_base64_file('landing', $secId . '_video.' . $ext, $input['bg_video_data']);
             $updates[] = "bg_video = ?";
             $params[] = $path;

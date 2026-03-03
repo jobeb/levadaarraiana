@@ -182,9 +182,9 @@
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span data-i18n="repertorio">Repertorio</span>
     </button>
 
-    <!-- Config (admin only) -->
-    <div class="sidebar-section admin-only" data-i18n="configuracion">Configuración</div>
-    <button class="sidebar-link admin-only" data-section="configuracion" onclick="Router.navigate('configuracion')">
+    <!-- Config (socio+) -->
+    <div class="sidebar-section socio-only" data-i18n="configuracion">Configuración</div>
+    <button class="sidebar-link socio-only" data-section="configuracion" onclick="Router.navigate('configuracion')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span data-i18n="configuracion">Configuración</span>
     </button>
 </aside>
@@ -486,7 +486,7 @@
     </div>
 
     <!-- Configuración -->
-    <div class="section admin-only" id="sec-configuracion">
+    <div class="section socio-only" id="sec-configuracion">
         <div class="section-header">
             <h2 data-i18n="configuracion">Configuración</h2>
         </div>
@@ -533,6 +533,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
 <script src="assets/js/config.js"></script>
 <script src="assets/js/state.js"></script>
 <script src="assets/js/utils.js"></script>
@@ -559,7 +560,7 @@
 <script src="assets/js/modules/instrumentos.js"></script>
 <script src="assets/js/modules/repertorio.js"></script>
 <script src="assets/js/modules/comentarios.js"></script>
-<script src="assets/js/modules/configuracion.js?v=6"></script>
+<script src="assets/js/modules/configuracion.js?v=7"></script>
 <script src="assets/js/app.js?v=2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>

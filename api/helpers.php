@@ -37,12 +37,31 @@ function fix_rows($rows, $json_cols = [], $bool_cols = [], $decimal_cols = []) {
     }, $rows);
 }
 
+// ---- File validation ----
+function validate_file_extension($filename, $type = 'document') {
+    $allowed = [
+        'image'    => ['jpg','jpeg','png','gif','webp'],
+        'document' => ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','odt','ods'],
+        'video'    => ['mp4','webm','ogg','mov','avi'],
+        'audio'    => ['mp3','wav','ogg','m4a'],
+    ];
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $list = $allowed[$type] ?? $allowed['document'];
+    if (!in_array($ext, $list)) {
+        send_json(['error' => 'Tipo de arquivo non permitido: .' . $ext], 400);
+    }
+}
+
 // ---- File helpers ----
 function save_base64_file($subdir, $filename, $b64data) {
+    $decoded = base64_decode($b64data);
+    if (strlen($decoded) > 50 * 1024 * 1024) {
+        send_json(['error' => 'Arquivo demasiado grande (máx 50MB)'], 400);
+    }
     $dir = UPLOADS_DIR . '/' . $subdir;
     if (!is_dir($dir)) mkdir($dir, 0755, true);
     $path = $dir . '/' . $filename;
-    file_put_contents($path, base64_decode($b64data));
+    file_put_contents($path, $decoded);
     return $subdir . '/' . $filename;
 }
 
@@ -113,13 +132,19 @@ function ensure_dirs() {
     }
 }
 
+// ---- Email header injection prevention ----
+function sanitize_email_header($value) {
+    return preg_replace('/[\r\n]/', '', $value);
+}
+
 // ---- Email dispatcher (php_mail or smtp based on config) ----
 function send_email($to, $subject, $body, $replyTo = null) {
     $cfg = get_db()->query("SELECT * FROM config WHERE id = 1")->fetch();
     if (!$cfg) return false;
 
-    $from = ($cfg['smtp_from'] ?: $cfg['smtp_user']) ?: 'noreply@levadaarraiana.gal';
+    $from = sanitize_email_header(($cfg['smtp_from'] ?: $cfg['smtp_user']) ?: 'noreply@levadaarraiana.gal');
     $metodo = $cfg['email_metodo'] ?? 'php_mail';
+    $subject = sanitize_email_header($subject);
 
     if ($metodo === 'smtp') {
         try {
@@ -133,9 +158,9 @@ function send_email($to, $subject, $body, $replyTo = null) {
 
     // Default: PHP mail()
     $headers  = "From: $from\r\n";
-    if ($replyTo) $headers .= "Reply-To: $replyTo\r\n";
+    if ($replyTo) $headers .= "Reply-To: " . sanitize_email_header($replyTo) . "\r\n";
     $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    return @mail($to, $subject, $body, $headers);
+    return @mail(sanitize_email_header($to), $subject, $body, $headers);
 }
 
 // ---- SMTP helper ----
@@ -144,7 +169,9 @@ function smtp_send($cfg, $to, $subject, $body, $attachments = []) {
     $port = (int)($cfg['smtp_port'] ?? 587);
     $user = $cfg['smtp_user'];
     $pass = $cfg['smtp_pass'];
-    $from = $cfg['smtp_from'] ?: $user;
+    $from = sanitize_email_header($cfg['smtp_from'] ?: $user);
+    $to = sanitize_email_header($to);
+    $subject = sanitize_email_header($subject);
     $cifrado = $cfg['smtp_cifrado'] ?? 'TLS';
 
     $prefix = ($cifrado === 'SSL') ? 'ssl://' : '';

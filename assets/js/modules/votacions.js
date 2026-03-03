@@ -144,7 +144,7 @@ function votacionsRender() {
             imaxeHtml +
             '<div class="card-body">' +
                 '<h3 class="card-title">' + esc(v.titulo) + ' ' + estadoBadge + tipoBadge + anonBadge + limiteBadge + '</h3>' +
-                (v.descripcion ? '<div class="rt-content card-text">' + v.descripcion + '</div>' : '') +
+                (v.descripcion ? '<div class="rt-content card-text">' + sanitizeHtml(v.descripcion) + '</div>' : '') +
                 bodyHtml +
             '</div>' +
             '<div class="card-actions">' +
@@ -440,7 +440,7 @@ async function votacionsVotar(id, tipo) {
 }
 
 function votacionsShare(id) {
-    var v = (AppState.votacions || []).find(function(x) { return x.id === id; });
+    var v = (AppState.votacions || []).find(function(x) { return x.id == id; });
     if (!v) return;
 
     var opcions = (v.opcions || []).map(function(o) {
@@ -470,7 +470,14 @@ function votacionsShare(id) {
     var baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'app.html#votacions/' + v.id;
     lines.push(baseUrl);
 
-    window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+    var url = 'https://wa.me/?text=' + encodeURIComponent(lines.join('\n'));
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
 async function votacionsPechar(id) {

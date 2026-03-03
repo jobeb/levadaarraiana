@@ -87,7 +87,7 @@ function _pubShowNoticia(id) {
         '<span class="pub-detail-date">' + formatDate(n.data) + '</span>' +
     '</div>' +
     '<h2>' + esc(tc(n,'titulo')) + '</h2>' +
-    '<div class="rt-content pub-detail-text">' + tc(n,'texto') + '</div>';
+    '<div class="rt-content pub-detail-text">' + sanitizeHtml(tc(n,'texto')) + '</div>';
     _pubShowDetail(imgHtml, bodyHtml);
 }
 
@@ -109,7 +109,7 @@ function _pubShowBolo(id) {
         (b.hora ? '<div class="pub-detail-meta-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' + esc(b.hora) + '</div>' : '') +
         (b.lugar ? '<div class="pub-detail-meta-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(b.lugar) + '</div>' : '') +
     '</div>' +
-    '<div class="rt-content pub-detail-text">' + tc(b,'descricion') + '</div>';
+    '<div class="rt-content pub-detail-text">' + sanitizeHtml(tc(b,'descricion')) + '</div>';
     _pubShowDetail(imgHtml, bodyHtml);
 }
 
@@ -125,7 +125,7 @@ function _pubShowInstrumento(id) {
     '</div>' +
     '<h2>' + esc(tc(i,'nome')) + '</h2>' +
     (tc(i,'notas') ? '<p class="pub-detail-subtitle">' + esc(tc(i,'notas')) + '</p>' : '') +
-    (tc(i,'descricion') ? '<div class="rt-content pub-detail-text">' + tc(i,'descricion') + '</div>' : '<p class="text-muted">' + t(('desc_' + (i.tipo || 'outro'))) + '</p>');
+    (tc(i,'descricion') ? '<div class="rt-content pub-detail-text">' + sanitizeHtml(tc(i,'descricion')) + '</div>' : '<p class="text-muted">' + t(('desc_' + (i.tipo || 'outro'))) + '</p>');
     _pubShowDetail(imgHtml, bodyHtml);
 }
 

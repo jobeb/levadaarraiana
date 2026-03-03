@@ -10,7 +10,13 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'middleware.php') {
 
 // ---- CORS ----
 function cors() {
-    header('Access-Control-Allow-Origin: *');
+    $allowed = ['https://levada.fordema.es', 'http://localhost', 'http://localhost:80'];
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (in_array($origin, $allowed)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+    } else {
+        header('Access-Control-Allow-Origin: https://levada.fordema.es');
+    }
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -65,4 +71,20 @@ function require_socio() {
         send_json(['error' => 'Acceso denegado'], 403);
     }
     return $user;
+}
+
+// ---- Rate limiting (file-based) ----
+function rate_limit($key, $max = 5, $window = 300) {
+    $dir = sys_get_temp_dir() . '/levada_rate/';
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    $file = $dir . md5($key) . '.json';
+    $data = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
+    if (!is_array($data)) $data = [];
+    $now = time();
+    $data = array_filter($data, function($t) use ($now, $window) { return $t > $now - $window; });
+    if (count($data) >= $max) {
+        send_json(['error' => 'Demasiados intentos. Agarda uns minutos.'], 429);
+    }
+    $data[] = $now;
+    file_put_contents($file, json_encode(array_values($data)));
 }

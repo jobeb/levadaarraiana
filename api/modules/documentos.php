@@ -39,6 +39,7 @@ function handle_documentos($method, $uri, $input) {
         $arquivo_nome = null;
         if (!empty($input['arquivo']) && !empty($input['arquivo_nome'])) {
             $arquivo_nome = $input['arquivo_nome'];
+            validate_file_extension($arquivo_nome, 'document');
             $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $arquivo_nome);
             $arquivo = save_base64_file('documentos', $safe, $input['arquivo']);
         }
@@ -70,6 +71,7 @@ function handle_documentos($method, $uri, $input) {
         $arquivo_nome = $existing['arquivo_nome'];
         if (!empty($input['arquivo']) && !empty($input['arquivo_nome'])) {
             $arquivo_nome = $input['arquivo_nome'];
+            validate_file_extension($arquivo_nome, 'document');
             $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $arquivo_nome);
             $arquivo = save_base64_file('documentos', $safe, $input['arquivo']);
         }

@@ -33,6 +33,7 @@ function handle_arquivos($method, $uri, $input) {
         $data = $input['data'] ?? '';
         if (!$data) send_json(['error' => 'Sen datos de imaxe'], 400);
 
+        validate_file_extension($name, 'image');
         $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $name);
         $url = process_and_save_image($dir, $safe, $data);
         send_json(['ok' => true, 'url' => $url]);
@@ -46,10 +47,11 @@ function handle_arquivos($method, $uri, $input) {
             send_json(['error' => 'Ruta non válida'], 400);
         }
         $full = UPLOADS_DIR . '/' . $path;
-        if (!file_exists($full)) {
-            send_json(['error' => 'Arquivo non atopado'], 404);
+        $real = realpath($full);
+        if ($real === false || strpos($real, realpath(UPLOADS_DIR)) !== 0) {
+            send_json(['error' => 'Ruta non válida'], 400);
         }
-        unlink($full);
+        unlink($real);
         send_json(['ok' => true]);
     }
 

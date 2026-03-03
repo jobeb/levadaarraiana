@@ -45,6 +45,7 @@ function handle_bolos($method, $uri, $input) {
         // Contrato arquivo base64
         $contrato_arquivo = '';
         if (!empty($input['contrato_arquivo_data']) && !empty($input['contrato_arquivo_nome'])) {
+            validate_file_extension($input['contrato_arquivo_nome'], 'document');
             $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $input['contrato_arquivo_nome']);
             $contrato_arquivo = save_base64_file('bolos', $safe, $input['contrato_arquivo_data']);
         }
@@ -126,6 +127,7 @@ function handle_bolos($method, $uri, $input) {
 
         // Contrato arquivo
         if (!empty($input['contrato_arquivo_data']) && !empty($input['contrato_arquivo_nome'])) {
+            validate_file_extension($input['contrato_arquivo_nome'], 'document');
             $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $input['contrato_arquivo_nome']);
             $path = save_base64_file('bolos', $safe, $input['contrato_arquivo_data']);
             $fields[] = "contrato_arquivo = ?";
