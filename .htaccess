@@ -1,7 +1,10 @@
 RewriteEngine On
 
-# No cache for dev (JS, CSS, HTML)
 <IfModule mod_headers.c>
+    # Allow microphone and camera for recording features
+    Header set Permissions-Policy "microphone=(self), camera=(self)"
+
+    # No cache for dev (JS, CSS, HTML)
     <FilesMatch "\.(js|css|html)$">
         Header set Cache-Control "no-cache, no-store, must-revalidate"
         Header set Pragma "no-cache"
