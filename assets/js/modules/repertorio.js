@@ -664,14 +664,22 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
         // Show preview in the slot
         var slotDiv = btn.closest('.medios-slot');
         if (slotDiv) {
-            var playerHtml = tipo === 'video'
-                ? '<video controls src="' + URL.createObjectURL(blob) + '" class="rec-preview-player"></video>'
-                : '<audio controls src="' + URL.createObjectURL(blob) + '" class="rec-preview-player"></audio>';
             var existing = slotDiv.querySelector('.rec-preview');
             if (existing) existing.remove();
             var preview = document.createElement('div');
             preview.className = 'rec-preview';
-            preview.innerHTML = playerHtml + '<span class="medios-slot-name">' + esc(file.name) + '</span>';
+
+            var player = document.createElement(tipo === 'video' ? 'video' : 'audio');
+            player.controls = true;
+            player.className = 'rec-preview-player';
+            player.src = URL.createObjectURL(blob);
+
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'medios-slot-name';
+            nameSpan.textContent = file.name;
+
+            preview.appendChild(player);
+            preview.appendChild(nameSpan);
             slotDiv.appendChild(preview);
         }
 
@@ -687,7 +695,7 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
         _repRecStream = null;
     };
 
-    _repRecorder.start();
+    _repRecorder.start(1000);
     btn.classList.add('rec-active');
     btn.title = t('gravando_pulsa_parar');
     toast(t('gravando'), 'info');

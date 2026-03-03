@@ -932,12 +932,15 @@ iframe.instrumento-yt-embed { height: 220px; border: none; }
 }
 .rec-preview {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     margin-top: 4px;
+    min-width: 0;
 }
 .rec-preview-player {
-    max-width: 280px;
+    max-width: 100%;
+    width: 100%;
     border-radius: var(--radius);
 }
 audio.rec-preview-player { height: 36px; }
