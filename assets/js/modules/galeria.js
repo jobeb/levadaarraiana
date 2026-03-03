@@ -519,31 +519,14 @@ async function _handleNewPhotos(files) {
         var isVideoFile = videoExts.indexOf(ext) !== -1 || file.type.startsWith('video/');
 
         if (isVideoFile) {
-            // Try YouTube upload, fallback to base64
-            toast('Subindo vídeo ' + file.name + ' a YouTube...', 'info');
-            try {
-                var b64v = await fileToBase64(file);
-                var titulo = ($('#album-titulo') || {}).value || 'Levada Arraiana';
-                var ytResult = await api('/youtube/upload', {
-                    method: 'POST',
-                    body: {
-                        title: titulo,
-                        description: '',
-                        video_data: b64v.data,
-                        video_ext: ext || 'mp4'
-                    }
-                });
-                if (ytResult.youtube_url) {
-                    _editorPhotos.push({
-                        path: ytResult.youtube_url,
-                        titulo: '', alt: '', destacada: false,
-                        _data: null, _ext: null, _nome: null, _objectUrl: null
-                    });
-                    toast('Vídeo subido a YouTube', 'success');
-                }
-            } catch (ytErr) {
-                toast('Erro YouTube: ' + ytErr.message, 'error');
-            }
+            // Store video file for YouTube upload on save
+            var objUrl = URL.createObjectURL(file);
+            _editorPhotos.push({
+                path: '',
+                titulo: '', alt: '', destacada: false,
+                _data: null, _ext: ext, _nome: file.name,
+                _objectUrl: objUrl, _videoFile: file
+            });
         } else {
             var b64 = await imageToBase64(file);
             var objUrl2 = URL.createObjectURL(file);
@@ -625,6 +608,27 @@ async function galeriaSave() {
             data: ($('#album-data') || {}).value || today(),
             i18n: _collectModalI18n()
         };
+
+        // Upload pending videos to YouTube
+        var titulo = body.titulo || 'Levada Arraiana';
+        for (var v = 0; v < _editorPhotos.length; v++) {
+            var vp = _editorPhotos[v];
+            if (vp._videoFile) {
+                toast('Subindo vídeo ' + vp._nome + ' a YouTube...', 'info');
+                var vb64 = await fileToBase64(vp._videoFile);
+                var vext = (vp._nome.split('.').pop() || 'mp4').toLowerCase();
+                var ytRes = await api('/youtube/upload', {
+                    method: 'POST',
+                    body: { title: titulo, description: '', video_data: vb64.data, video_ext: vext }
+                });
+                if (ytRes.youtube_url) {
+                    vp.path = ytRes.youtube_url;
+                    vp._videoFile = null;
+                    vp._data = null;
+                    toast('Vídeo subido a YouTube', 'success');
+                }
+            }
+        }
 
         // Build fotos array from editor state
         var fotos = [];

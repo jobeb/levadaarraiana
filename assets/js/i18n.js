@@ -219,6 +219,7 @@ const TRANSLATIONS = {
     media:              { gl:'Media', es:'Media', pt:'Média', en:'Medium' },
     dificil:            { gl:'Difícil', es:'Difícil', pt:'Difícil', en:'Hard' },
     audio:              { gl:'Audio', es:'Audio', pt:'Áudio', en:'Audio' },
+    video:              { gl:'Vídeo', es:'Vídeo', pt:'Vídeo', en:'Video' },
     partitura:          { gl:'Partitura', es:'Partitura', pt:'Partitura', en:'Score' },
     estructura:         { gl:'Estructura', es:'Estructura', pt:'Estrutura', en:'Structure' },
     inicio:             { gl:'Inicio', es:'Inicio', pt:'Início', en:'Intro' },
@@ -227,6 +228,11 @@ const TRANSLATIONS = {
     final_cierre:       { gl:'Final', es:'Final', pt:'Final', en:'Ending' },
     engadir_andamento:  { gl:'Engadir andamento', es:'Añadir andamiento', pt:'Adicionar andamento', en:'Add movement' },
     engadir_corte:      { gl:'Engadir corte', es:'Añadir corte', pt:'Adicionar corte', en:'Add break' },
+    descargar:          { gl:'Descargar', es:'Descargar', pt:'Descarregar', en:'Download' },
+    descargar_medios:   { gl:'Descargar medios (ZIP)', es:'Descargar medios (ZIP)', pt:'Descarregar médias (ZIP)', en:'Download media (ZIP)' },
+    abrir_youtube:      { gl:'Abrir en YouTube', es:'Abrir en YouTube', pt:'Abrir no YouTube', en:'Open on YouTube' },
+    preparando_descarga:{ gl:'Preparando descarga...', es:'Preparando descarga...', pt:'Preparando download...', en:'Preparing download...' },
+    sen_medios:         { gl:'Non hai medios para descargar', es:'No hay medios para descargar', pt:'Não há médias para descarregar', en:'No media to download' },
 
     // ---- Config ----
     nome_asociacion:    { gl:'Nome asociación', es:'Nombre asociación', pt:'Nome associação', en:'Association name' },

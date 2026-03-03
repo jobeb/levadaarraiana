@@ -907,6 +907,13 @@ iframe.instrumento-yt-embed { height: 220px; border: none; }
     max-width: 100%;
     border-radius: var(--radius);
 }
+.medios-slot-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    min-width: 44px;
+}
 .medios-slot-name {
     font-size: 0.8rem;
     color: var(--text-dim);

@@ -2,6 +2,8 @@
  * Repertorio — Repertoire / rhythms module
  */
 
+var _repPendingUploads = [];
+
 async function repertorioLoad() {
     try {
         AppState.repertorio = await api('/repertorio');
@@ -103,6 +105,7 @@ function repertorioRender() {
             '</div>' +
             '<div class="card-actions">' +
                 '<button class="btn-icon" onclick="repertorioMediosModal(' + r.id + ')" title="' + t('medios') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>' +
+                '<button class="btn-icon" onclick="_repDownloadZip(' + r.id + ')" title="' + t('descargar_medios') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>' +
                 (isAdmin
                     ? '<button class="btn-icon" onclick="repertorioModal(AppState.repertorio.find(function(x){return x.id==' + r.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
                       '<button class="btn-icon btn-danger" onclick="repertorioDelete(' + r.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
@@ -301,7 +304,12 @@ async function repertorioMediosModal(repId) {
 
     $('#modal-title').textContent = t('medios') + ' — ' + ritmo.nome;
     $('#modal-body').innerHTML = '<p class="text-center">' + t('cargando') + '</p>';
-    $('#modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+    _repPendingUploads = [];
+    var footerHtml = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>';
+    if (AppState.isSocio()) {
+        footerHtml += '<button class="btn btn-primary" onclick="_repMediosSaveAll(' + repId + ')">' + t('gardar') + '</button>';
+    }
+    $('#modal-footer').innerHTML = footerHtml;
     showModal('modal-overlay');
 
     var medios = [];
@@ -388,110 +396,103 @@ function _repYoutubeIdFromUrl(src) {
 function _repMedioDualSlotHtml(repId, parteIdx, instrId, medioAudio, medioYT, canEdit) {
     var html = '';
 
+    var _dlIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    var _delIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>';
+
     // --- Audio slot ---
     if (medioAudio && medioAudio.arquivo) {
         var url = uploadUrl(medioAudio.arquivo);
         var player = '<audio controls preload="none" style="height:36px;flex:1;min-width:0"><source src="' + esc(url) + '"></audio>';
+        var dlBtn = '<a class="btn-icon btn-sm" href="' + esc(url) + '" download="' + esc(medioAudio.arquivo_nome) + '" title="' + t('descargar') + '">' + _dlIcon + '</a>';
         var deleteBtn = canEdit
-            ? '<button class="btn-icon btn-danger btn-sm" onclick="_repMedioDelete(' + repId + ',' + medioAudio.id + ')" title="' + t('eliminar') + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
+            ? '<button class="btn-icon btn-danger btn-sm" onclick="_repMedioDelete(' + repId + ',' + medioAudio.id + ')" title="' + t('eliminar') + '">' + _delIcon + '</button>'
             : '';
-        html += '<div class="medios-slot">' + player +
+        html += '<div class="medios-slot"><label class="medios-slot-label">' + t('audio') + '</label>' + player +
             '<span class="medios-slot-name" title="' + esc(medioAudio.arquivo_nome) + '">' + esc(medioAudio.arquivo_nome) + '</span>' +
-            deleteBtn + '</div>';
+            dlBtn + deleteBtn + '</div>';
     } else if (canEdit) {
         var inputId = 'medio-audio-' + parteIdx + '-' + instrId;
-        html += '<div class="medios-slot">' +
+        html += '<div class="medios-slot"><label class="medios-slot-label">' + t('audio') + '</label>' +
             '<input type="file" class="form-control" id="' + inputId + '" accept="audio/*" ' +
-            'onchange="_repMedioUpload(' + repId + ',' + parteIdx + ',' + instrId + ',this)">' +
+            'onchange="_repMedioQueue(' + parteIdx + ',' + instrId + ',this,\'audio\')">' +
             '</div>';
     }
 
     // --- YouTube/Video slot ---
     if (medioYT && medioYT.arquivo) {
+        var isYT = _repIsYoutubeUrl(medioYT.arquivo);
+        var dlBtn2 = isYT
+            ? '<a class="btn-icon btn-sm" href="https://www.youtube.com/watch?v=' + esc(_repYoutubeIdFromUrl(medioYT.arquivo)) + '" target="_blank" title="' + t('abrir_youtube') + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>'
+            : '<a class="btn-icon btn-sm" href="' + esc(uploadUrl(medioYT.arquivo)) + '" download title="' + t('descargar') + '">' + _dlIcon + '</a>';
         var deleteBtn2 = canEdit
-            ? '<button class="btn-icon btn-danger btn-sm" onclick="_repMedioDelete(' + repId + ',' + medioYT.id + ')" title="' + t('eliminar') + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
+            ? '<button class="btn-icon btn-danger btn-sm" onclick="_repMedioDelete(' + repId + ',' + medioYT.id + ')" title="' + t('eliminar') + '">' + _delIcon + '</button>'
             : '';
-        html += '<div class="medios-slot">' +
+        html += '<div class="medios-slot"><label class="medios-slot-label">' + t('video') + '</label>' +
             '<iframe width="280" height="158" src="' + esc(medioYT.arquivo) + '" frameborder="0" allowfullscreen style="border-radius:var(--radius);max-width:100%"></iframe>' +
-            deleteBtn2 + '</div>';
+            dlBtn2 + deleteBtn2 + '</div>';
     } else if (canEdit) {
         var vidInputId = 'medio-video-' + parteIdx + '-' + instrId;
-        html += '<div class="medios-slot">' +
+        html += '<div class="medios-slot"><label class="medios-slot-label">' + t('video') + '</label>' +
             '<input type="file" class="form-control" id="' + vidInputId + '" accept="video/*" ' +
-            'onchange="_repVideoUpload(' + repId + ',' + parteIdx + ',' + instrId + ',this)">' +
+            'onchange="_repMedioQueue(' + parteIdx + ',' + instrId + ',this,\'video\')">' +
             '</div>';
     }
 
     return html;
 }
 
-async function _repMedioUpload(repId, parteIdx, instrId, input) {
+function _repMedioQueue(parteIdx, instrId, input, tipo) {
     if (!input.files || !input.files.length) return;
-    var file = input.files[0];
-    input.disabled = true;
-
-    try {
-        var f = await fileToBase64(file);
-        await api('/repertorio/' + repId + '/medios', {
-            method: 'PUT',
-            body: {
-                parte_idx: parteIdx,
-                instrumento_id: instrId,
-                data: f.data,
-                nome: f.name,
-                tipo_media: 'audio'
-            }
-        });
-        toast(t('exito'), 'success');
-        repertorioMediosModal(repId);
-    } catch (e) {
-        toast(t('erro') + ': ' + e.message, 'error');
-        input.disabled = false;
-    }
+    // Remove any previous pending for same slot
+    _repPendingUploads = _repPendingUploads.filter(function(p) {
+        return !(p.parteIdx === parteIdx && p.instrId === instrId && p.tipo === tipo);
+    });
+    _repPendingUploads.push({ parteIdx: parteIdx, instrId: instrId, file: input.files[0], tipo: tipo });
 }
 
-var _repVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
+async function _repMediosSaveAll(repId) {
+    if (_repPendingUploads.length === 0) {
+        hideModal('modal-overlay');
+        return;
+    }
 
-async function _repVideoUpload(repId, parteIdx, instrId, input) {
-    if (!input.files || !input.files.length) return;
-    var file = input.files[0];
-    input.disabled = true;
+    var btn = $('#modal-footer .btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = t('gardando'); }
 
-    var ext = (file.name.split('.').pop() || '').toLowerCase();
     var ritmo = (AppState.repertorio || []).find(function(x) { return x.id == repId; });
     var title = ritmo ? ritmo.nome : 'Levada Arraiana';
 
     try {
-        var f = await fileToBase64(file);
-        toast('Subindo vídeo a YouTube...', 'info');
+        for (var i = 0; i < _repPendingUploads.length; i++) {
+            var pending = _repPendingUploads[i];
+            var f = await fileToBase64(pending.file);
 
-        var ytResult = await api('/youtube/upload', {
-            method: 'POST',
-            body: {
-                title: title,
-                description: 'Levada Arraiana — ' + title,
-                video_data: f.data,
-                video_ext: ext || 'mp4'
-            }
-        });
-
-        if (ytResult.youtube_url) {
-            await api('/repertorio/' + repId + '/medios', {
-                method: 'PUT',
-                body: {
-                    parte_idx: parteIdx,
-                    instrumento_id: instrId,
-                    youtube_url: ytResult.youtube_url,
-                    nome: f.name,
-                    tipo_media: 'youtube'
+            if (pending.tipo === 'video') {
+                var ext = (pending.file.name.split('.').pop() || 'mp4').toLowerCase();
+                toast('Subindo vídeo a YouTube...', 'info');
+                var ytResult = await api('/youtube/upload', {
+                    method: 'POST',
+                    body: { title: title, description: 'Levada Arraiana — ' + title, video_data: f.data, video_ext: ext }
+                });
+                if (ytResult.youtube_url) {
+                    await api('/repertorio/' + repId + '/medios', {
+                        method: 'PUT',
+                        body: { parte_idx: pending.parteIdx, instrumento_id: pending.instrId, youtube_url: ytResult.youtube_url, nome: f.name, tipo_media: 'youtube' }
+                    });
                 }
-            });
-            toast(t('exito'), 'success');
-            repertorioMediosModal(repId);
+            } else {
+                await api('/repertorio/' + repId + '/medios', {
+                    method: 'PUT',
+                    body: { parte_idx: pending.parteIdx, instrumento_id: pending.instrId, data: f.data, nome: f.name, tipo_media: 'audio' }
+                });
+            }
         }
+        _repPendingUploads = [];
+        toast(t('exito'), 'success');
+        repertorioMediosModal(repId);
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
-        input.disabled = false;
+        if (btn) { btn.disabled = false; btn.textContent = t('gardar'); }
     }
 }
 
@@ -501,6 +502,109 @@ async function _repMedioDelete(repId, medioId) {
         await api('/repertorio/' + repId + '/medios/' + medioId, { method: 'DELETE' });
         toast(t('exito'), 'success');
         repertorioMediosModal(repId);
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+async function _repDownloadZip(repId) {
+    if (typeof JSZip === 'undefined') { toast(t('erro') + ': JSZip non dispoñible', 'error'); return; }
+
+    var ritmo = (AppState.repertorio || []).find(function(x) { return x.id == repId; });
+    if (!ritmo) return;
+
+    toast(t('preparando_descarga'), 'info');
+
+    var medios = [];
+    try { medios = await api('/repertorio/' + repId + '/medios'); } catch (e) { toast(t('erro') + ': ' + e.message, 'error'); return; }
+
+    if (medios.length === 0 && !ritmo.arquivo_audio && !ritmo.arquivo_partitura) {
+        toast(t('sen_medios'), 'info');
+        return;
+    }
+
+    var instrumentos = await _repLoadInstrumentos();
+    var instrMap = {};
+    instrumentos.forEach(function(inst) { instrMap[inst.id] = inst.nome; });
+
+    var partes = ritmo.estructura || [];
+    var zip = new JSZip();
+    var ytLinks = [];
+
+    // Helper: build folder name for a medio
+    function medioFolder(m) {
+        var folder = '';
+        if (m.parte_idx === -1) {
+            folder = 'Xeral';
+        } else if (partes[m.parte_idx]) {
+            var p = partes[m.parte_idx];
+            var label = _estructuraLabel(p.tipo);
+            var count = 0;
+            for (var j = 0; j <= m.parte_idx; j++) {
+                if (partes[j].tipo === p.tipo) count++;
+            }
+            if (['andamento', 'corte'].indexOf(p.tipo) !== -1) label += ' ' + count;
+            folder = label;
+        } else {
+            folder = 'Parte ' + m.parte_idx;
+        }
+        if (m.instrumento_id && instrMap[m.instrumento_id]) {
+            folder += '/' + instrMap[m.instrumento_id];
+        }
+        return folder;
+    }
+
+    // Fetch and add files
+    async function addFile(url, zipPath) {
+        try {
+            var resp = await fetch(url);
+            if (!resp.ok) return;
+            var blob = await resp.blob();
+            zip.file(zipPath, blob);
+        } catch (e) { /* skip failed files */ }
+    }
+
+    // Main audio & partitura
+    if (ritmo.arquivo_audio) {
+        var ext = ritmo.arquivo_audio.split('.').pop() || 'mp3';
+        await addFile(uploadUrl(ritmo.arquivo_audio), 'audio_xeral.' + ext);
+    }
+    if (ritmo.arquivo_partitura) {
+        var ext2 = ritmo.arquivo_partitura.split('.').pop() || 'pdf';
+        await addFile(uploadUrl(ritmo.arquivo_partitura), 'partitura.' + ext2);
+    }
+
+    // Medios
+    for (var i = 0; i < medios.length; i++) {
+        var m = medios[i];
+        if (!m.arquivo) continue;
+        var folder = medioFolder(m);
+
+        if (_repIsYoutubeUrl(m.arquivo)) {
+            var ytId = _repYoutubeIdFromUrl(m.arquivo);
+            ytLinks.push(folder + ': https://www.youtube.com/watch?v=' + ytId);
+        } else {
+            var fname = m.arquivo_nome || ('medio_' + m.id + '.' + (m.arquivo.split('.').pop() || 'mp3'));
+            await addFile(uploadUrl(m.arquivo), folder + '/' + fname);
+        }
+    }
+
+    // YouTube links file
+    if (ytLinks.length > 0) {
+        zip.file('videos_youtube.txt', ytLinks.join('\n'));
+    }
+
+    // Generate and download
+    try {
+        var blob = await zip.generateAsync({ type: 'blob' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = (ritmo.nome || 'repertorio') + '_medios.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        toast(t('exito'), 'success');
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }
