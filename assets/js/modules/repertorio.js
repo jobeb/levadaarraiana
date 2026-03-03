@@ -402,14 +402,14 @@ function _repMedioDualSlotHtml(repId, parteIdx, instrId, medioAudio, medioYT, ca
     // --- Audio slot ---
     if (medioAudio && medioAudio.arquivo) {
         var url = uploadUrl(medioAudio.arquivo);
-        var player = '<audio controls preload="none" style="height:36px;flex:1;min-width:0"><source src="' + esc(url) + '"></audio>';
         var dlBtn = '<a class="btn-icon btn-sm" href="' + esc(url) + '" download="' + esc(medioAudio.arquivo_nome) + '" title="' + t('descargar') + '">' + _dlIcon + '</a>';
         var deleteBtn = canEdit
             ? '<button class="btn-icon btn-danger btn-sm" onclick="_repMedioDelete(' + repId + ',' + medioAudio.id + ')" title="' + t('eliminar') + '">' + _delIcon + '</button>'
             : '';
-        html += '<div class="medios-slot"><label class="medios-slot-label">' + t('audio') + '</label>' + player +
+        html += '<div class="medios-slot medios-slot-stacked"><div class="medios-slot-row"><label class="medios-slot-label">' + t('audio') + '</label>' +
             '<span class="medios-slot-name" title="' + esc(medioAudio.arquivo_nome) + '">' + esc(medioAudio.arquivo_nome) + '</span>' +
-            dlBtn + deleteBtn + '</div>';
+            dlBtn + deleteBtn + '</div>' +
+            '<audio controls preload="none" class="medios-slot-player"><source src="' + esc(url) + '"></audio></div>';
     } else if (canEdit) {
         var inputId = 'medio-audio-' + parteIdx + '-' + instrId;
         var recAudioId = 'rec-audio-' + parteIdx + '-' + instrId;
