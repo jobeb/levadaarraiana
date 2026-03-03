@@ -34,6 +34,10 @@ const Router = {
             link.classList.toggle('active', link.dataset.section === hash);
         });
 
+        // Scroll to top
+        document.querySelector('.app-main')?.scrollTo(0, 0);
+        window.scrollTo(0, 0);
+
         // Call route callback if registered
         if (this.routes[hash]) {
             this.routes[hash]();

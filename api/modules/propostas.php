@@ -19,7 +19,7 @@ function handle_propostas($method, $uri, $input) {
         if ($voto !== 1 && $voto !== -1) $voto = 1;
 
         $stmt = $db->prepare(
-            "INSERT INTO propostas_votos (proposta_id, socio_id, voto) VALUES (?, ?, ?)
+            "INSERT INTO propostas_votos (proposta_id, usuario_id, voto) VALUES (?, ?, ?)
              ON DUPLICATE KEY UPDATE voto = VALUES(voto)"
         );
         $stmt->execute([$proposta_id, $user['id'], $voto]);
@@ -30,7 +30,7 @@ function handle_propostas($method, $uri, $input) {
     if (preg_match('#^/propostas/(\d+)/voto$#', $uri, $m) && $method === 'DELETE') {
         $user = require_auth();
         $proposta_id = (int)$m[1];
-        $stmt = $db->prepare("DELETE FROM propostas_votos WHERE proposta_id = ? AND socio_id = ?");
+        $stmt = $db->prepare("DELETE FROM propostas_votos WHERE proposta_id = ? AND usuario_id = ?");
         $stmt->execute([$proposta_id, $user['id']]);
         send_json(['ok' => true]);
     }
@@ -41,7 +41,7 @@ function handle_propostas($method, $uri, $input) {
         $proposta_id = (int)$m[1];
         $stmt = $db->prepare(
             "SELECT pv.*, s.nome_completo FROM propostas_votos pv
-             LEFT JOIN usuarios s ON s.id = pv.socio_id
+             LEFT JOIN usuarios s ON s.id = pv.usuario_id
              WHERE pv.proposta_id = ?"
         );
         $stmt->execute([$proposta_id]);
@@ -73,7 +73,7 @@ function handle_propostas($method, $uri, $input) {
             $user = get_session_user();
             if ($user) {
                 $uid = (int)$user['id'];
-                $vs = $db->prepare("SELECT voto FROM propostas_votos WHERE proposta_id = ? AND socio_id = ?");
+                $vs = $db->prepare("SELECT voto FROM propostas_votos WHERE proposta_id = ? AND usuario_id = ?");
                 $vs->execute([$id, $uid]);
                 $v = $vs->fetch();
                 $row['meu_voto'] = $v ? (int)$v['voto'] : 0;
@@ -98,7 +98,7 @@ function handle_propostas($method, $uri, $input) {
         $user = get_session_user();
         if ($user) {
             $uid = (int)$user['id'];
-            $stmt_v = $db->prepare("SELECT proposta_id, voto FROM propostas_votos WHERE socio_id = ?");
+            $stmt_v = $db->prepare("SELECT proposta_id, voto FROM propostas_votos WHERE usuario_id = ?");
             $stmt_v->execute([$uid]);
             $votes = $stmt_v->fetchAll();
             $userVotes = [];
