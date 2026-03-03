@@ -935,16 +935,21 @@ iframe.instrumento-yt-embed { height: 220px; border: none; }
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin-top: 4px;
-    min-width: 0;
-}
-.rec-preview-player {
-    max-width: 100%;
-    width: 100%;
+    margin: 4px 0 6px 0;
+    padding: 6px 10px;
+    background: var(--bg-dark);
     border-radius: var(--radius);
 }
-audio.rec-preview-player { height: 36px; }
-video.rec-preview-player { max-height: 160px; }
+.rec-play-btn {
+    padding: 4px 10px;
+    line-height: 1;
+}
+.rec-preview-video {
+    width: 100%;
+    max-height: 180px;
+    border-radius: var(--radius);
+    margin-top: 6px;
+}
 .medios-instrumentos summary {
     cursor: pointer;
     font-size: 0.85rem;

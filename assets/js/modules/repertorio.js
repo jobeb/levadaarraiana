@@ -661,39 +661,58 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
         var blob = new Blob(_repRecChunks, { type: mimeType });
         var file = new File([blob], 'gravacion_' + Date.now() + '.' + ext, { type: mimeType });
 
-        // Show preview in the slot
+        // Show preview below the slot
         var slotDiv = btn.closest('.medios-slot');
         if (slotDiv) {
-            var existing = slotDiv.querySelector('.rec-preview');
+            var existing = slotDiv.parentNode.querySelector('.rec-preview[data-slot="' + parteIdx + '-' + instrId + '-' + tipo + '"]');
             if (existing) existing.remove();
+
+            var blobUrl = URL.createObjectURL(blob);
             var preview = document.createElement('div');
             preview.className = 'rec-preview';
+            preview.setAttribute('data-slot', parteIdx + '-' + instrId + '-' + tipo);
 
-            var player = document.createElement(tipo === 'video' ? 'video' : 'audio');
-            player.controls = true;
-            player.preload = 'metadata';
-            player.className = 'rec-preview-player';
-            var blobUrl = URL.createObjectURL(blob);
-            player.src = blobUrl;
+            var playBtn = document.createElement('button');
+            playBtn.type = 'button';
+            playBtn.className = 'btn btn-sm btn-secondary rec-play-btn';
+            playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+            playBtn.title = 'Play';
 
-            // Fix WebM missing duration: seek to end to force browser to calculate it
-            player.addEventListener('loadedmetadata', function() {
-                if (player.duration === Infinity || isNaN(player.duration)) {
-                    player.currentTime = 1e101;
-                    player.addEventListener('timeupdate', function onSeek() {
-                        player.removeEventListener('timeupdate', onSeek);
-                        player.currentTime = 0;
-                    });
+            var _activePlayer = null;
+            playBtn.onclick = function() {
+                if (_activePlayer) {
+                    _activePlayer.pause();
+                    _activePlayer = null;
+                    playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+                    var vidEl = preview.querySelector('video');
+                    if (vidEl) vidEl.remove();
+                    return;
                 }
-            });
+                _activePlayer = document.createElement(tipo === 'video' ? 'video' : 'audio');
+                _activePlayer.src = blobUrl;
+                _activePlayer.play();
+                playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+                if (tipo === 'video') {
+                    _activePlayer.className = 'rec-preview-video';
+                    _activePlayer.controls = true;
+                    preview.appendChild(_activePlayer);
+                }
+                _activePlayer.onended = function() {
+                    _activePlayer = null;
+                    playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+                    var vidEl = preview.querySelector('video');
+                    if (vidEl) vidEl.remove();
+                };
+            };
 
             var nameSpan = document.createElement('span');
             nameSpan.className = 'medios-slot-name';
             nameSpan.textContent = file.name;
 
-            preview.appendChild(player);
+            preview.appendChild(playBtn);
             preview.appendChild(nameSpan);
-            slotDiv.appendChild(preview);
+            // Insert preview after the slot div (new line below)
+            slotDiv.parentNode.insertBefore(preview, slotDiv.nextSibling);
         }
 
         // Queue the file
@@ -708,7 +727,7 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
         _repRecStream = null;
     };
 
-    _repRecorder.start(1000);
+    _repRecorder.start();
     btn.classList.add('rec-active');
     btn.title = t('gravando_pulsa_parar');
     toast(t('gravando'), 'info');
