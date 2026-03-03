@@ -397,11 +397,24 @@ function _renderDashboardActions() {
     var listEl = document.getElementById('dashboard-actions-list');
     if (!listEl || !AppState.isSocio()) return;
 
-    listEl.innerHTML = '<div class="dashboard-actions-grid">' +
-        '<button class="btn btn-sm btn-primary" onclick="Router.navigate(\'ensaios\');setTimeout(ensaiosModal,200)">+ ' + t('novo_ensaio') + '</button>' +
-        '<button class="btn btn-sm btn-primary" onclick="Router.navigate(\'bolos\');setTimeout(bolosModal,200)">+ ' + t('novo_bolo') + '</button>' +
-        '<button class="btn btn-sm btn-secondary" onclick="Router.navigate(\'noticias\');setTimeout(noticiasModal,200)">+ ' + t('nova_noticia') + '</button>' +
-    '</div>';
+    var actions = [
+        { key: 'nova_noticia',   section: 'noticias',   fn: 'noticiasModal',   color: '#005f97' },
+        { key: 'novo_bolo',      section: 'bolos',      fn: 'bolosModal',      color: '#e3c300' },
+        { key: 'novo_ensaio',    section: 'ensaios',    fn: 'ensaiosModal',    color: '#009564' },
+        { key: 'novo_album',     section: 'galeria',    fn: 'galeriaModal',    color: '#a50d3d' },
+        { key: 'nova_proposta',  section: 'propostas',  fn: 'propostasModal',  color: '#e67e22' },
+        { key: 'nova_votacion',  section: 'votacions',  fn: 'votacionsModal',  color: '#8e44ad' },
+        { key: 'nova_acta',      section: 'actas',      fn: 'actasModal',      color: '#2980b9' },
+        { key: 'novo_documento', section: 'documentos', fn: 'documentosModal', color: '#16a085' }
+    ];
+    var html = '<div class="dashboard-actions-grid">';
+    actions.forEach(function(a) {
+        html += '<button class="btn btn-sm" style="background:' + a.color + ';color:#fff;border:none" ' +
+            'onmouseenter="this.style.opacity=\'0.85\'" onmouseleave="this.style.opacity=\'1\'" ' +
+            'onclick="Router.navigate(\'' + a.section + '\');setTimeout(' + a.fn + ',200)">+ ' + t(a.key) + '</button>';
+    });
+    html += '</div>';
+    listEl.innerHTML = html;
 }
 
 // ---- Profile dropdown ----
