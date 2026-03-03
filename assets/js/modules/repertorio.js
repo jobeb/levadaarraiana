@@ -667,52 +667,28 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
             var existing = slotDiv.parentNode.querySelector('.rec-preview[data-slot="' + parteIdx + '-' + instrId + '-' + tipo + '"]');
             if (existing) existing.remove();
 
-            var blobUrl = URL.createObjectURL(blob);
-            var preview = document.createElement('div');
-            preview.className = 'rec-preview';
-            preview.setAttribute('data-slot', parteIdx + '-' + instrId + '-' + tipo);
+            // Convert blob to data URL for reliable mobile playback
+            var reader = new FileReader();
+            reader.onload = function() {
+                var dataUrl = reader.result;
+                var preview = document.createElement('div');
+                preview.className = 'rec-preview';
+                preview.setAttribute('data-slot', parteIdx + '-' + instrId + '-' + tipo);
 
-            var playBtn = document.createElement('button');
-            playBtn.type = 'button';
-            playBtn.className = 'btn btn-sm btn-secondary rec-play-btn';
-            playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-            playBtn.title = 'Play';
+                var player = document.createElement(tipo === 'video' ? 'video' : 'audio');
+                player.controls = true;
+                player.className = tipo === 'video' ? 'rec-preview-video' : 'rec-preview-audio';
+                player.src = dataUrl;
 
-            var _activePlayer = null;
-            playBtn.onclick = function() {
-                if (_activePlayer) {
-                    _activePlayer.pause();
-                    _activePlayer = null;
-                    playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-                    var vidEl = preview.querySelector('video');
-                    if (vidEl) vidEl.remove();
-                    return;
-                }
-                _activePlayer = document.createElement(tipo === 'video' ? 'video' : 'audio');
-                _activePlayer.src = blobUrl;
-                _activePlayer.play();
-                playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
-                if (tipo === 'video') {
-                    _activePlayer.className = 'rec-preview-video';
-                    _activePlayer.controls = true;
-                    preview.appendChild(_activePlayer);
-                }
-                _activePlayer.onended = function() {
-                    _activePlayer = null;
-                    playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-                    var vidEl = preview.querySelector('video');
-                    if (vidEl) vidEl.remove();
-                };
+                var nameSpan = document.createElement('span');
+                nameSpan.className = 'medios-slot-name';
+                nameSpan.textContent = file.name;
+
+                preview.appendChild(player);
+                preview.appendChild(nameSpan);
+                slotDiv.parentNode.insertBefore(preview, slotDiv.nextSibling);
             };
-
-            var nameSpan = document.createElement('span');
-            nameSpan.className = 'medios-slot-name';
-            nameSpan.textContent = file.name;
-
-            preview.appendChild(playBtn);
-            preview.appendChild(nameSpan);
-            // Insert preview after the slot div (new line below)
-            slotDiv.parentNode.insertBefore(preview, slotDiv.nextSibling);
+            reader.readAsDataURL(blob);
         }
 
         // Queue the file
