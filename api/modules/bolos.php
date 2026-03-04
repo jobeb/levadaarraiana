@@ -23,7 +23,7 @@ function handle_bolos($method, $uri, $input) {
             $stmt = $db->prepare("SELECT * FROM bolos WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
-            if (!$row) send_json(['error' => 'Bolo non atopado'], 404);
+            if (!$row) send_error('Bolo non atopado', 'erro_non_atopado', 404);
             send_json(fix_row($row, ['i18n'], ['publica'], ['importe']));
         }
         $rows = $db->query("SELECT * FROM bolos ORDER BY data DESC, hora DESC, id DESC")->fetchAll();
@@ -84,6 +84,7 @@ function handle_bolos($method, $uri, $input) {
             $db->prepare("UPDATE bolos SET imaxe = ? WHERE id = ?")->execute([$newPath, $newId]);
         }
 
+        audit_log('CREATE', 'bolos', $newId, trim($input['titulo'] ?? ''));
         send_json(['ok' => true, 'id' => $newId], 201);
     }
 
@@ -94,7 +95,7 @@ function handle_bolos($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM bolos WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
-        if (!$existing) send_json(['error' => 'Bolo non atopado'], 404);
+        if (!$existing) send_error('Bolo non atopado', 'erro_non_atopado', 404);
 
         $fields = [];
         $params = [];
@@ -135,13 +136,14 @@ function handle_bolos($method, $uri, $input) {
         }
 
         if (empty($fields)) {
-            send_json(['error' => 'Non hai campos para actualizar'], 400);
+            send_error('Non hai campos para actualizar', 'erro_campos_obrigatorios', 400);
         }
 
         $params[] = $id;
         $sql = "UPDATE bolos SET " . implode(', ', $fields) . " WHERE id = ?";
         $db->prepare($sql)->execute($params);
 
+        audit_log('UPDATE', 'bolos', $id);
         send_json(['ok' => true, 'id' => $id]);
     }
 
@@ -151,10 +153,11 @@ function handle_bolos($method, $uri, $input) {
         $stmt = $db->prepare("DELETE FROM bolos WHERE id = ?");
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) {
-            send_json(['error' => 'Bolo non atopado'], 404);
+            send_error('Bolo non atopado', 'erro_non_atopado', 404);
         }
+        audit_log('DELETE', 'bolos', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Ruta de bolos non atopada'], 404);
+    send_error('Ruta de bolos non atopada', 'erro_non_atopado', 404);
 }

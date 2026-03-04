@@ -14,7 +14,7 @@ function handle_configuracion($method, $uri, $input) {
     // GET /config — return config row (id=1) — público
     if ($method === 'GET') {
         $row = $db->query("SELECT * FROM config WHERE id = 1")->fetch();
-        if (!$row) send_json(['error' => 'Configuración non atopada'], 404);
+        if (!$row) send_error('Configuración non atopada', 'erro_non_atopado', 404);
         // Mask SMTP password and YouTube secret for non-admin users
         $user = get_session_user();
         if (($user['role'] ?? '') !== 'Admin') {
@@ -34,7 +34,7 @@ function handle_configuracion($method, $uri, $input) {
         $isAdmin = ($user['role'] === 'Admin');
 
         $row = $db->query("SELECT * FROM config WHERE id = 1")->fetch();
-        if (!$row) send_json(['error' => 'Configuración non atopada'], 404);
+        if (!$row) send_error('Configuración non atopada', 'erro_non_atopado', 404);
 
         // Fields that Socio can modify
         $socio_allowed = [
@@ -105,8 +105,9 @@ function handle_configuracion($method, $uri, $input) {
             $input['cal_cor_noticias'] ?? $row['cal_cor_noticias'] ?? '#005f97',
             $input['cal_cor_votacions'] ?? $row['cal_cor_votacions'] ?? '#a50d3d',
         ]);
+        audit_log('CONFIG', 'config');
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }

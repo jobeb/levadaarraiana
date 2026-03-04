@@ -49,7 +49,7 @@ function validate_file_extension($filename, $type = 'document') {
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     $list = $allowed[$type] ?? $allowed['document'];
     if (!in_array($ext, $list)) {
-        send_json(['error' => 'Tipo de arquivo non permitido: .' . $ext], 400);
+        send_error('Tipo de arquivo non permitido: .' . $ext, 'erro_tipo_arquivo', 400);
     }
 }
 
@@ -57,7 +57,7 @@ function validate_file_extension($filename, $type = 'document') {
 function save_base64_file($subdir, $filename, $b64data) {
     $decoded = base64_decode($b64data);
     if (strlen($decoded) > 50 * 1024 * 1024) {
-        send_json(['error' => 'Arquivo demasiado grande (máx 50MB)'], 400);
+        send_error('Arquivo demasiado grande (máx 50MB)', 'erro_arquivo_grande', 400);
     }
     $dir = UPLOADS_DIR . '/' . $subdir;
     if (!is_dir($dir)) mkdir($dir, 0755, true);
@@ -130,6 +130,39 @@ function ensure_dirs() {
     foreach ($subs as $s) {
         $d = UPLOADS_DIR . '/' . $s;
         if (!is_dir($d)) mkdir($d, 0755, true);
+    }
+}
+
+// ---- Audit log ----
+function get_current_user_safe() {
+    $header = $_SERVER['HTTP_AUTHORIZATION']
+           ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+           ?? '';
+    if (empty($header) && function_exists('getallheaders')) {
+        $all = getallheaders();
+        $header = $all['Authorization'] ?? $all['authorization'] ?? '';
+    }
+    if (strpos($header, 'Bearer ') !== 0) return null;
+    $token = substr($header, 7);
+    if (empty($token)) return null;
+    $stmt = get_db()->prepare("SELECT id, nome_completo, username FROM usuarios WHERE session_token = ?");
+    $stmt->execute([$token]);
+    return $stmt->fetch() ?: null;
+}
+
+function audit_log($accion, $modulo, $registro_id = null, $detalles = null) {
+    try {
+        $user = get_current_user_safe();
+        $uid = $user ? (int)$user['id'] : null;
+        $nome = $user ? ($user['nome_completo'] ?: $user['username']) : '';
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $stmt = get_db()->prepare(
+            "INSERT INTO audit_log (usuario_id, usuario_nome, accion, modulo, registro_id, detalles, ip)
+             VALUES (?, ?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->execute([$uid, $nome, $accion, $modulo, $registro_id, $detalles, $ip]);
+    } catch (Exception $e) {
+        error_log('Audit log error: ' . $e->getMessage());
     }
 }
 

@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Levada Arraiana — Batucada de Estás, Tomiño</title>
     <link rel="icon" href="assets/img/favicon.jpg">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#e3c300">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="assets/img/icon-192.png">
     <link rel="stylesheet" href="assets/css/variables.css?v=2">
     <link rel="stylesheet" href="assets/css/base.css?v=2">
     <link rel="stylesheet" href="assets/css/components.css?v=2">
@@ -100,10 +104,6 @@
                 <input type="tel" id="reg-telefono" class="form-control" autocomplete="tel">
             </div>
             <div class="form-group">
-                <label data-i18n="instrumento">Instrumento</label>
-                <input type="text" id="reg-instrumento" class="form-control" placeholder="Surdo, Caixa, Repinique...">
-            </div>
-            <div class="form-group">
                 <label class="required" data-i18n="contrasinal">Contrasinal</label>
                 <div class="pw-wrap">
                     <input type="password" id="reg-password" class="form-control" autocomplete="new-password" required>
@@ -124,6 +124,10 @@
                     <input type="file" id="reg-foto" class="form-control" accept="image/*" onchange="previewRegFoto(this)">
                 </div>
             </div>
+            <label class="lopd-checkbox">
+                <input type="checkbox" id="reg-lopd-check">
+                <span id="reg-lopd-label"></span>
+            </label>
             <button type="submit" class="btn btn-primary" data-i18n="rexistrarse">Rexistrarse</button>
             <div id="reg-error" class="overlay-error"></div>
             <div id="reg-success" class="overlay-success"></div>
@@ -357,7 +361,7 @@
             <div class="contacto-item" id="contacto-email-row">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
                 <div>
-                    <strong>Email</strong>
+                    <strong data-i18n="email">Email</strong>
                     <p id="contacto-email"></p>
                 </div>
             </div>
@@ -378,6 +382,10 @@
                 </div>
                 <input type="text" class="form-control" id="contacto-asunto" data-i18n-placeholder="asunto" placeholder="Asunto">
                 <textarea class="form-control" id="contacto-mensaxe" rows="4" data-i18n-placeholder="mensaxe" placeholder="Mensaxe" required></textarea>
+                <label class="lopd-checkbox">
+                    <input type="checkbox" id="contacto-lopd-check">
+                    <span id="contacto-lopd-label"></span>
+                </label>
                 <button type="submit" class="btn btn-primary" id="contacto-submit-btn" data-i18n="enviar">Enviar</button>
             </form>
             <div class="contacto-map">
@@ -395,6 +403,10 @@
             <div class="pub-footer-col">
                 <img src="assets/img/logo-white.png" alt="Levada Arraiana" class="footer-logo">
                 <p class="footer-desc" data-i18n="footer_desc">Grupo de batucada con sede en Estas, Tomino, na fronteira entre Galicia e Portugal.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/levadaarraiana/" target="_blank" rel="noopener" title="Instagram"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+                    <a href="https://www.facebook.com/people/Levada-Arraiana/100088588088362/" target="_blank" rel="noopener" title="Facebook"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+                </div>
             </div>
             <div class="pub-footer-col">
                 <h4 data-i18n="enlaces">Ligazons</h4>
@@ -503,6 +515,78 @@
     }
 
     // ---- Register ----
+    // LOPD label with link to privacy overlay
+    (function() {
+        var privLink = '<a href="#" onclick="event.preventDefault();event.stopPropagation();showOverlay(\'privacidade\')">' + t('lopd_ver_privacidade') + '</a>';
+        var lopdHtml = t('lopd_checkbox_link').replace('{link}', privLink);
+        var lbl = document.getElementById('reg-lopd-label');
+        if (lbl) lbl.innerHTML = lopdHtml;
+        var lbl2 = document.getElementById('contacto-lopd-label');
+        if (lbl2) lbl2.innerHTML = lopdHtml;
+    })();
+
+    // Check username availability on blur
+    var _regUsernameTimer = null;
+    var regUsernameInput = document.getElementById('reg-username');
+    if (regUsernameInput) {
+        regUsernameInput.addEventListener('input', function() {
+            clearTimeout(_regUsernameTimer);
+            var hint = document.getElementById('reg-username-hint');
+            if (hint) { hint.textContent = ''; hint.className = 'reg-hint'; }
+            var val = this.value.trim();
+            if (val.length < 2) return;
+            _regUsernameTimer = setTimeout(async function() {
+                try {
+                    var res = await api('/check-username', { method: 'POST', body: { username: val } });
+                    if (!hint) {
+                        hint = document.createElement('div');
+                        hint.id = 'reg-username-hint';
+                        hint.className = 'reg-hint';
+                        regUsernameInput.parentNode.appendChild(hint);
+                    }
+                    if (res.available) {
+                        hint.textContent = t('username_disponible');
+                        hint.className = 'reg-hint reg-hint-ok';
+                    } else {
+                        hint.textContent = t('username_xa_existe');
+                        hint.className = 'reg-hint reg-hint-error';
+                    }
+                } catch(e) { /* ignore */ }
+            }, 400);
+        });
+    }
+
+    // Check email availability
+    var _regEmailTimer = null;
+    var regEmailInput = document.getElementById('reg-email');
+    if (regEmailInput) {
+        regEmailInput.addEventListener('input', function() {
+            clearTimeout(_regEmailTimer);
+            var hint = document.getElementById('reg-email-hint');
+            if (hint) { hint.textContent = ''; hint.className = 'reg-hint'; }
+            var val = this.value.trim();
+            if (val.length < 5 || !val.includes('@')) return;
+            _regEmailTimer = setTimeout(async function() {
+                try {
+                    var res = await api('/check-email', { method: 'POST', body: { email: val } });
+                    if (!hint) {
+                        hint = document.createElement('div');
+                        hint.id = 'reg-email-hint';
+                        hint.className = 'reg-hint';
+                        regEmailInput.parentNode.appendChild(hint);
+                    }
+                    if (res.available) {
+                        hint.textContent = t('email_disponible');
+                        hint.className = 'reg-hint reg-hint-ok';
+                    } else {
+                        hint.textContent = t('email_xa_existe');
+                        hint.className = 'reg-hint reg-hint-error';
+                    }
+                } catch(e) { /* ignore */ }
+            }, 400);
+        });
+    }
+
     let regFotoData = null;
     function previewRegFoto(input) {
         const preview = document.getElementById('reg-foto-preview');
@@ -531,6 +615,12 @@
             errEl.style.display = 'block';
             return;
         }
+        var lopdCb = document.getElementById('reg-lopd-check');
+        if (!lopdCb.checked) {
+            errEl.textContent = t('lopd_obrigatorio');
+            errEl.style.display = 'block';
+            return;
+        }
 
         const data = {
             username: document.getElementById('reg-username').value.trim(),
@@ -538,7 +628,7 @@
             nome_completo: document.getElementById('reg-nome').value.trim(),
             email: document.getElementById('reg-email').value.trim(),
             telefono: document.getElementById('reg-telefono').value.trim(),
-            instrumento: document.getElementById('reg-instrumento').value.trim(),
+            lopd_consent: true,
         };
         if (regFotoData) {
             data.foto_data = regFotoData;
@@ -709,6 +799,10 @@
                         '<label>' + t('comentario_opcional') + '</label>' +
                         '<textarea id="join-comentario" class="form-control" rows="3"></textarea>' +
                     '</div>' +
+                    '<label class="lopd-checkbox">' +
+                        '<input type="checkbox" id="join-lopd-check">' +
+                        '<span>' + t('lopd_checkbox_link').replace('{link}', '<a href="#" onclick="event.preventDefault();event.stopPropagation();showOverlay(\'privacidade\')">' + t('lopd_ver_privacidade') + '</a>') + '</span>' +
+                    '</label>' +
                     '<button type="submit" class="btn btn-primary">' + t('enviar_solicitude') + '</button>' +
                     '<div id="join-error" class="overlay-error"></div>' +
                 '</form>';
@@ -720,6 +814,13 @@
         e.preventDefault();
         var errEl = document.getElementById('join-error');
         errEl.style.display = 'none';
+
+        var lopdCb = document.getElementById('join-lopd-check');
+        if (lopdCb && !lopdCb.checked) {
+            errEl.textContent = t('lopd_obrigatorio');
+            errEl.style.display = 'block';
+            return;
+        }
 
         var body = {};
         if (AppState.user && AppState.token) {
@@ -772,6 +873,10 @@
                     '<label>' + t('descricion_evento') + '</label>' +
                     '<textarea id="contratar-descricion" class="form-control" rows="3" placeholder="' + t('descricion_evento_placeholder') + '"></textarea>' +
                 '</div>' +
+                '<label class="lopd-checkbox">' +
+                    '<input type="checkbox" id="contratar-lopd-check">' +
+                    '<span>' + t('lopd_checkbox_link').replace('{link}', '<a href="#" onclick="event.preventDefault();event.stopPropagation();showOverlay(\'privacidade\')">' + t('lopd_ver_privacidade') + '</a>') + '</span>' +
+                '</label>' +
                 '<button type="submit" class="btn btn-primary">' + t('contratar_btn') + '</button>' +
                 '<div id="contratar-error" class="overlay-error"></div>' +
             '</form>';
@@ -782,6 +887,13 @@
         e.preventDefault();
         var errEl = document.getElementById('contratar-error');
         errEl.style.display = 'none';
+
+        var lopdCb = document.getElementById('contratar-lopd-check');
+        if (lopdCb && !lopdCb.checked) {
+            errEl.textContent = t('lopd_obrigatorio');
+            errEl.style.display = 'block';
+            return;
+        }
 
         var body = {
             nome: (document.getElementById('contratar-nome').value || '').trim(),
@@ -881,16 +993,27 @@
     function detectSession() {
         var hasSession = AppState.loadSession();
         var authBtns = document.querySelectorAll('.pub-auth-btn');
+        var joinBtns = document.querySelectorAll('.pub-join-btn');
         var userInfo = document.getElementById('pub-nav-user');
         var userNameEl = document.getElementById('pub-nav-username');
         if (hasSession && AppState.user) {
             authBtns.forEach(function(el) { el.style.display = 'none'; });
+            var isSocio = AppState.user.role === 'Admin' || AppState.user.role === 'Socio';
+            if (isSocio) {
+                joinBtns.forEach(function(el) { el.style.display = 'none'; });
+            }
             userNameEl.textContent = AppState.user.nome_completo || AppState.user.username;
             userInfo.style.display = '';
         } else {
             authBtns.forEach(function(el) { el.style.display = ''; });
+            joinBtns.forEach(function(el) { el.style.display = ''; });
             userInfo.style.display = 'none';
         }
+    }
+
+    // ---- PWA standalone redirect ----
+    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+        window.location.replace('app.html');
     }
 
     // ---- Init ----
@@ -905,7 +1028,13 @@
         checkResetToken();
         initCookieBanner();
         loadPublicContent();
+        // Open legal overlay if hash matches (e.g. #privacidade from app.html LOPD link)
+        var legalHash = location.hash.replace('#', '');
+        if (['privacidade', 'aviso-legal', 'cookies'].indexOf(legalHash) !== -1) {
+            showOverlay(legalHash);
+        }
     })();
 </script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </body>
 </html>

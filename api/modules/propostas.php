@@ -69,7 +69,7 @@ function handle_propostas($method, $uri, $input) {
             );
             $stmt->execute([$id]);
             $row = $stmt->fetch();
-            if (!$row) send_json(['error' => 'Proposta non atopada'], 404);
+            if (!$row) send_error('Proposta non atopada', 'erro_non_atopado', 404);
             $user = get_session_user();
             if ($user) {
                 $uid = (int)$user['id'];
@@ -142,7 +142,9 @@ function handle_propostas($method, $uri, $input) {
             $ficheiros,
             $input['estado'] ?? 'aberta'
         ]);
-        send_json(['ok' => true, 'id' => $db->lastInsertId()], 201);
+        $newId = (int)$db->lastInsertId();
+        audit_log('CREATE', 'propostas', $newId, $input['titulo'] ?? '');
+        send_json(['ok' => true, 'id' => $newId], 201);
     }
 
     // PUT — update
@@ -152,7 +154,7 @@ function handle_propostas($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM propostas WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
-        if (!$existing) send_json(['error' => 'Proposta non atopada'], 404);
+        if (!$existing) send_error('Proposta non atopada', 'erro_non_atopado', 404);
 
         $ficheiros_clean = [];
         if (isset($input['ficheiros'])) {
@@ -182,6 +184,7 @@ function handle_propostas($method, $uri, $input) {
             $input['estado'] ?? $existing['estado'] ?? 'aberta',
             $id
         ]);
+        audit_log('UPDATE', 'propostas', $id);
         send_json(['ok' => true]);
     }
 
@@ -190,8 +193,9 @@ function handle_propostas($method, $uri, $input) {
         require_socio();
         $stmt = $db->prepare("DELETE FROM propostas WHERE id = ?");
         $stmt->execute([$id]);
+        audit_log('DELETE', 'propostas', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }

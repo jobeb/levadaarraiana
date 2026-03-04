@@ -10,7 +10,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'backup.php') {
 
 function handle_backup($method, $uri, $input) {
     if ($method !== 'GET') {
-        send_json(['error' => 'Método non permitido'], 405);
+        send_error('Método non permitido', 'erro_metodo', 405);
     }
 
     require_admin();

@@ -39,7 +39,7 @@ function handle_ensaios($method, $uri, $input) {
             if (preg_match('#^/asistencia/(\d+)#', $uri, $m)) {
                 $ensaio_id = (int)$m[1];
             }
-            if (!$ensaio_id) send_json(['error' => 'ID de ensaio requerido'], 400);
+            if (!$ensaio_id) send_error('ID de ensaio requerido', 'erro_campos_obrigatorios', 400);
 
             $stmt = $db->prepare(
                 "SELECT a.*, s.nome_completo AS socio_nome
@@ -58,16 +58,16 @@ function handle_ensaios($method, $uri, $input) {
             $user = get_session_user();
 
             $ensaio_id = intval($input['ensaio_id'] ?? 0);
-            if (!$ensaio_id) send_json(['error' => 'ensaio_id requerido'], 400);
+            if (!$ensaio_id) send_error('ensaio_id requerido', 'erro_campos_obrigatorios', 400);
 
             $stmt = $db->prepare("SELECT * FROM ensaios WHERE id = ?");
             $stmt->execute([$ensaio_id]);
             $ensaio = $stmt->fetch();
-            if (!$ensaio) send_json(['error' => 'Ensaio non atopado'], 404);
+            if (!$ensaio) send_error('Ensaio non atopado', 'erro_non_atopado', 404);
 
             $cfg = $db->query("SELECT * FROM config WHERE id = 1")->fetch();
             if (!$cfg || empty($cfg['email_dest'])) {
-                send_json(['error' => 'Email de destino non configurado'], 500);
+                send_error('Email de destino non configurado', 'erro_email_destino', 500);
             }
 
             $nome = $user['nome_completo'] ?: $user['username'];
@@ -84,7 +84,7 @@ function handle_ensaios($method, $uri, $input) {
             $replyTo = $user['email'] ?: null;
             $ok = send_email($cfg['email_dest'], $subject, $body, $replyTo);
 
-            if (!$ok) send_json(['error' => 'Erro ao enviar o correo'], 500);
+            if (!$ok) send_error('Erro ao enviar o correo', 'erro_enviar_correo', 500);
             send_json(['ok' => true]);
         }
 
@@ -97,7 +97,7 @@ function handle_ensaios($method, $uri, $input) {
             $estado = $input['estado'] ?? null;
 
             if (!$ensaio_id || !$socio_id || $estado === null) {
-                send_json(['error' => 'ensaio_id, socio_id e estado son obrigatorios'], 400);
+                send_error('ensaio_id, socio_id e estado son obrigatorios', 'erro_campos_obrigatorios', 400);
             }
 
             $stmt = $db->prepare(
@@ -109,7 +109,7 @@ function handle_ensaios($method, $uri, $input) {
             send_json(['ok' => true], 201);
         }
 
-        send_json(['error' => 'Método non permitido'], 405);
+        send_error('Método non permitido', 'erro_metodo', 405);
     }
 
     // ---- ENSAIOS routes ----
@@ -125,7 +125,7 @@ function handle_ensaios($method, $uri, $input) {
             $stmt = $db->prepare("SELECT * FROM ensaios WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
-            if (!$row) send_json(['error' => 'Ensaio non atopado'], 404);
+            if (!$row) send_error('Ensaio non atopado', 'erro_non_atopado', 404);
             send_json($row);
         }
         $rows = $db->query("SELECT * FROM ensaios ORDER BY data DESC")->fetchAll();
@@ -175,6 +175,7 @@ function handle_ensaios($method, $uri, $input) {
                     $grupo
                 ]);
             }
+            audit_log('CREATE', 'ensaios', null, "Recorrencia: {$recorrencia}, " . count($dates) . " ensaios");
             send_json(['ok' => true, 'count' => count($dates), 'grupo' => $grupo], 201);
         }
 
@@ -191,7 +192,9 @@ function handle_ensaios($method, $uri, $input) {
             $input['notas'] ?? '',
             $input['estado'] ?? 'programado'
         ]);
-        send_json(['ok' => true, 'id' => $db->lastInsertId()], 201);
+        $newId = (int)$db->lastInsertId();
+        audit_log('CREATE', 'ensaios', $newId, $data_base);
+        send_json(['ok' => true, 'id' => $newId], 201);
     }
 
     // PUT — update
@@ -200,7 +203,7 @@ function handle_ensaios($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM ensaios WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
-        if (!$existing) send_json(['error' => 'Ensaio non atopado'], 404);
+        if (!$existing) send_error('Ensaio non atopado', 'erro_non_atopado', 404);
 
         // Update this single ensaio
         $stmt = $db->prepare(
@@ -277,6 +280,7 @@ function handle_ensaios($method, $uri, $input) {
             }
         }
 
+        audit_log('UPDATE', 'ensaios', $id);
         send_json(['ok' => true]);
     }
 
@@ -295,6 +299,7 @@ function handle_ensaios($method, $uri, $input) {
                 $stmt->execute([$row['grupo_recorrencia'], $row['data']]);
                 $stmt = $db->prepare("DELETE FROM ensaios WHERE grupo_recorrencia = ? AND data >= ?");
                 $stmt->execute([$row['grupo_recorrencia'], $row['data']]);
+                audit_log('DELETE', 'ensaios', $id, 'scope=future');
                 send_json(['ok' => true]);
             }
         }
@@ -304,8 +309,9 @@ function handle_ensaios($method, $uri, $input) {
         $stmt->execute([$id]);
         $stmt = $db->prepare("DELETE FROM ensaios WHERE id = ?");
         $stmt->execute([$id]);
+        audit_log('DELETE', 'ensaios', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }

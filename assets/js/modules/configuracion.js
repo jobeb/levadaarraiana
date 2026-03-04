@@ -76,24 +76,24 @@ function configuracionRender() {
         '<div id="cfg-smtp-fields" style="' + (metodo === 'smtp' ? '' : 'display:none') + '">' +
             '<div class="form-row">' +
                 '<div class="form-group" style="flex:2">' +
-                    '<label>SMTP Host</label>' +
+                    '<label>' + t('smtp_host') + '</label>' +
                     '<input type="text" class="form-control" id="cfg-smtp-host" value="' + esc(cfg.smtp_host || '') + '">' +
                 '</div>' +
                 '<div class="form-group" style="flex:1">' +
-                    '<label>SMTP Port</label>' +
+                    '<label>' + t('smtp_port') + '</label>' +
                     '<input type="number" class="form-control" id="cfg-smtp-port" value="' + (cfg.smtp_port || 587) + '">' +
                 '</div>' +
             '</div>' +
             '<div class="form-group">' +
-                '<label>SMTP User</label>' +
+                '<label>' + t('smtp_user') + '</label>' +
                 '<input type="text" class="form-control" id="cfg-smtp-user" value="' + esc(cfg.smtp_user || '') + '">' +
             '</div>' +
             '<div class="form-group">' +
-                '<label>SMTP Pass</label>' +
+                '<label>' + t('smtp_pass') + '</label>' +
                 '<input type="password" class="form-control" id="cfg-smtp-pass" value="' + esc(cfg.smtp_pass || '') + '">' +
             '</div>' +
             '<div class="form-group">' +
-                '<label>SMTP From</label>' +
+                '<label>' + t('smtp_from') + '</label>' +
                 '<input type="text" class="form-control" id="cfg-smtp-from" value="' + esc(cfg.smtp_from || '') + '">' +
             '</div>' +
             '<div class="form-group">' +
@@ -106,7 +106,7 @@ function configuracionRender() {
             '</div>' +
         '</div>' +
         '<div class="form-group">' +
-            '<label>Email destino</label>' +
+            '<label>' + t('email_destino') + '</label>' +
             '<input type="email" class="form-control" id="cfg-email-dest" value="' + esc(cfg.email_dest || '') + '">' +
         '</div>' +
     '</div>';
@@ -128,15 +128,15 @@ function configuracionRender() {
         '</div>' +
         '<div class="form-row">' +
             '<div class="form-group" style="flex:1">' +
-                '<label>CP</label>' +
+                '<label>' + t('cp') + '</label>' +
                 '<input type="text" class="form-control" id="cfg-fiscal-cp" value="' + esc(cfg.fiscal_cp || '') + '">' +
             '</div>' +
             '<div class="form-group" style="flex:2">' +
-                '<label>Localidade</label>' +
+                '<label>' + t('localidade') + '</label>' +
                 '<input type="text" class="form-control" id="cfg-fiscal-localidade" value="' + esc(cfg.fiscal_localidade || '') + '">' +
             '</div>' +
             '<div class="form-group" style="flex:1">' +
-                '<label>Provincia</label>' +
+                '<label>' + t('provincia') + '</label>' +
                 '<input type="text" class="form-control" id="cfg-fiscal-provincia" value="' + esc(cfg.fiscal_provincia || '') + '">' +
             '</div>' +
         '</div>' +
@@ -558,13 +558,13 @@ function _renderLandingTab(seccions) {
 
     panel.innerHTML = html;
 
-    // Init drag-and-drop for section reordering
+    // Init drag-and-drop for section reordering (use onX to avoid stacking listeners)
     var dragEl = null;
-    panel.addEventListener('dragstart', function(e) {
+    panel.ondragstart = function(e) {
         dragEl = e.target.closest('.landing-sec-card');
         if (dragEl) dragEl.classList.add('dragging');
-    });
-    panel.addEventListener('dragover', function(e) {
+    };
+    panel.ondragover = function(e) {
         e.preventDefault();
         var target = e.target.closest('.landing-sec-card');
         if (target && target !== dragEl) {
@@ -573,12 +573,12 @@ function _renderLandingTab(seccions) {
             if (e.clientY < midY) panel.insertBefore(dragEl, target);
             else panel.insertBefore(dragEl, target.nextSibling);
         }
-    });
-    panel.addEventListener('dragend', function() {
+    };
+    panel.ondragend = function() {
         if (dragEl) dragEl.classList.remove('dragging');
         dragEl = null;
         _landingSaveOrder();
-    });
+    };
 }
 
 function _landingToggleBgSizeCustom(secId) {

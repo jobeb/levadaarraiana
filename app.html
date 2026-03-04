@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Levada Arraiana — Panel</title>
     <link rel="icon" href="assets/img/favicon.jpg">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#e3c300">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="assets/img/icon-192.png">
     <link rel="stylesheet" href="assets/css/variables.css">
     <link rel="stylesheet" href="assets/css/base.css">
     <link rel="stylesheet" href="assets/css/layout.css">
@@ -54,10 +58,33 @@
                 <button type="button" class="pw-toggle" onclick="togglePw('reg-pass', this)" title="Ver contrasinal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
             </div>
         </div>
+        <label class="lopd-checkbox" style="margin-bottom:8px">
+            <input type="checkbox" id="reg-lopd-check">
+            <span id="app-reg-lopd-label"></span>
+        </label>
         <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="onRegister()" data-i18n="rexistro">Rexistro</button>
         <button class="btn btn-secondary" style="width:100%" onclick="showLogin()" data-i18n="voltar">Voltar</button>
         <div id="reg-error" class="auth-error"></div>
         <div id="reg-success" class="auth-success"></div>
+    </div>
+</div>
+
+<!-- LOPD consent overlay (for users without prior consent) -->
+<div id="lopd-consent-overlay" class="auth-overlay" style="display:none">
+    <div class="auth-box" style="max-width:520px">
+        <img src="assets/img/logo-shadow.png" alt="Levada Arraiana" style="display:block;max-width:140px;margin:0 auto 12px">
+        <h2 data-i18n="lopd_titulo">Proteccion de datos</h2>
+        <div class="lopd-text" data-i18n="lopd_texto">Para continuar usando a plataforma, necesitamos o teu consentimento para o tratamento dos teus datos persoais conforme a normativa de proteccion de datos (LOPD/RGPD). Os teus datos seran tratados unicamente para a xestion interna da asociacion.</div>
+        <div class="lopd-links">
+            <a href="index.html#privacidade" target="_blank" data-i18n="lopd_ver_privacidade">Ver politica de privacidade</a>
+        </div>
+        <label class="lopd-checkbox">
+            <input type="checkbox" id="lopd-consent-check">
+            <span data-i18n="lopd_checkbox">Lin e acepto a politica de privacidade e o tratamento dos meus datos persoais</span>
+        </label>
+        <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="acceptLopd()" data-i18n="lopd_aceptar">Aceptar e continuar</button>
+        <button class="btn btn-secondary" style="width:100%;margin-top:6px" onclick="rejectLopd()" data-i18n="lopd_rexeitar">Cancelar e saír</button>
+        <div id="lopd-error" class="auth-error"></div>
     </div>
 </div>
 
@@ -187,6 +214,9 @@
     <button class="sidebar-link socio-only" data-section="configuracion" onclick="Router.navigate('configuracion')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span data-i18n="configuracion">Configuración</span>
     </button>
+    <button class="sidebar-link admin-only" data-section="auditoria" onclick="Router.navigate('auditoria')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></span><span data-i18n="auditoria">Auditoría</span>
+    </button>
 </aside>
 
 <!-- Sidebar overlay (mobile) -->
@@ -226,7 +256,7 @@
             <input type="text" class="form-control" data-i18n-placeholder="buscar" id="usuarios-search" oninput="usuariosRender()" style="max-width:260px">
             <select class="form-control" id="usuarios-role-filter" style="max-width:160px" onchange="usuariosRender()">
                 <option value="" data-i18n="todos">Todos</option>
-                <option value="Admin">Admin</option>
+                <option value="Admin" data-i18n="admin">Admin</option>
                 <option value="Socio" data-i18n="socio">Socio</option>
                 <option value="Usuario" data-i18n="usuario">Usuario</option>
             </select>
@@ -308,15 +338,15 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
             <input type="text" class="form-control" id="propostas-search" data-i18n-placeholder="buscar" placeholder="Buscar..." style="max-width:260px" oninput="propostasRender()">
             <select class="form-control" id="propostas-sort" style="max-width:200px" onchange="propostasRender()">
-                <option value="recentes">Máis recentes</option>
-                <option value="votadas">Máis votadas</option>
-                <option value="comentadas">Máis comentadas</option>
-                <option value="titulo">Título A-Z</option>
+                <option value="recentes" data-i18n="mais_recentes">Máis recentes</option>
+                <option value="votadas" data-i18n="mais_votadas">Máis votadas</option>
+                <option value="comentadas" data-i18n="mais_comentadas">Máis comentadas</option>
+                <option value="titulo" data-i18n="titulo_az">Título A-Z</option>
             </select>
             <select class="form-control" id="propostas-estado-filter" style="max-width:160px" onchange="propostasRender()">
-                <option value="todas">Todas</option>
-                <option value="aberta">Aberta</option>
-                <option value="pechada">Pechada</option>
+                <option value="todas" data-i18n="todas">Todas</option>
+                <option value="aberta" data-i18n="aberta">Aberta</option>
+                <option value="pechada" data-i18n="pechada">Pechada</option>
             </select>
             <div class="export-dropdown socio-only" style="margin-left:auto">
                 <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
@@ -502,6 +532,12 @@
         </div>
         <div id="config-form"></div>
     </div>
+
+    <!-- Auditoría -->
+    <div class="section admin-only" id="sec-auditoria">
+        <div class="section-header"><h2 data-i18n="auditoria">Auditoría</h2></div>
+        <div id="auditoria-content"></div>
+    </div>
 </main>
 
 <footer class="app-footer">
@@ -571,9 +607,11 @@
 <script src="assets/js/modules/repertorio.js"></script>
 <script src="assets/js/modules/comentarios.js"></script>
 <script src="assets/js/modules/configuracion.js?v=7"></script>
+<script src="assets/js/modules/auditoria.js"></script>
 <script src="assets/js/app.js?v=2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </body>
 </html>

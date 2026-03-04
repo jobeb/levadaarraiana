@@ -48,7 +48,7 @@ function handle_albums($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM albums WHERE id = ?");
         $stmt->execute([(int)$m[1]]);
         $row = $stmt->fetch();
-        if (!$row) send_json(['error' => 'Album non atopado'], 404);
+        if (!$row) send_error('Album non atopado', 'erro_non_atopado', 404);
         $row = fix_row($row, ['fotos', 'i18n']);
         $row['fotos'] = normalize_fotos($row['fotos']);
         send_json($row);
@@ -113,6 +113,7 @@ function handle_albums($method, $uri, $input) {
             }
         }
 
+        audit_log('CREATE', 'albums', $id, trim($input['titulo'] ?? ''));
         send_json(['ok' => true, 'id' => $id], 201);
     }
 
@@ -123,7 +124,7 @@ function handle_albums($method, $uri, $input) {
 
         $check = $db->prepare("SELECT id FROM albums WHERE id = ?");
         $check->execute([$id]);
-        if (!$check->fetch()) send_json(['error' => 'Album non atopado'], 404);
+        if (!$check->fetch()) send_error('Album non atopado', 'erro_non_atopado', 404);
 
         $fields = [];
         $params = [];
@@ -175,13 +176,14 @@ function handle_albums($method, $uri, $input) {
         }
 
         if (empty($fields)) {
-            send_json(['error' => 'Non hai campos para actualizar'], 400);
+            send_error('Non hai campos para actualizar', 'erro_campos_obrigatorios', 400);
         }
 
         $params[] = $id;
         $sql = "UPDATE albums SET " . implode(', ', $fields) . " WHERE id = ?";
         $db->prepare($sql)->execute($params);
 
+        audit_log('UPDATE', 'albums', $id);
         send_json(['ok' => true, 'id' => $id]);
     }
 
@@ -192,10 +194,11 @@ function handle_albums($method, $uri, $input) {
         $stmt = $db->prepare("DELETE FROM albums WHERE id = ?");
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) {
-            send_json(['error' => 'Album non atopado'], 404);
+            send_error('Album non atopado', 'erro_non_atopado', 404);
         }
+        audit_log('DELETE', 'albums', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Ruta de albums non atopada'], 404);
+    send_error('Ruta de albums non atopada', 'erro_non_atopado', 404);
 }

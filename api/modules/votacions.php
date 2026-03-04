@@ -22,13 +22,13 @@ function handle_votacions($method, $uri, $input) {
             if (preg_match('#^/votos/(\d+)#', $uri, $m)) {
                 $votacion_id = (int)$m[1];
             }
-            if (!$votacion_id) send_json(['error' => 'ID de votación requerido'], 400);
+            if (!$votacion_id) send_error('ID de votación requerido', 'erro_campos_obrigatorios', 400);
 
             // Fetch votacion metadata
             $stmt = $db->prepare("SELECT anonima, estado FROM votacions WHERE id = ?");
             $stmt->execute([$votacion_id]);
             $votacion = $stmt->fetch();
-            if (!$votacion) send_json(['error' => 'Votación non atopada'], 404);
+            if (!$votacion) send_error('Votación non atopada', 'erro_non_atopado', 404);
 
             $anonima = (bool)$votacion['anonima'];
             $aberta = $votacion['estado'] === 'aberta';
@@ -109,42 +109,42 @@ function handle_votacions($method, $uri, $input) {
             $comentario = $input['comentario'] ?? null;
 
             if (!$votacion_id || !$opcions || !is_array($opcions) || count($opcions) === 0) {
-                send_json(['error' => 'votacion_id e opcions son obrigatorios'], 400);
+                send_error('votacion_id e opcions son obrigatorios', 'erro_campos_obrigatorios', 400);
             }
 
             // Check votacion exists and is open
             $stmt = $db->prepare("SELECT * FROM votacions WHERE id = ?");
             $stmt->execute([$votacion_id]);
             $votacion = $stmt->fetch();
-            if (!$votacion) send_json(['error' => 'Votación non atopada'], 404);
+            if (!$votacion) send_error('Votación non atopada', 'erro_non_atopado', 404);
             if ($votacion['estado'] !== 'aberta') {
-                send_json(['error' => 'A votación está pechada'], 403);
+                send_error('A votación está pechada', 'erro_votacion_pechada', 403);
             }
 
             // Check user hasn't voted yet
             $stmt = $db->prepare("SELECT COUNT(*) FROM votos WHERE votacion_id = ? AND socio_id = ?");
             $stmt->execute([$votacion_id, $user['id']]);
             if ((int)$stmt->fetchColumn() > 0) {
-                send_json(['error' => 'Xa votaches nesta votación'], 409);
+                send_error('Xa votaches nesta votación', 'erro_xa_votaches', 409);
             }
 
             // Validate options exist in the votacion's option list
             $valid_opcions = json_decode($votacion['opcions'], true) ?? [];
             foreach ($opcions as $op) {
                 if (!in_array($op, $valid_opcions)) {
-                    send_json(['error' => 'Opción non válida: ' . $op], 400);
+                    send_error('Opción non válida: ' . $op, 'erro_campos_obrigatorios', 400);
                 }
             }
 
             // Validate type constraints
             $tipo = $votacion['tipo'] ?? 'simple';
             if ($tipo === 'simple' && count($opcions) > 1) {
-                send_json(['error' => 'Votación simple: só 1 opción permitida'], 400);
+                send_error('Votación simple: só 1 opción permitida', 'erro_campos_obrigatorios', 400);
             }
             if ($tipo === 'multiple') {
                 $max = $votacion['max_opcions'] ? (int)$votacion['max_opcions'] : null;
                 if ($max && count($opcions) > $max) {
-                    send_json(['error' => 'Máximo ' . $max . ' opcións permitidas'], 400);
+                    send_error('Máximo ' . $max . ' opcións permitidas', 'erro_campos_obrigatorios', 400);
                 }
             }
 
@@ -163,7 +163,7 @@ function handle_votacions($method, $uri, $input) {
             send_json(['ok' => true], 201);
         }
 
-        send_json(['error' => 'Método non permitido'], 405);
+        send_error('Método non permitido', 'erro_metodo', 405);
     }
 
     // ---- VOTACIONS routes ----
@@ -194,7 +194,7 @@ function handle_votacions($method, $uri, $input) {
             );
             $stmt->execute([$uid, $id]);
             $row = $stmt->fetch();
-            if (!$row) send_json(['error' => 'Votación non atopada'], 404);
+            if (!$row) send_error('Votación non atopada', 'erro_non_atopado', 404);
             $row = fix_row($row, ['opcions'], ['anonima', 'user_voted']);
             send_json($row);
         }
@@ -249,6 +249,7 @@ function handle_votacions($method, $uri, $input) {
             $db->prepare("UPDATE votacions SET imaxe = ? WHERE id = ?")->execute([$imaxe, $newId]);
         }
 
+        audit_log('CREATE', 'votacions', (int)$newId, $input['titulo'] ?? '');
         send_json(['ok' => true, 'id' => $newId], 201);
     }
 
@@ -259,7 +260,7 @@ function handle_votacions($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM votacions WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
-        if (!$existing) send_json(['error' => 'Votación non atopada'], 404);
+        if (!$existing) send_error('Votación non atopada', 'erro_non_atopado', 404);
 
         $opcions = isset($input['opcions']) ? json_encode($input['opcions']) : $existing['opcions'];
         $pechado_en = $existing['pechado_en'];
@@ -296,6 +297,7 @@ function handle_votacions($method, $uri, $input) {
             $data_limite,
             $id
         ]);
+        audit_log('UPDATE', 'votacions', $id);
         send_json(['ok' => true]);
     }
 
@@ -307,8 +309,9 @@ function handle_votacions($method, $uri, $input) {
         $stmt->execute([$id]);
         $stmt = $db->prepare("DELETE FROM votacions WHERE id = ?");
         $stmt->execute([$id]);
+        audit_log('DELETE', 'votacions', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }

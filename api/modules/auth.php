@@ -9,7 +9,7 @@ function handle_auth($uri, $method, $input) {
         $username = $input['username'] ?? '';
         $password = $input['password'] ?? '';
         if (empty($username) || empty($password)) {
-            send_json(['error' => 'Faltan credenciais'], 400);
+            send_error('Faltan credenciais', 'erro_faltan_credenciais', 400);
         }
 
         $stmt = get_db()->prepare("SELECT * FROM usuarios WHERE username = ?");
@@ -17,10 +17,10 @@ function handle_auth($uri, $method, $input) {
         $user = $stmt->fetch();
 
         if (!$user || !verify_password($password, $user['password'])) {
-            send_json(['error' => 'Credenciais incorrectas'], 401);
+            send_error('Credenciais incorrectas', 'erro_credenciais', 401);
         }
         if ($user['estado'] === 'Desactivado') {
-            send_json(['error' => 'Conta desactivada'], 403);
+            send_error('Conta desactivada', 'erro_conta_desactivada', 403);
         }
 
         // Generate session token
@@ -34,7 +34,28 @@ function handle_auth($uri, $method, $input) {
 
         unset($user['password'], $user['session_token'], $user['session_expires']);
         $user['token'] = $token;
+        audit_log('LOGIN', 'auth', (int)$user['id'], $user['username']);
         send_json($user);
+    }
+
+    if ($uri === '/check-username' && $method === 'POST') {
+        $username = trim($input['username'] ?? '');
+        if (empty($username)) {
+            send_json(['available' => false]);
+        }
+        $stmt = get_db()->prepare("SELECT id FROM usuarios WHERE username = ?");
+        $stmt->execute([$username]);
+        send_json(['available' => !$stmt->fetch()]);
+    }
+
+    if ($uri === '/check-email' && $method === 'POST') {
+        $email = trim($input['email'] ?? '');
+        if (empty($email)) {
+            send_json(['available' => false]);
+        }
+        $stmt = get_db()->prepare("SELECT id FROM usuarios WHERE email = ?");
+        $stmt->execute([$email]);
+        send_json(['available' => !$stmt->fetch()]);
     }
 
     if ($uri === '/register' && $method === 'POST') {
@@ -47,23 +68,33 @@ function handle_auth($uri, $method, $input) {
         $instrumento = trim($input['instrumento'] ?? '');
 
         if (empty($username) || empty($password)) {
-            send_json(['error' => 'Username e contrasinal obrigatorios'], 400);
+            send_error('Username e contrasinal obrigatorios', 'erro_username_obrigatorio', 400);
         }
         if (strlen($password) < 8) {
-            send_json(['error' => 'O contrasinal debe ter polo menos 8 caracteres'], 400);
+            send_error('O contrasinal debe ter polo menos 8 caracteres', 'erro_contrasinal_curto', 400);
         }
 
         // Check unique username
         $stmt = get_db()->prepare("SELECT id FROM usuarios WHERE username = ?");
         $stmt->execute([$username]);
         if ($stmt->fetch()) {
-            send_json(['error' => 'O username xa existe'], 409);
+            send_error('O username xa existe', 'erro_username_existe', 409);
+        }
+
+        // Check unique email
+        if (!empty($email)) {
+            $stmt = get_db()->prepare("SELECT id FROM usuarios WHERE email = ?");
+            $stmt->execute([$email]);
+            if ($stmt->fetch()) {
+                send_error('Ese email xa esta en uso', 'erro_email_existe', 409);
+            }
         }
 
         $hashed = hash_password($password);
+        $lopd_consent = !empty($input['lopd_consent']);
         $stmt   = get_db()->prepare(
-            "INSERT INTO usuarios (username, nome_completo, email, telefono, instrumento, password, role, data_alta, estado)
-             VALUES (?, ?, ?, ?, ?, ?, 'Usuario', CURDATE(), 'Activo')"
+            "INSERT INTO usuarios (username, nome_completo, email, telefono, instrumento, password, role, data_alta, estado, lopd_consentimento)
+             VALUES (?, ?, ?, ?, ?, ?, 'Usuario', CURDATE(), 'Activo', " . ($lopd_consent ? "NOW()" : "NULL") . ")"
         );
         $stmt->execute([$username, $nome, $email, $telefono, $instrumento, $hashed]);
         $id = (int)get_db()->lastInsertId();
@@ -75,6 +106,7 @@ function handle_auth($uri, $method, $input) {
             get_db()->prepare("UPDATE usuarios SET foto = ? WHERE id = ?")->execute([$path, $id]);
         }
 
+        audit_log('REGISTER', 'auth', $id, $username);
         send_json(['ok' => true, 'id' => $id], 201);
     }
 
@@ -83,7 +115,7 @@ function handle_auth($uri, $method, $input) {
         rate_limit('forgot:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 3, 600);
         $identifier = trim($input['identifier'] ?? '');
         if (empty($identifier)) {
-            send_json(['error' => 'Introduce o teu usuario ou email'], 400);
+            send_error('Introduce o teu usuario ou email', 'erro_introduce_usuario', 400);
         }
 
         // Find user by username or email
@@ -130,10 +162,10 @@ function handle_auth($uri, $method, $input) {
         $password = $input['password'] ?? '';
 
         if (empty($token) || empty($password)) {
-            send_json(['error' => 'Token e contrasinal obrigatorios'], 400);
+            send_error('Token e contrasinal obrigatorios', 'erro_token_contrasinal_obrigatorios', 400);
         }
         if (strlen($password) < 8) {
-            send_json(['error' => 'O contrasinal debe ter polo menos 8 caracteres'], 400);
+            send_error('O contrasinal debe ter polo menos 8 caracteres', 'erro_contrasinal_curto', 400);
         }
 
         $stmt = get_db()->prepare(
@@ -143,7 +175,7 @@ function handle_auth($uri, $method, $input) {
         $user = $stmt->fetch();
 
         if (!$user) {
-            send_json(['error' => 'Token non valido ou caducado'], 400);
+            send_error('Token non valido ou caducado', 'erro_token_invalido', 400);
         }
 
         // Update password and clear token
@@ -156,14 +188,24 @@ function handle_auth($uri, $method, $input) {
         send_json(['ok' => true]);
     }
 
+    if ($uri === '/consent' && $method === 'POST') {
+        $user = require_auth();
+        $stmt = get_db()->prepare("UPDATE usuarios SET lopd_consentimento = NOW() WHERE id = ?");
+        $stmt->execute([$user['id']]);
+        audit_log('CONSENT', 'auth', (int)$user['id'], 'LOPD consent accepted');
+        $now = date('Y-m-d H:i:s');
+        send_json(['ok' => true, 'lopd_consentimento' => $now]);
+    }
+
     if ($uri === '/logout' && $method === 'POST') {
         $user = get_session_user();
         if ($user) {
+            audit_log('LOGOUT', 'auth', (int)$user['id'], $user['username']);
             $stmt = get_db()->prepare("UPDATE usuarios SET session_token=NULL, session_expires=NULL WHERE id=?");
             $stmt->execute([$user['id']]);
         }
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }

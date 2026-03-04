@@ -23,10 +23,10 @@ function handle_solicitudes_bolos($method, $uri, $input) {
         $nome  = trim($input['nome'] ?? '');
         $email = trim($input['email'] ?? '');
         if (!$nome || !$email) {
-            send_json(['error' => 'Nome e email son obrigatorios'], 400);
+            send_error('Nome e email son obrigatorios', 'erro_campos_obrigatorios', 400);
         }
         if (strpos($email, '@') === false) {
-            send_json(['error' => 'Email non valido'], 400);
+            send_error('Email non valido', 'erro_email_invalido', 400);
         }
 
         $telefono    = trim($input['telefono'] ?? '');
@@ -72,7 +72,7 @@ function handle_solicitudes_bolos($method, $uri, $input) {
         }
 
         if (empty($sets)) {
-            send_json(['error' => 'Nada que actualizar'], 400);
+            send_error('Nada que actualizar', 'erro_campos_obrigatorios', 400);
         }
 
         $vals[] = $id;
@@ -87,7 +87,7 @@ function handle_solicitudes_bolos($method, $uri, $input) {
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Ruta non atopada'], 404);
+    send_error('Ruta non atopada', 'erro_non_atopado', 404);
 }
 
 function _sol_bolos_send_email($db, $nome, $email, $telefono, $data_evento, $lugar, $tipo, $descricion) {

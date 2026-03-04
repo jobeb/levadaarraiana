@@ -23,7 +23,7 @@ function handle_instrumentos($method, $uri, $input) {
             $stmt = $db->prepare("SELECT * FROM instrumentos WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
-            if (!$row) send_json(['error' => 'Instrumento non atopado'], 404);
+            if (!$row) send_error('Instrumento non atopado', 'erro_non_atopado', 404);
             send_json(fix_row($row, ['i18n']));
         }
         $rows = $db->query("SELECT * FROM instrumentos ORDER BY nome ASC")->fetchAll();
@@ -80,6 +80,7 @@ function handle_instrumentos($method, $uri, $input) {
             $db->prepare("UPDATE instrumentos SET audio_mostra = ? WHERE id = ?")->execute([$audio_path, $newId]);
         }
 
+        audit_log('CREATE', 'instrumentos', (int)$newId, $input['nome'] ?? '');
         send_json(['ok' => true, 'id' => $newId], 201);
     }
 
@@ -89,7 +90,7 @@ function handle_instrumentos($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM instrumentos WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
-        if (!$existing) send_json(['error' => 'Instrumento non atopado'], 404);
+        if (!$existing) send_error('Instrumento non atopado', 'erro_non_atopado', 404);
 
         $imaxe = $existing['imaxe'];
         if (!empty($input['imaxe_data'])) {
@@ -132,6 +133,7 @@ function handle_instrumentos($method, $uri, $input) {
             $i18n_val,
             $id
         ]);
+        audit_log('UPDATE', 'instrumentos', $id);
         send_json(['ok' => true]);
     }
 
@@ -140,8 +142,9 @@ function handle_instrumentos($method, $uri, $input) {
         require_socio();
         $stmt = $db->prepare("DELETE FROM instrumentos WHERE id = ?");
         $stmt->execute([$id]);
+        audit_log('DELETE', 'instrumentos', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }

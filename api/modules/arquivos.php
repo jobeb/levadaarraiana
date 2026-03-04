@@ -31,7 +31,7 @@ function handle_arquivos($method, $uri, $input) {
         $dir = preg_replace('/[^a-zA-Z0-9_-]/', '', $input['dir'] ?? 'general');
         $name = $input['name'] ?? 'img.jpg';
         $data = $input['data'] ?? '';
-        if (!$data) send_json(['error' => 'Sen datos de imaxe'], 400);
+        if (!$data) send_error('Sen datos de imaxe', 'erro_campos_obrigatorios', 400);
 
         validate_file_extension($name, 'image');
         $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $name);
@@ -46,7 +46,7 @@ function handle_arquivos($method, $uri, $input) {
         $name = $input['name'] ?? '';
         $data = $input['data'] ?? '';
         $type = $input['type'] ?? '';
-        if (!$name || !$data) send_json(['error' => 'Faltan datos'], 400);
+        if (!$name || !$data) send_error('Faltan datos', 'erro_campos_obrigatorios', 400);
 
         // Determine if it's an image
         $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
@@ -59,7 +59,7 @@ function handle_arquivos($method, $uri, $input) {
                      'mp4','webm','ogg','mov','avi',
                      'mp3','wav','m4a'];
         if (!in_array($ext, $allowed)) {
-            send_json(['error' => 'Tipo de arquivo non permitido: .' . $ext], 400);
+            send_error('Tipo de arquivo non permitido: .' . $ext, 'erro_tipo_arquivo', 400);
         }
 
         $safe = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $name);
@@ -78,18 +78,18 @@ function handle_arquivos($method, $uri, $input) {
         require_socio();
         $path = trim($input['path'] ?? '');
         if (!$path || strpos($path, '..') !== false) {
-            send_json(['error' => 'Ruta non válida'], 400);
+            send_error('Ruta non válida', 'erro_datos_invalidos', 400);
         }
         $full = UPLOADS_DIR . '/' . $path;
         $real = realpath($full);
         if ($real === false || strpos($real, realpath(UPLOADS_DIR)) !== 0) {
-            send_json(['error' => 'Ruta non válida'], 400);
+            send_error('Ruta non válida', 'erro_datos_invalidos', 400);
         }
         unlink($real);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }
 
 function scan_folder($dir, $prefix) {

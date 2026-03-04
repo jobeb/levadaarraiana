@@ -15,7 +15,13 @@ async function api(endpoint, opts = {}) {
     });
     const data = await res.json();
     if (!res.ok) {
-        throw new Error(data.error || 'Erro ' + res.status);
+        // Session expired — redirect to login instead of showing error
+        if (res.status === 401 && AppState.token) {
+            AppState.clearSession();
+            window.location.href = 'app.html';
+            return;
+        }
+        throw new Error((data.error_key && t(data.error_key) !== data.error_key ? t(data.error_key) : data.error) || t('erro') + ' ' + res.status);
     }
     return data;
 }
@@ -66,7 +72,7 @@ function imageToBase64(file) {
             URL.revokeObjectURL(img.src);
             resolve({ name: file.name.replace(/\.[^.]+$/, '.jpg'), data: data, type: 'image/jpeg' });
         };
-        img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error('Image load failed')); };
+        img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error(t('erro_cargar_imaxe'))); };
         img.src = URL.createObjectURL(file);
     });
 }

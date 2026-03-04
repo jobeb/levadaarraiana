@@ -23,7 +23,7 @@ function handle_noticias($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM noticias WHERE id = ?");
         $stmt->execute([(int)$m[1]]);
         $row = $stmt->fetch();
-        if (!$row) send_json(['error' => 'Noticia non atopada'], 404);
+        if (!$row) send_error('Noticia non atopada', 'erro_non_atopado', 404);
         $row = fix_row($row, ['imaxes', 'i18n'], ['publica']);
         send_json($row);
     }
@@ -64,6 +64,7 @@ function handle_noticias($method, $uri, $input) {
                ->execute([json_encode($imaxes, JSON_UNESCAPED_UNICODE), $id]);
         }
 
+        audit_log('CREATE', 'noticias', $id, trim($input['titulo'] ?? ''));
         send_json(['ok' => true, 'id' => $id], 201);
     }
 
@@ -74,7 +75,7 @@ function handle_noticias($method, $uri, $input) {
 
         $check = $db->prepare("SELECT id FROM noticias WHERE id = ?");
         $check->execute([$id]);
-        if (!$check->fetch()) send_json(['error' => 'Noticia non atopada'], 404);
+        if (!$check->fetch()) send_error('Noticia non atopada', 'erro_non_atopado', 404);
 
         $fields = [];
         $params = [];
@@ -113,13 +114,14 @@ function handle_noticias($method, $uri, $input) {
         }
 
         if (empty($fields)) {
-            send_json(['error' => 'Non hai campos para actualizar'], 400);
+            send_error('Non hai campos para actualizar', 'erro_campos_obrigatorios', 400);
         }
 
         $params[] = $id;
         $sql = "UPDATE noticias SET " . implode(', ', $fields) . " WHERE id = ?";
         $db->prepare($sql)->execute($params);
 
+        audit_log('UPDATE', 'noticias', $id);
         send_json(['ok' => true, 'id' => $id]);
     }
 
@@ -130,10 +132,11 @@ function handle_noticias($method, $uri, $input) {
         $stmt = $db->prepare("DELETE FROM noticias WHERE id = ?");
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) {
-            send_json(['error' => 'Noticia non atopada'], 404);
+            send_error('Noticia non atopada', 'erro_non_atopado', 404);
         }
+        audit_log('DELETE', 'noticias', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Ruta de noticias non atopada'], 404);
+    send_error('Ruta de noticias non atopada', 'erro_non_atopado', 404);
 }

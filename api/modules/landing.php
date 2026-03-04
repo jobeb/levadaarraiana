@@ -22,11 +22,12 @@ function handle_landing($method, $uri, $input) {
     if ($method === 'PUT' && $uri === '/landing-seccions/reorder') {
         require_socio();
         $ids = $input['ids'] ?? [];
-        if (!is_array($ids) || empty($ids)) send_json(['error' => 'ids requeridos'], 400);
+        if (!is_array($ids) || empty($ids)) send_error('ids requeridos', 'erro_campos_obrigatorios', 400);
         $stmt = $db->prepare("UPDATE landing_seccions SET orden = ? WHERE id = ?");
         foreach ($ids as $i => $id) {
             $stmt->execute([$i, $id]);
         }
+        audit_log('UPDATE', 'landing', null, 'reorder');
         $rows = $db->query("SELECT * FROM landing_seccions ORDER BY orden ASC")->fetchAll(PDO::FETCH_ASSOC);
         $rows = fix_rows($rows, [], ['parallax', 'activa', 'divisor'], ['overlay_opacidade', 'max_items', 'max_items_mobile', 'max_fotos_destacadas', 'orden']);
         send_json($rows);
@@ -41,7 +42,7 @@ function handle_landing($method, $uri, $input) {
         $stmt = $db->prepare("SELECT id FROM landing_seccions WHERE id = ?");
         $stmt->execute([$secId]);
         if (!$stmt->fetch()) {
-            send_json(['error' => 'Seccion non atopada'], 404);
+            send_error('Seccion non atopada', 'erro_non_atopado', 404);
         }
 
         $updates = [];
@@ -149,6 +150,8 @@ function handle_landing($method, $uri, $input) {
             $stmt->execute($params);
         }
 
+        audit_log('UPDATE', 'landing', null, $secId);
+
         // Return updated row
         $stmt = $db->prepare("SELECT * FROM landing_seccions WHERE id = ?");
         $stmt->execute([$secId]);
@@ -156,5 +159,5 @@ function handle_landing($method, $uri, $input) {
         send_json($row);
     }
 
-    send_json(['error' => 'Ruta non atopada'], 404);
+    send_error('Ruta non atopada', 'erro_non_atopado', 404);
 }

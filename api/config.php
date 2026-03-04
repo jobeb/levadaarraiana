@@ -43,6 +43,11 @@ function send_json($data, $status = 200) {
     exit;
 }
 
+// ---- JSON error response with i18n key ----
+function send_error($message, $error_key, $status = 400) {
+    send_json(['error' => $message, 'error_key' => $error_key], $status);
+}
+
 // ---- Read JSON body ----
 function read_body() {
     return json_decode(file_get_contents('php://input'), true) ?? [];

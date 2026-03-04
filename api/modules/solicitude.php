@@ -10,7 +10,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'solicitude.php') {
 
 function handle_solicitude($method, $uri, $input) {
     if ($method !== 'POST') {
-        send_json(['error' => 'Método non permitido'], 405);
+        send_error('Método non permitido', 'erro_metodo', 405);
     }
 
     rate_limit('solicitude:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 3, 600);
@@ -18,7 +18,7 @@ function handle_solicitude($method, $uri, $input) {
     $db  = get_db();
     $cfg = $db->query("SELECT * FROM config WHERE id = 1")->fetch();
     if (!$cfg || empty($cfg['email_dest'])) {
-        send_json(['error' => 'Email de destino non configurado'], 500);
+        send_error('Email de destino non configurado', 'erro_email_destino', 500);
     }
 
     $to = $cfg['email_dest'];
@@ -47,13 +47,13 @@ function handle_solicitude($method, $uri, $input) {
         $nome  = trim($input['nome'] ?? '');
         $email = trim($input['email'] ?? '');
         if (!$nome || !$email) {
-            send_json(['error' => 'Nome e email son obrigatorios'], 400);
+            send_error('Nome e email son obrigatorios', 'erro_campos_obrigatorios', 400);
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            send_json(['error' => 'Email non valido'], 400);
+            send_error('Email non valido', 'erro_email_invalido', 400);
         }
         if (preg_match('/[\r\n]/', $email) || preg_match('/[\r\n]/', $nome)) {
-            send_json(['error' => 'Datos non válidos'], 400);
+            send_error('Datos non válidos', 'erro_datos_invalidos', 400);
         }
 
         $telefono   = trim($input['telefono'] ?? '');
@@ -76,7 +76,7 @@ function handle_solicitude($method, $uri, $input) {
     $replyTo = $user ? ($user['email'] ?: null) : $email;
     $ok = send_email($to, $subject, $body, $replyTo);
     if (!$ok) {
-        send_json(['error' => 'Erro ao enviar o correo'], 500);
+        send_error('Erro ao enviar o correo', 'erro_enviar_correo', 500);
     }
 
     send_json(['ok' => true]);

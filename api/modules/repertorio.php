@@ -39,7 +39,7 @@ function handle_repertorio($method, $uri, $input) {
             $youtube_url = $input['youtube_url'] ?? '';
             $data = $input['data'] ?? '';
 
-            if (!$youtube_url && (!$data || !$nome)) send_json(['error' => 'Faltan data ou nome'], 400);
+            if (!$youtube_url && (!$data || !$nome)) send_error('Faltan data ou nome', 'erro_campos_obrigatorios', 400);
 
             // Check if slot exists — delete old local file
             $stmt = $db->prepare("SELECT * FROM repertorio_medios WHERE repertorio_id = ? AND parte_idx = ? AND instrumento_id = ? AND tipo_media = ?");
@@ -77,7 +77,7 @@ function handle_repertorio($method, $uri, $input) {
             $stmt = $db->prepare("SELECT * FROM repertorio_medios WHERE id = ? AND repertorio_id = ?");
             $stmt->execute([$medioId, $id]);
             $row = $stmt->fetch();
-            if (!$row) send_json(['error' => 'Medio non atopado'], 404);
+            if (!$row) send_error('Medio non atopado', 'erro_non_atopado', 404);
             if ($row['arquivo'] && strpos($row['arquivo'], 'youtube.com/') === false) {
                 $path = UPLOADS_DIR . '/' . $row['arquivo'];
                 if (file_exists($path)) @unlink($path);
@@ -87,7 +87,7 @@ function handle_repertorio($method, $uri, $input) {
             send_json(['ok' => true]);
         }
 
-        send_json(['error' => 'Método non permitido'], 405);
+        send_error('Método non permitido', 'erro_metodo', 405);
     }
 
     // GET — list all or single
@@ -97,7 +97,7 @@ function handle_repertorio($method, $uri, $input) {
             $stmt = $db->prepare("SELECT * FROM repertorio WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
-            if (!$row) send_json(['error' => 'Peza non atopada'], 404);
+            if (!$row) send_error('Peza non atopada', 'erro_non_atopado', 404);
             send_json(fix_row($row, ['estructura']));
         }
         $rows = $db->query("SELECT * FROM repertorio ORDER BY nome ASC")->fetchAll();
@@ -138,7 +138,9 @@ function handle_repertorio($method, $uri, $input) {
             $arquivo_partitura,
             $estructura
         ]);
-        send_json(['ok' => true, 'id' => $db->lastInsertId()], 201);
+        $newId = (int)$db->lastInsertId();
+        audit_log('CREATE', 'repertorio', $newId, $input['nome'] ?? '');
+        send_json(['ok' => true, 'id' => $newId], 201);
     }
 
     // PUT — update
@@ -148,7 +150,7 @@ function handle_repertorio($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM repertorio WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
-        if (!$existing) send_json(['error' => 'Peza non atopada'], 404);
+        if (!$existing) send_error('Peza non atopada', 'erro_non_atopado', 404);
 
         $arquivo_audio = $existing['arquivo_audio'];
         if (!empty($input['arquivo_audio']) && !empty($input['arquivo_audio_nome'])) {
@@ -183,6 +185,7 @@ function handle_repertorio($method, $uri, $input) {
             $estructura,
             $id
         ]);
+        audit_log('UPDATE', 'repertorio', $id);
         send_json(['ok' => true]);
     }
 
@@ -200,8 +203,9 @@ function handle_repertorio($method, $uri, $input) {
         }
         $stmt = $db->prepare("DELETE FROM repertorio WHERE id = ?");
         $stmt->execute([$id]);
+        audit_log('DELETE', 'repertorio', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }

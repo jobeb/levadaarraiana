@@ -24,7 +24,7 @@ function handle_actas($method, $uri, $input) {
             $stmt = $db->prepare("SELECT * FROM actas WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
-            if (!$row) send_json(['error' => 'Acta non atopada'], 404);
+            if (!$row) send_error('Acta non atopada', 'erro_non_atopado', 404);
             send_json(fix_row($row, ['arquivos']));
         }
         $rows = $db->query("SELECT * FROM actas ORDER BY data DESC")->fetchAll();
@@ -61,7 +61,9 @@ function handle_actas($method, $uri, $input) {
             $input['estado'] ?? 'borrador',
             $arquivos
         ]);
-        send_json(['ok' => true, 'id' => $db->lastInsertId()], 201);
+        $newId = (int)$db->lastInsertId();
+        audit_log('CREATE', 'actas', $newId, $input['titulo'] ?? '');
+        send_json(['ok' => true, 'id' => $newId], 201);
     }
 
     // PUT — update
@@ -71,7 +73,7 @@ function handle_actas($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM actas WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
-        if (!$existing) send_json(['error' => 'Acta non atopada'], 404);
+        if (!$existing) send_error('Acta non atopada', 'erro_non_atopado', 404);
 
         $arquivos_clean = [];
         if (isset($input['arquivos'])) {
@@ -101,6 +103,7 @@ function handle_actas($method, $uri, $input) {
             $arquivos,
             $id
         ]);
+        audit_log('UPDATE', 'actas', $id);
         send_json(['ok' => true]);
     }
 
@@ -109,8 +112,9 @@ function handle_actas($method, $uri, $input) {
         require_socio();
         $stmt = $db->prepare("DELETE FROM actas WHERE id = ?");
         $stmt->execute([$id]);
+        audit_log('DELETE', 'actas', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }

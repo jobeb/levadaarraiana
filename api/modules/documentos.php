@@ -24,7 +24,7 @@ function handle_documentos($method, $uri, $input) {
             $stmt = $db->prepare("SELECT * FROM documentos WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
-            if (!$row) send_json(['error' => 'Documento non atopado'], 404);
+            if (!$row) send_error('Documento non atopado', 'erro_non_atopado', 404);
             send_json($row);
         }
         $rows = $db->query("SELECT * FROM documentos ORDER BY creado DESC")->fetchAll();
@@ -54,7 +54,9 @@ function handle_documentos($method, $uri, $input) {
             $arquivo,
             $arquivo_nome
         ]);
-        send_json(['ok' => true, 'id' => $db->lastInsertId()], 201);
+        $newId = (int)$db->lastInsertId();
+        audit_log('CREATE', 'documentos', $newId, $input['titulo'] ?? '');
+        send_json(['ok' => true, 'id' => $newId], 201);
     }
 
     // PUT — update
@@ -64,7 +66,7 @@ function handle_documentos($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM documentos WHERE id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch();
-        if (!$existing) send_json(['error' => 'Documento non atopado'], 404);
+        if (!$existing) send_error('Documento non atopado', 'erro_non_atopado', 404);
 
         $arquivo = $existing['arquivo'];
         $arquivo_nome = $existing['arquivo_nome'];
@@ -93,8 +95,9 @@ function handle_documentos($method, $uri, $input) {
         require_socio();
         $stmt = $db->prepare("DELETE FROM documentos WHERE id = ?");
         $stmt->execute([$id]);
+        audit_log('DELETE', 'documentos', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Método non permitido'], 405);
+    send_error('Método non permitido', 'erro_metodo', 405);
 }

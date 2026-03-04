@@ -50,7 +50,7 @@ function get_session_user() {
 function require_auth() {
     $user = get_session_user();
     if (!$user) {
-        send_json(['error' => 'Non autorizado'], 401);
+        send_error('Non autorizado', 'erro_non_autorizado', 401);
     }
     return $user;
 }
@@ -59,7 +59,7 @@ function require_auth() {
 function require_admin() {
     $user = require_auth();
     if ($user['role'] !== 'Admin') {
-        send_json(['error' => 'Acceso denegado'], 403);
+        send_error('Acceso denegado', 'erro_acceso_denegado', 403);
     }
     return $user;
 }
@@ -68,7 +68,7 @@ function require_admin() {
 function require_socio() {
     $user = require_auth();
     if (!in_array($user['role'], ['Admin', 'Socio'])) {
-        send_json(['error' => 'Acceso denegado'], 403);
+        send_error('Acceso denegado', 'erro_acceso_denegado', 403);
     }
     return $user;
 }
@@ -83,7 +83,7 @@ function rate_limit($key, $max = 5, $window = 300) {
     $now = time();
     $data = array_filter($data, function($t) use ($now, $window) { return $t > $now - $window; });
     if (count($data) >= $max) {
-        send_json(['error' => 'Demasiados intentos. Agarda uns minutos.'], 429);
+        send_error('Demasiados intentos. Agarda uns minutos.', 'erro_rate_limit', 429);
     }
     $data[] = $now;
     file_put_contents($file, json_encode(array_values($data)));

@@ -18,11 +18,11 @@ function handle_comentarios($method, $uri, $input) {
         $id = (int)$m[1];
         $nuevo_estado = trim($input['estado'] ?? '');
         if (!in_array($nuevo_estado, ['aprobado', 'rexeitado'])) {
-            send_json(['error' => 'Estado non válido'], 400);
+            send_error('Estado non válido', 'erro_datos_invalidos', 400);
         }
         $stmt = $db->prepare("UPDATE comentarios SET estado = ? WHERE id = ?");
         $stmt->execute([$nuevo_estado, $id]);
-        if ($stmt->rowCount() === 0) send_json(['error' => 'Non atopado'], 404);
+        if ($stmt->rowCount() === 0) send_error('Non atopado', 'erro_non_atopado', 404);
         send_json(['ok' => true]);
     }
 
@@ -50,7 +50,7 @@ function handle_comentarios($method, $uri, $input) {
             // Público: todos os comentarios aprobados dun tipo
             $allowed = ['noticia', 'bolo', 'proposta'];
             if (!in_array($item_type, $allowed)) {
-                send_json(['error' => 'item_type non válido'], 400);
+                send_error('item_type non válido', 'erro_datos_invalidos', 400);
             }
             $stmt = $db->prepare(
                 "SELECT c.*, s.nome_completo AS autor_nome, s.foto AS autor_foto
@@ -96,13 +96,13 @@ function handle_comentarios($method, $uri, $input) {
         $parent_id = isset($input['parent_id']) ? (int)$input['parent_id'] : null;
 
         if (!in_array($item_type, ['noticia', 'bolo', 'proposta'])) {
-            send_json(['error' => 'item_type non válido'], 400);
+            send_error('item_type non válido', 'erro_datos_invalidos', 400);
         }
         if ($item_id <= 0) {
-            send_json(['error' => 'item_id non válido'], 400);
+            send_error('item_id non válido', 'erro_datos_invalidos', 400);
         }
         if ($texto === '') {
-            send_json(['error' => 'O texto é obrigatorio'], 400);
+            send_error('O texto é obrigatorio', 'erro_campos_obrigatorios', 400);
         }
 
         // Validar parent_id
@@ -110,8 +110,8 @@ function handle_comentarios($method, $uri, $input) {
             $pstmt = $db->prepare("SELECT parent_id FROM comentarios WHERE id = ?");
             $pstmt->execute([$parent_id]);
             $parent = $pstmt->fetch();
-            if (!$parent) send_json(['error' => 'Comentario pai non atopado'], 404);
-            if ($parent['parent_id'] !== null) send_json(['error' => 'Non se pode responder a unha resposta'], 400);
+            if (!$parent) send_error('Comentario pai non atopado', 'erro_non_atopado', 404);
+            if ($parent['parent_id'] !== null) send_error('Non se pode responder a unha resposta', 'erro_datos_invalidos', 400);
         }
 
         // Determinar estado según moderación
@@ -130,6 +130,7 @@ function handle_comentarios($method, $uri, $input) {
         $stmt->execute([$item_type, $item_id, $texto, (int)$user['id'], $parent_id, $estado]);
         $id = (int)$db->lastInsertId();
 
+        audit_log('CREATE', 'comentarios', $id, "$item_type#$item_id");
         send_json(['ok' => true, 'id' => $id, 'estado' => $estado], 201);
     }
 
@@ -142,18 +143,19 @@ function handle_comentarios($method, $uri, $input) {
         $stmt->execute([$id]);
         $row = $stmt->fetch();
         if (!$row) {
-            send_json(['error' => 'Comentario non atopado'], 404);
+            send_error('Comentario non atopado', 'erro_non_atopado', 404);
         }
 
         // O autor pode eliminar o seu; admin/socio pode eliminar calquera
         $isMod = in_array($user['role'], ['Admin', 'Socio']);
         if ((int)$row['autor_id'] !== (int)$user['id'] && !$isMod) {
-            send_json(['error' => 'Acceso denegado'], 403);
+            send_error('Acceso denegado', 'erro_acceso_denegado', 403);
         }
 
         $db->prepare("DELETE FROM comentarios WHERE id = ?")->execute([$id]);
+        audit_log('DELETE', 'comentarios', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Ruta de comentarios non atopada'], 404);
+    send_error('Ruta de comentarios non atopada', 'erro_non_atopado', 404);
 }

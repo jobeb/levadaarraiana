@@ -36,6 +36,30 @@ async function onLogin() {
     }
 }
 
+function rejectLopd() {
+    doLogout();
+}
+
+async function acceptLopd() {
+    var cb = document.getElementById('lopd-consent-check');
+    var errEl = document.getElementById('lopd-error');
+    if (!cb.checked) {
+        errEl.textContent = t('lopd_obrigatorio');
+        errEl.style.display = 'block';
+        return;
+    }
+    errEl.style.display = 'none';
+    try {
+        var res = await api('/consent', { method: 'POST' });
+        AppState.user.lopd_consentimento = res.lopd_consentimento;
+        AppState.setUser(AppState.user);
+        initApp();
+    } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+    }
+}
+
 async function onRegister() {
     const user = document.getElementById('reg-user').value.trim();
     const nome = document.getElementById('reg-nome').value.trim();
@@ -44,8 +68,14 @@ async function onRegister() {
     const okEl = document.getElementById('reg-success');
     errEl.style.display = 'none';
     okEl.style.display = 'none';
+    var lopdCb = document.getElementById('reg-lopd-check');
+    if (!lopdCb.checked) {
+        errEl.textContent = t('lopd_obrigatorio');
+        errEl.style.display = 'block';
+        return;
+    }
     try {
-        await doRegister({ username: user, password: pass, nome_completo: nome });
+        await doRegister({ username: user, password: pass, nome_completo: nome, lopd_consent: true });
         okEl.textContent = t('rexistro_ok');
         okEl.style.display = 'block';
     } catch (e) {
@@ -61,6 +91,14 @@ function toggleSidebar() {
 
 function initApp() {
     document.getElementById('login-overlay').style.display = 'none';
+
+    // Check LOPD consent — block dashboard until accepted
+    if (!AppState.user.lopd_consentimento) {
+        document.getElementById('lopd-consent-overlay').style.display = '';
+        return;
+    }
+    document.getElementById('lopd-consent-overlay').style.display = 'none';
+
     document.getElementById('app-header').style.display = '';
     document.getElementById('hamburger-btn').style.display = '';
     document.getElementById('app-sidebar').style.display = '';
@@ -85,7 +123,7 @@ function initApp() {
         }
     }
     document.getElementById('welcome-msg').textContent =
-        (AppState.lang === 'en' ? 'Welcome, ' : 'Benvido/a, ') + (u.nome_completo || u.username) + '!';
+        t('benvido') + ', ' + (u.nome_completo || u.username) + '!';
 
     // Admin-only elements
     const isAdmin = AppState.isAdmin();
@@ -115,6 +153,7 @@ function initApp() {
     Router.register('repertorio', repertorioLoad);
     Router.register('comentarios', comentariosLoad);
     Router.register('configuracion', configuracionLoad);
+    Router.register('auditoria', auditoriaLoad);
 
     Router.init();
     applyLang(AppState.lang);
@@ -273,7 +312,7 @@ function _showCalendarDayPopup(date, events) {
         if (meta) html += '<span class="cal-day-popup-hora">' + esc(meta) + '</span>';
         html += '</div>';
         if (ev.type === 'ensaio' && !_isSocio) {
-            html += '<button class="btn btn-sm btn-primary" style="margin-left:auto;flex-shrink:0;font-size:0.75rem;padding:2px 8px" onclick="event.stopPropagation(); _closeCalendarPopup(); ensaiosSolicitarAsistencia(' + ev.id + ')">' + t('solicitar_asistir') + '</button>';
+            html += '<button class="btn btn-sm btn-primary cal-day-popup-btn" onclick="event.stopPropagation(); _closeCalendarPopup(); ensaiosSolicitarAsistencia(' + ev.id + ')">' + t('solicitar_asistir') + '</button>';
         }
         html += '</div>';
     });
@@ -521,7 +560,7 @@ async function saveProfile() {
             if (ph) ph.remove();
         }
         document.getElementById('welcome-msg').textContent =
-            (AppState.lang === 'en' ? 'Welcome, ' : 'Benvido/a, ') + (updated.nome_completo || updated.username) + '!';
+            t('benvido') + ', ' + (updated.nome_completo || updated.username) + '!';
 
         hideModal('modal-overlay');
         toast(t('perfil_actualizado'), 'success');
@@ -578,6 +617,13 @@ document.getElementById('login-user')?.addEventListener('keydown', e => { if (e.
 
     initLangSelector();
     applyLang(AppState.lang);
+
+    // Render LOPD label with link in register box
+    var regLopdLabel = document.getElementById('app-reg-lopd-label');
+    if (regLopdLabel) {
+        regLopdLabel.innerHTML = t('lopd_checkbox_link').replace('{link}', '<a href="index.html#privacidade" target="_blank">' + t('lopd_ver_privacidade') + '</a>');
+    }
+
     if (AppState.loadSession()) {
         initApp();
     }

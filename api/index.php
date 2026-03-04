@@ -26,7 +26,7 @@ if (in_array($method, ['POST', 'PUT'])) {
 
 try {
     // Auth routes
-    if ($uri === '/login' || $uri === '/logout' || $uri === '/register' || $uri === '/forgot-password' || $uri === '/reset-password') {
+    if ($uri === '/login' || $uri === '/logout' || $uri === '/register' || $uri === '/forgot-password' || $uri === '/reset-password' || $uri === '/consent' || $uri === '/check-username' || $uri === '/check-email') {
         require __DIR__ . '/modules/auth.php';
         handle_auth($uri, $method, $input);
     }
@@ -57,6 +57,7 @@ try {
         '/contacto'      => 'contacto',
         '/backup'        => 'backup',
         '/youtube'       => 'youtube',
+        '/auditoria'     => 'auditoria',
     ];
 
     // Find matching route (longest prefix match)
@@ -75,11 +76,11 @@ try {
         $fnName($method, $uri, $input);
     }
 
-    send_json(['error' => 'Ruta non atopada: ' . $uri], 404);
+    send_error('Ruta non atopada: ' . $uri, 'erro_non_atopado', 404);
 
 } catch (PDOException $e) {
     error_log('PDO Error: ' . $e->getMessage());
-    send_json(['error' => 'Erro de base de datos'], 500);
+    send_error('Erro de base de datos', 'erro_base_datos', 500);
 } catch (Exception $e) {
     send_json(['error' => $e->getMessage()], 500);
 }

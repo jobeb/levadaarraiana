@@ -45,14 +45,14 @@ function handle_usuarios($method, $uri, $input) {
         // Cambio de contrasinal
         if (!empty($input['password_new'])) {
             if (empty($input['password_old']) || !verify_password($input['password_old'], $user['password'])) {
-                send_json(['error' => 'Contrasinal actual incorrecta'], 400);
+                send_error('Contrasinal actual incorrecta', 'erro_contrasinal_actual', 400);
             }
             $fields[] = "password = ?";
             $params[] = hash_password($input['password_new']);
         }
 
         if (empty($fields)) {
-            send_json(['error' => 'Non hai campos para actualizar'], 400);
+            send_error('Non hai campos para actualizar', 'erro_campos_obrigatorios', 400);
         }
 
         $params[] = $id;
@@ -70,18 +70,19 @@ function handle_usuarios($method, $uri, $input) {
 
     // PUT /usuarios/ID/estado → cambiar estado (Activo/Desactivado)
     if (preg_match('#^/usuarios/(\d+)/estado$#', $uri, $m)) {
-        if ($method !== 'PUT') send_json(['error' => 'Método non permitido'], 405);
+        if ($method !== 'PUT') send_error('Método non permitido', 'erro_metodo', 405);
         require_admin();
         $id     = (int)$m[1];
         $estado = $input['estado'] ?? '';
         if (!in_array($estado, ['Activo', 'Desactivado'])) {
-            send_json(['error' => 'Estado non válido. Usa Activo ou Desactivado'], 400);
+            send_error('Estado non válido. Usa Activo ou Desactivado', 'erro_datos_invalidos', 400);
         }
         $stmt = $db->prepare("UPDATE usuarios SET estado = ? WHERE id = ?");
         $stmt->execute([$estado, $id]);
         if ($stmt->rowCount() === 0) {
-            send_json(['error' => 'Usuario non atopado'], 404);
+            send_error('Usuario non atopado', 'erro_non_atopado', 404);
         }
+        audit_log('UPDATE', 'usuarios', $id, "estado=$estado");
         send_json(['ok' => true, 'id' => $id, 'estado' => $estado]);
     }
 
@@ -103,7 +104,7 @@ function handle_usuarios($method, $uri, $input) {
         $stmt = $db->prepare("SELECT * FROM usuarios WHERE id = ?");
         $stmt->execute([(int)$m[1]]);
         $row = $stmt->fetch();
-        if (!$row) send_json(['error' => 'Usuario non atopado'], 404);
+        if (!$row) send_error('Usuario non atopado', 'erro_non_atopado', 404);
         unset($row['password'], $row['session_token'], $row['session_expires']);
         $row = fix_row($row);
         send_json($row);
@@ -115,14 +116,14 @@ function handle_usuarios($method, $uri, $input) {
         $username = trim($input['username'] ?? '');
         $password = $input['password'] ?? '';
         if (empty($username) || empty($password)) {
-            send_json(['error' => 'Username e contrasinal obrigatorios'], 400);
+            send_error('Username e contrasinal obrigatorios', 'erro_username_obrigatorio', 400);
         }
 
         // Comprobar username único
         $check = $db->prepare("SELECT id FROM usuarios WHERE username = ?");
         $check->execute([$username]);
         if ($check->fetch()) {
-            send_json(['error' => 'O username xa existe'], 409);
+            send_error('O username xa existe', 'erro_username_existe', 409);
         }
 
         $hashed = hash_password($password);
@@ -151,6 +152,7 @@ function handle_usuarios($method, $uri, $input) {
             $db->prepare("UPDATE usuarios SET foto = ? WHERE id = ?")->execute([$foto_path, $newId]);
         }
 
+        audit_log('CREATE', 'usuarios', $newId, $username);
         send_json(['ok' => true, 'id' => $newId], 201);
     }
 
@@ -162,7 +164,7 @@ function handle_usuarios($method, $uri, $input) {
         // Comprobar que existe
         $check = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
         $check->execute([$id]);
-        if (!$check->fetch()) send_json(['error' => 'Usuario non atopado'], 404);
+        if (!$check->fetch()) send_error('Usuario non atopado', 'erro_non_atopado', 404);
 
         // Foto base64
         $foto_path = $input['foto'] ?? null;
@@ -194,13 +196,14 @@ function handle_usuarios($method, $uri, $input) {
         }
 
         if (empty($fields)) {
-            send_json(['error' => 'Non hai campos para actualizar'], 400);
+            send_error('Non hai campos para actualizar', 'erro_campos_obrigatorios', 400);
         }
 
         $params[] = $id;
         $sql = "UPDATE usuarios SET " . implode(', ', $fields) . " WHERE id = ?";
         $db->prepare($sql)->execute($params);
 
+        audit_log('UPDATE', 'usuarios', $id);
         send_json(['ok' => true, 'id' => $id]);
     }
 
@@ -211,10 +214,11 @@ function handle_usuarios($method, $uri, $input) {
         $stmt = $db->prepare("DELETE FROM usuarios WHERE id = ?");
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) {
-            send_json(['error' => 'Usuario non atopado'], 404);
+            send_error('Usuario non atopado', 'erro_non_atopado', 404);
         }
+        audit_log('DELETE', 'usuarios', $id);
         send_json(['ok' => true]);
     }
 
-    send_json(['error' => 'Ruta de usuarios non atopada'], 404);
+    send_error('Ruta de usuarios non atopada', 'erro_non_atopado', 404);
 }
