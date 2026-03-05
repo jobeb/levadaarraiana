@@ -201,6 +201,7 @@ const TRANSLATIONS = {
     conflicto_horario:  { gl:'Xa existe un ensaio nese lugar e horario. Continuar?', es:'Ya existe un ensayo en ese lugar y horario. ¿Continuar?', pt:'Já existe um ensaio nesse local e horário. Continuar?', en:'A rehearsal already exists at that place and time. Continue?' },
     confirmo:           { gl:'Confirmo', es:'Confirmo', pt:'Confirmo', en:'I confirm' },
     non_podo:           { gl:'Non podo', es:'No puedo', pt:'Não posso', en:'Cannot attend' },
+    chegarei_tarde:     { gl:'Chegarei tarde', es:'Llegaré tarde', pt:'Chegarei tarde', en:'Will be late' },
     confirmados_bolo:   { gl:'Confirmados', es:'Confirmados', pt:'Confirmados', en:'Confirmed' },
     ninguen_confirmou:  { gl:'Aínda ninguén confirmou', es:'Todavía nadie confirmó', pt:'Ainda ninguém confirmou', en:'No one confirmed yet' },
     confirmar_asistencia_link: { gl:'Confirma a túa asistencia aquí', es:'Confirma tu asistencia aquí', pt:'Confirma a tua presença aqui', en:'Confirm your attendance here' },

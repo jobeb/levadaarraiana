@@ -70,6 +70,12 @@
 .btn-icon.btn-success:hover {
     color: var(--accent-green);
 }
+.btn-icon.btn-warning {
+    color: var(--warning);
+}
+.btn-icon.btn-warning:hover {
+    color: var(--warning);
+}
 .btn-icon.btn-whatsapp {
     color: #25D366;
 }
