@@ -215,6 +215,9 @@ async function loadDashboard() {
             _statCard('stat-magenta', _statIcons.check, pastBol, t('bolos_realizados')) +
             _statCard('stat-green', _statIcons.ensaios, proxEns, t('ensaios'));
 
+        // Next ensaio & next bolo with attendance
+        _renderDashboardNextEnsaio(ensaios);
+        _renderDashboardNextBolo(bolos);
         // Mini calendar
         _renderDashboardCalendar(ensaios, bolos, noticias, votacions);
         // Timeline
@@ -392,6 +395,107 @@ function _showCalendarDayPopup(date, events) {
         };
         document.addEventListener('click', _calPopupOutsideHandler);
     }, 10);
+}
+
+async function _renderDashboardNextEnsaio(ensaios) {
+    var bodyEl = document.getElementById('dashboard-next-ensaio-body');
+    if (!bodyEl) return;
+
+    var todayStr = today();
+    var next = (ensaios || []).filter(function(e) {
+        return e.data >= todayStr && e.estado === 'programado';
+    }).sort(function(a, b) { return a.data.localeCompare(b.data); })[0];
+
+    if (!next) {
+        bodyEl.innerHTML = '<p class="text-muted text-sm">' + t('sen_proximos') + '</p>';
+        return;
+    }
+
+    var html = '<div class="dashboard-next-event">' +
+        '<div class="dashboard-next-date">' + formatDate(next.data) + '</div>' +
+        '<div class="dashboard-next-meta">' +
+            (next.hora_inicio ? '<span>' + esc(next.hora_inicio) + (next.hora_fin ? ' - ' + esc(next.hora_fin) : '') + '</span>' : '') +
+            (next.lugar ? '<span>' + esc(next.lugar) + '</span>' : '') +
+        '</div>' +
+    '</div>';
+
+    bodyEl.innerHTML = html + '<p class="text-muted text-sm">' + t('cargando') + '</p>';
+
+    try {
+        var asist = await api('/asistencia/' + next.id);
+        if (!Array.isArray(asist)) asist = asist.asistencia || [];
+        var confirmados = asist.filter(function(a) { return a.estado === 'confirmado'; });
+        var tardes = asist.filter(function(a) { return a.estado === 'chegarei_tarde'; });
+        var ausentes = asist.filter(function(a) { return a.estado === 'ausente'; });
+
+        var listHtml = '';
+        if (confirmados.length > 0) {
+            listHtml += '<div class="dashboard-asist-group"><span class="badge badge-success">' + t('confirmo') + ' (' + confirmados.length + ')</span>';
+            listHtml += '<div class="dashboard-asist-names">' + confirmados.map(function(a) { return esc(a.socio_nome || ''); }).join(', ') + '</div></div>';
+        }
+        if (tardes.length > 0) {
+            listHtml += '<div class="dashboard-asist-group"><span class="badge badge-warning">' + t('chegarei_tarde') + ' (' + tardes.length + ')</span>';
+            listHtml += '<div class="dashboard-asist-names">' + tardes.map(function(a) { return esc(a.socio_nome || ''); }).join(', ') + '</div></div>';
+        }
+        if (ausentes.length > 0) {
+            listHtml += '<div class="dashboard-asist-group"><span class="badge badge-danger">' + t('non_podo') + ' (' + ausentes.length + ')</span>';
+            listHtml += '<div class="dashboard-asist-names">' + ausentes.map(function(a) { return esc(a.socio_nome || ''); }).join(', ') + '</div></div>';
+        }
+        if (!listHtml) {
+            listHtml = '<p class="text-muted text-sm">' + t('ninguen_confirmou') + '</p>';
+        }
+        bodyEl.innerHTML = html + listHtml;
+    } catch (e) {
+        bodyEl.innerHTML = html;
+    }
+}
+
+async function _renderDashboardNextBolo(bolos) {
+    var bodyEl = document.getElementById('dashboard-next-bolo-body');
+    if (!bodyEl) return;
+
+    var todayStr = today();
+    var next = (bolos || []).filter(function(b) {
+        return b.data >= todayStr && b.estado !== 'cancelado';
+    }).sort(function(a, b) { return a.data.localeCompare(b.data); })[0];
+
+    if (!next) {
+        bodyEl.innerHTML = '<p class="text-muted text-sm">' + t('sen_proximos') + '</p>';
+        return;
+    }
+
+    var html = '<div class="dashboard-next-event">' +
+        '<div class="dashboard-next-title">' + esc(next.titulo) + '</div>' +
+        '<div class="dashboard-next-date">' + formatDate(next.data) + '</div>' +
+        '<div class="dashboard-next-meta">' +
+            (next.hora ? '<span>' + esc(next.hora) + '</span>' : '') +
+            (next.lugar ? '<span>' + esc(next.lugar) + '</span>' : '') +
+        '</div>' +
+    '</div>';
+
+    bodyEl.innerHTML = html + '<p class="text-muted text-sm">' + t('cargando') + '</p>';
+
+    try {
+        var asist = await api('/bolos/asistencia/' + next.id);
+        var confirmados = asist.filter(function(a) { return a.estado === 'confirmado'; });
+        var nonPodo = asist.filter(function(a) { return a.estado === 'non_podo'; });
+
+        var listHtml = '';
+        if (confirmados.length > 0) {
+            listHtml += '<div class="dashboard-asist-group"><span class="badge badge-success">' + t('confirmo') + ' (' + confirmados.length + ')</span>';
+            listHtml += '<div class="dashboard-asist-names">' + confirmados.map(function(a) { return esc(a.nome_completo || ''); }).join(', ') + '</div></div>';
+        }
+        if (nonPodo.length > 0) {
+            listHtml += '<div class="dashboard-asist-group"><span class="badge badge-danger">' + t('non_podo') + ' (' + nonPodo.length + ')</span>';
+            listHtml += '<div class="dashboard-asist-names">' + nonPodo.map(function(a) { return esc(a.nome_completo || ''); }).join(', ') + '</div></div>';
+        }
+        if (!listHtml) {
+            listHtml = '<p class="text-muted text-sm">' + t('ninguen_confirmou') + '</p>';
+        }
+        bodyEl.innerHTML = html + listHtml;
+    } catch (e) {
+        bodyEl.innerHTML = html;
+    }
 }
 
 function _renderDashboardTimeline(ensaios, bolos) {
