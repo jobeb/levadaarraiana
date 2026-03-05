@@ -173,6 +173,18 @@
     display: none;
     text-align: center;
 }
+.reg-hint {
+    font-size: 0.8rem;
+    margin-top: 4px;
+    min-height: 1.2em;
+}
+.reg-hint-ok { color: var(--success, #4caf50); }
+.reg-hint-error { color: var(--danger); }
+.lopd-checkbox a {
+    color: var(--primary);
+    text-decoration: underline;
+}
+.lopd-checkbox a:hover { color: var(--primary-hover, var(--primary)); }
 .overlay-link-forgot {
     font-size: 0.82rem;
     color: var(--text-muted);
@@ -1481,6 +1493,19 @@
 .pub-footer-col .footer-desc {
     max-width: 300px;
     line-height: 1.8;
+}
+.social-links {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+.social-links a {
+    color: rgba(255,255,255,0.6);
+    transition: color 0.2s, transform 0.2s;
+}
+.social-links a:hover {
+    color: var(--primary);
+    transform: scale(1.15);
 }
 .pub-footer-bottom {
     text-align: center;

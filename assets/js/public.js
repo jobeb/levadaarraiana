@@ -850,14 +850,23 @@ function _renderLegalPages(cfg) {
     if (aviso) {
         aviso.innerHTML =
             '<p>' + t('legal_aviso_p1') + '</p>' +
-            '<p><strong>' + t('legal_titular') + ':</strong> ' + esc(titular) + '</p>' +
-            (nif ? '<p><strong>' + t('legal_nif') + ':</strong> ' + esc(nif) + '</p>' : '') +
-            (enderezo ? '<p><strong>' + t('legal_enderezo') + ':</strong> ' + esc(enderezo) + '</p>' : '') +
-            (email ? '<p><strong>' + t('legal_email_contacto') + ':</strong> ' + esc(email) + '</p>' : '') +
+            '<h3>' + t('legal_titular') + '</h3>' +
+            '<p><strong>' + esc(titular) + '</strong>' +
+            (nif ? '<br>' + t('legal_nif') + ': ' + esc(nif) : '') +
+            (enderezo ? '<br>' + t('legal_enderezo') + ': ' + esc(enderezo) : '') +
+            (email ? '<br>' + t('legal_email_contacto') + ': ' + esc(email) : '') + '</p>' +
+            '<h3>' + t('legal_aviso_obxecto') + '</h3>' +
+            '<p>' + t('legal_aviso_obxecto_p1') + '</p>' +
+            '<h3>' + t('legal_aviso_condicions') + '</h3>' +
+            '<p>' + t('legal_aviso_condicions_p1') + '</p>' +
+            '<h3>' + t('legal_aviso_responsabilidade') + '</h3>' +
+            '<p>' + t('legal_aviso_responsabilidade_p1') + '</p>' +
             '<h3>' + t('legal_prop_intelectual') + '</h3>' +
             '<p>' + t('legal_aviso_prop_p1') + '</p>' +
             '<h3>' + t('legal_lei_aplicable') + '</h3>' +
-            '<p>' + t('legal_aviso_lei_p1') + '</p>';
+            '<p>' + t('legal_aviso_lei_p1') + '</p>' +
+            '<h3>' + t('legal_aviso_modificacions') + '</h3>' +
+            '<p>' + t('legal_aviso_modificacions_p1') + '</p>';
     }
 
     // Politica de Privacidade
@@ -875,6 +884,10 @@ function _renderLegalPages(cfg) {
             '<p>' + t('legal_privacidade_datos_p1') + '</p>' +
             '<h3>' + t('legal_base_legal') + '</h3>' +
             '<p>' + t('legal_privacidade_base_p1') + '</p>' +
+            '<h3>' + t('legal_cesion') + '</h3>' +
+            '<p>' + t('legal_privacidade_cesion_p1') + '</p>' +
+            '<h3>' + t('legal_seguridade') + '</h3>' +
+            '<p>' + t('legal_privacidade_seguridade_p1') + '</p>' +
             '<h3>' + t('legal_dereitos') + '</h3>' +
             '<p>' + t('legal_privacidade_dereitos_p1') + '</p>' +
             '<h3>' + t('legal_retencion') + '</h3>' +
@@ -886,10 +899,16 @@ function _renderLegalPages(cfg) {
     if (cook) {
         cook.innerHTML =
             '<p>' + t('legal_cookies_intro') + '</p>' +
+            '<h3>' + t('legal_cookies_diferenza') + '</h3>' +
+            '<p>' + t('legal_cookies_diferenza_p1') + '</p>' +
             '<h3>' + t('legal_que_almacenamos') + '</h3>' +
             '<ul>' + t('legal_cookies_list') + '</ul>' +
+            '<h3>' + t('legal_cookies_como_borrar') + '</h3>' +
+            '<p>' + t('legal_cookies_como_borrar_p1') + '</p>' +
             '<h3>' + t('legal_terceiros') + '</h3>' +
-            '<p>' + t('legal_cookies_terceiros_p1') + '</p>';
+            '<p>' + t('legal_cookies_terceiros_p1') + '</p>' +
+            '<h3>' + t('legal_cookies_actualizacion') + '</h3>' +
+            '<p>' + t('legal_cookies_actualizacion_p1') + '</p>';
     }
 }
 
@@ -915,6 +934,11 @@ function rejectCookies() {
 // ---- Contacto form ----
 function _enviarContacto(e) {
     e.preventDefault();
+    var lopdCb = document.getElementById('contacto-lopd-check');
+    if (lopdCb && !lopdCb.checked) {
+        toast(t('lopd_obrigatorio'), 'error');
+        return false;
+    }
     var btn = document.getElementById('contacto-submit-btn');
     var oldText = btn.textContent;
     btn.disabled = true;

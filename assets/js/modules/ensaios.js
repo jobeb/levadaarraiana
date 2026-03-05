@@ -2,6 +2,7 @@
  * Ensaios — Rehearsals module
  */
 var _ensaiosView = 'list';
+var _ensaiosAsistencia = {};
 
 var _ensaiosPager = new Paginator('ensaios-pagination', { perPage: 12, onChange: function() { ensaiosRender(); } });
 var _ensaiosCalendar = new CalendarWidget('ensaios-calendar', {
@@ -29,13 +30,13 @@ function _showDayPopup(date, events) {
         var ensaio = (AppState.ensaios || []).find(function(x) { return x.id == ev.id; });
         var estado = ensaio ? ensaio.estado : '';
 
-        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-surface-2);border-radius:var(--radius);margin-bottom:8px">' +
-            '<div style="border-left:3px solid ' + (ev.color || 'var(--primary)') + ';padding-left:10px;flex:1">' +
+        html += '<div class="ensaio-popup-item">' +
+            '<div class="ensaio-popup-info" style="border-left:3px solid ' + (ev.color || 'var(--primary)') + '">' +
                 '<strong>' + esc(ev.title) + '</strong>' +
                 (ev.time ? '<br><span style="color:var(--text-dim);font-size:0.85rem">' + esc(ev.time) + '</span>' : '') +
                 (estado ? ' ' + _ensaioEstadoBadge(estado) : '') +
             '</div>' +
-            '<div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap">' +
+            '<div class="ensaio-popup-actions">' +
                 (ensaio && isSocio ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + ev.id + ')">' + t('asistencia') + '</button>' : '') +
                 (ensaio ? '<button class="btn btn-sm btn-success" onclick="ensaiosAsistenciaRapida(' + ev.id + ',\'confirmado\')">' + t('confirmo') + '</button>' : '') +
                 (ensaio ? '<button class="btn btn-sm btn-danger" onclick="ensaiosAsistenciaRapida(' + ev.id + ',\'ausente\')">' + t('non_podo') + '</button>' : '') +
@@ -179,14 +180,28 @@ async function ensaiosLoad() {
     try {
         var results = await Promise.all([
             api('/ensaios'),
-            Object.keys(AppState.config || {}).length ? Promise.resolve(AppState.config) : api('/config').catch(function() { return {}; })
+            Object.keys(AppState.config || {}).length ? Promise.resolve(AppState.config) : api('/config').catch(function() { return {}; }),
+            api('/asistencia/mi-asistencia').catch(function() { return {}; })
         ]);
         AppState.ensaios = results[0];
         AppState.config = results[1] || {};
+        _ensaiosAsistencia = results[2] || {};
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
         AppState.ensaios = AppState.ensaios || [];
     }
+
+    // Deep link: #ensaios/ID → open confirm modal
+    if (AppState.routeParam) {
+        var targetId = parseInt(AppState.routeParam, 10);
+        AppState.routeParam = null;
+        if (targetId) {
+            ensaiosSetView(_ensaiosView);
+            ensaiosConfirmModal(targetId);
+            return;
+        }
+    }
+
     // Usuario role: force calendar view only
     if (!AppState.isSocio() && _ensaiosView !== 'calendar') {
         ensaiosSetView('calendar');
@@ -276,13 +291,13 @@ function ensaiosRender() {
     var page = _ensaiosPager.slice(allCards);
 
     var html = '';
+    var todayStr = today();
 
     page.forEach(function(card) {
         if (card.type === 'group') {
             var items = card.items;
             var first = items[0];
             var last = items[items.length - 1];
-            var todayStr = today();
             var next = items.find(function(e) { return e.data >= todayStr; }) || last;
             var realizados = items.filter(function(e) { return e.estado === 'realizado'; }).length;
             var programados = items.filter(function(e) { return e.estado === 'programado'; }).length;
@@ -318,13 +333,16 @@ function ensaiosRender() {
                 '<div class="card-actions">' +
                     '<button class="btn btn-sm btn-secondary" onclick="ensaiosExpandGroup(' + card.key + ')">' + t('ver_sesions') + '</button>' +
                     (isSocio
-                        ? '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + next.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+                        ? '<button class="btn-icon btn-whatsapp" onclick="ensaiosShareWhatsapp(' + next.id + ')" title="' + t('compartir_whatsapp') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>' +
+                          '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + next.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
                           '<button class="btn-icon btn-danger" onclick="ensaiosDeleteGroup(' + card.key + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
                         : '') +
                 '</div>' +
             '</div>';
         } else {
             var e = card.item;
+            var eFuture = e.data >= todayStr;
+            var eMyEstado = _ensaiosAsistencia[e.id] || null;
             html += '<div class="card' + _ensaioCardClass(e.estado) + '">' +
                 '<div class="card-body" style="padding:16px">' +
                     '<div class="ensaio-card-layout">' +
@@ -332,14 +350,22 @@ function ensaiosRender() {
                         '<div class="ensaio-card-info">' +
                             '<div style="font-size:0.9rem;font-weight:600">' + esc(e.lugar || '') + '</div>' +
                             '<div style="color:var(--text-dim);font-size:0.85rem">' + esc(e.hora_inicio || '') + ' - ' + esc(e.hora_fin || '') + '</div>' +
-                            '<div>' + _ensaioEstadoBadge(e.estado) + '</div>' +
+                            '<div>' + _ensaioEstadoBadge(e.estado) +
+                                (eFuture && eMyEstado === 'confirmado' ? ' <span class="badge badge-success">' + t('confirmo') + '</span>' : '') +
+                                (eFuture && eMyEstado === 'ausente' ? ' <span class="badge badge-danger">' + t('non_podo') + '</span>' : '') +
+                            '</div>' +
                             (e.notas ? '<div class="ensaio-notas-preview" onclick="event.stopPropagation();ensaiosViewNotas(' + e.id + ')">' + esc(truncate(stripHtml(e.notas), 150)) + '<span class="ensaio-notas-more">' + t('ver_mais') + '</span></div>' : '') +
                         '</div>' +
                     '</div>' +
                 '</div>' +
                 '<div class="card-actions">' +
+                    (eFuture
+                        ? '<button class="btn-icon' + (eMyEstado === 'confirmado' ? ' btn-success' : '') + '" onclick="_ensaiosCardAsistencia(' + e.id + ',\'confirmado\')" title="' + t('confirmo') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>' +
+                          '<button class="btn-icon' + (eMyEstado === 'ausente' ? ' btn-danger' : '') + '" onclick="_ensaiosCardAsistencia(' + e.id + ',\'ausente\')" title="' + t('non_podo') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
+                        : '') +
                     (isSocio
-                        ? '<button class="btn btn-sm btn-secondary" onclick="ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' +
+                        ? '<button class="btn-icon btn-whatsapp" onclick="ensaiosShareWhatsapp(' + e.id + ')" title="' + t('compartir_whatsapp') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>' +
+                          '<button class="btn btn-sm btn-secondary" onclick="ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' +
                           '<button class="btn-icon" onclick="ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
                           '<button class="btn-icon btn-danger" onclick="ensaiosDelete(' + e.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
                         : '') +
@@ -370,11 +396,20 @@ function ensaiosExpandGroup(grupo) {
 
     items.forEach(function(e) {
         var isPast = e.data < todayStr;
+        var eMyEstado = _ensaiosAsistencia[e.id] || null;
+        var estadoCol = _ensaioEstadoBadge(e.estado);
+        if (!isPast && eMyEstado === 'confirmado') estadoCol += ' <span class="badge badge-success">' + t('confirmo') + '</span>';
+        if (!isPast && eMyEstado === 'ausente') estadoCol += ' <span class="badge badge-danger">' + t('non_podo') + '</span>';
         html += '<tr style="' + (isPast ? 'opacity:0.5' : '') + '">' +
             '<td>' + formatDate(e.data) + '</td>' +
             '<td>' + esc(e.hora_inicio || '') + ' - ' + esc(e.hora_fin || '') + '</td>' +
-            '<td>' + _ensaioEstadoBadge(e.estado) + '</td>' +
+            '<td>' + estadoCol + '</td>' +
             '<td style="text-align:right">' +
+                (!isPast
+                    ? '<button class="btn-icon' + (eMyEstado === 'confirmado' ? ' btn-success' : '') + '" onclick="_ensaiosGroupAsistencia(' + e.id + ',\'confirmado\',' + e.grupo_recorrencia + ')" title="' + t('confirmo') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>' +
+                      '<button class="btn-icon' + (eMyEstado === 'ausente' ? ' btn-danger' : '') + '" onclick="_ensaiosGroupAsistencia(' + e.id + ',\'ausente\',' + e.grupo_recorrencia + ')" title="' + t('non_podo') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
+                    : '') +
+                (isSocio ? '<button class="btn-icon btn-whatsapp" onclick="ensaiosShareWhatsapp(' + e.id + ')" title="' + t('compartir_whatsapp') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>' : '') +
                 (isSocio ? '<button class="btn btn-sm btn-secondary" onclick="hideModal(\'modal-overlay\');ensaiosAsistencia(' + e.id + ')">' + t('asistencia') + '</button>' : '') +
                 (isSocio ? ' <button class="btn-icon" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + e.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
             '</td>' +
@@ -791,6 +826,136 @@ async function ensaiosAsistenciaResumo() {
 
     $('#modal-footer').innerHTML =
         '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+    showModal('modal-overlay');
+}
+
+/* ---- Card quick attendance + WhatsApp share + Confirm modal ---- */
+
+async function _ensaiosGroupAsistencia(id, estado, grupo) {
+    try {
+        await api('/asistencia', { method: 'POST', body: { ensaio_id: id, socio_id: AppState.user.id, estado: estado } });
+        _ensaiosAsistencia[id] = estado;
+        toast(t('exito'), 'success');
+        hideModal('modal-overlay');
+        ensaiosExpandGroup(grupo);
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+async function _ensaiosCardAsistencia(id, estado) {
+    try {
+        await api('/asistencia', { method: 'POST', body: { ensaio_id: id, socio_id: AppState.user.id, estado: estado } });
+        _ensaiosAsistencia[id] = estado;
+        toast(t('exito'), 'success');
+        ensaiosRender();
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+async function ensaiosShareWhatsapp(id) {
+    var e = (AppState.ensaios || []).find(function(x) { return x.id == id; });
+    if (!e) return;
+
+    var asistentes = [];
+    try {
+        asistentes = await api('/asistencia/' + id);
+        if (!Array.isArray(asistentes)) asistentes = asistentes.asistencia || [];
+    } catch (err) { /* ignore */ }
+
+    var confirmados = asistentes.filter(function(a) { return a.estado === 'confirmado'; });
+
+    var lines = [];
+    lines.push('*' + t('ensaio') + '*');
+    lines.push('');
+    if (e.data) lines.push(formatDate(e.data) + (e.hora_inicio ? ' ' + e.hora_inicio + (e.hora_fin ? ' - ' + e.hora_fin : '') : ''));
+    if (e.lugar) lines.push(e.lugar);
+    lines.push('');
+
+    lines.push(t('confirmados_bolo') + ' (' + confirmados.length + '):');
+    if (confirmados.length > 0) {
+        confirmados.forEach(function(a) { lines.push('  - ' + (a.socio_nome || a.nome_completo || '')); });
+    } else {
+        lines.push('  ' + t('ninguen_confirmou'));
+    }
+    lines.push('');
+
+    var baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'app.html#ensaios/' + id;
+    lines.push(t('confirmar_asistencia_link') + ':');
+    lines.push(baseUrl);
+
+    var url = 'https://wa.me/?text=' + encodeURIComponent(lines.join('\n'));
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+async function ensaiosConfirmModal(ensaioId) {
+    var e = (AppState.ensaios || []).find(function(x) { return x.id == ensaioId; });
+    if (!e) return;
+
+    var asistentes = [];
+    try {
+        asistentes = await api('/asistencia/' + ensaioId);
+        if (!Array.isArray(asistentes)) asistentes = asistentes.asistencia || [];
+    } catch (err) { /* ignore */ }
+
+    var confirmados = asistentes.filter(function(a) { return a.estado === 'confirmado'; });
+    var ausentes = asistentes.filter(function(a) { return a.estado === 'ausente'; });
+    var myEstado = _ensaiosAsistencia[ensaioId] || null;
+
+    $('#modal-title').textContent = t('ensaio') + ' — ' + formatDate(e.data);
+
+    var html = '';
+
+    // Ensaio info
+    html += '<div class="card-meta" style="margin-bottom:12px">';
+    if (e.data) html += '<span>' + formatDate(e.data) + (e.hora_inicio ? ' ' + esc(e.hora_inicio) + (e.hora_fin ? ' - ' + esc(e.hora_fin) : '') : '') + '</span>';
+    if (e.lugar) html += '<span>' + esc(e.lugar) + '</span>';
+    html += '</div>';
+
+    // My status
+    if (myEstado) {
+        var badgeClass = myEstado === 'confirmado' ? 'badge-success' : 'badge-danger';
+        var badgeText = myEstado === 'confirmado' ? t('confirmo') : t('non_podo');
+        html += '<p style="margin-bottom:12px"><strong>' + t('o_teu_estado') + ':</strong> <span class="badge ' + badgeClass + '">' + badgeText + '</span></p>';
+    }
+
+    // Confirmed list
+    html += '<h4 style="margin:12px 0 8px">' + t('confirmados_bolo') + ' (' + confirmados.length + ')</h4>';
+    if (confirmados.length > 0) {
+        html += '<ul style="list-style:none;padding:0;margin:0">';
+        confirmados.forEach(function(a) {
+            html += '<li style="padding:4px 0">' + esc(a.socio_nome || a.nome_completo || '') + '</li>';
+        });
+        html += '</ul>';
+    } else {
+        html += '<p class="text-muted">' + t('ninguen_confirmou') + '</p>';
+    }
+
+    // Absent list
+    if (ausentes.length > 0) {
+        html += '<h4 style="margin:12px 0 8px">' + t('non_podo') + ' (' + ausentes.length + ')</h4>';
+        html += '<ul style="list-style:none;padding:0;margin:0">';
+        ausentes.forEach(function(a) {
+            html += '<li style="padding:4px 0">' + esc(a.socio_nome || a.nome_completo || '') + '</li>';
+        });
+        html += '</ul>';
+    }
+
+    $('#modal-body').innerHTML = html;
+
+    var isFuture = e.data >= today();
+    $('#modal-footer').innerHTML =
+        (isFuture ? '<button class="btn btn-success" onclick="_ensaiosCardAsistencia(' + ensaioId + ',\'confirmado\');hideModal(\'modal-overlay\')">' + t('confirmo') + '</button>' +
+        '<button class="btn btn-danger" onclick="_ensaiosCardAsistencia(' + ensaioId + ',\'ausente\');hideModal(\'modal-overlay\')">' + t('non_podo') + '</button>' : '') +
+        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+
     showModal('modal-overlay');
 }
 

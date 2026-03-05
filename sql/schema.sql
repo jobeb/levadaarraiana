@@ -26,6 +26,7 @@ CREATE TABLE `usuarios` (
   `ultimo_login` datetime DEFAULT NULL,
   `password_reset_token` varchar(255) DEFAULT NULL,
   `password_reset_expires` datetime DEFAULT NULL,
+  `lopd_consentimento` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -258,6 +259,7 @@ CREATE TABLE `config` (
   `cal_cor_noticias` varchar(20) NOT NULL DEFAULT '#005f97',
   `cal_cor_votacions` varchar(20) NOT NULL DEFAULT '#a50d3d',
   `gate_password` varchar(255) NOT NULL DEFAULT 'levada2026',
+  `audit_retencion_dias` int(11) NOT NULL DEFAULT 90,
   PRIMARY KEY (`id`),
   CONSTRAINT `config_singleton` CHECK (`id` = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -331,6 +333,37 @@ CREATE TABLE `solicitudes_bolos` (
   `estado` VARCHAR(50) NOT NULL DEFAULT 'pendente',
   `notas` TEXT DEFAULT NULL,
   `creado` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 26. Asistencia a bolos
+DROP TABLE IF EXISTS `bolos_asistencia`;
+CREATE TABLE `bolos_asistencia` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `bolo_id` int(11) NOT NULL,
+  `socio_id` int(11) NOT NULL,
+  `estado` varchar(50) NOT NULL DEFAULT 'confirmado',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_bolo_asistencia` (`bolo_id`, `socio_id`),
+  CONSTRAINT `fk_boloasist_bolo` FOREIGN KEY (`bolo_id`) REFERENCES `bolos` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_boloasist_usuario` FOREIGN KEY (`socio_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 27. Audit log (rexistro de actividade)
+DROP TABLE IF EXISTS `audit_log`;
+CREATE TABLE `audit_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `usuario_id` int(11) DEFAULT NULL,
+  `usuario_nome` varchar(255) NOT NULL DEFAULT '',
+  `accion` varchar(50) NOT NULL DEFAULT '',
+  `modulo` varchar(100) NOT NULL DEFAULT '',
+  `registro_id` int(11) DEFAULT NULL,
+  `detalles` text DEFAULT NULL,
+  `ip` varchar(45) NOT NULL DEFAULT '',
+  `creado` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_audit_creado` (`creado`),
+  KEY `idx_audit_modulo` (`modulo`),
+  KEY `idx_audit_usuario` (`usuario_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

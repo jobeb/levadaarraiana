@@ -201,6 +201,10 @@ const TRANSLATIONS = {
     conflicto_horario:  { gl:'Xa existe un ensaio nese lugar e horario. Continuar?', es:'Ya existe un ensayo en ese lugar y horario. ¿Continuar?', pt:'Já existe um ensaio nesse local e horário. Continuar?', en:'A rehearsal already exists at that place and time. Continue?' },
     confirmo:           { gl:'Confirmo', es:'Confirmo', pt:'Confirmo', en:'I confirm' },
     non_podo:           { gl:'Non podo', es:'No puedo', pt:'Não posso', en:'Cannot attend' },
+    confirmados_bolo:   { gl:'Confirmados', es:'Confirmados', pt:'Confirmados', en:'Confirmed' },
+    ninguen_confirmou:  { gl:'Aínda ninguén confirmou', es:'Todavía nadie confirmó', pt:'Ainda ninguém confirmou', en:'No one confirmed yet' },
+    confirmar_asistencia_link: { gl:'Confirma a túa asistencia aquí', es:'Confirma tu asistencia aquí', pt:'Confirma a tua presença aqui', en:'Confirm your attendance here' },
+    o_teu_estado:       { gl:'O teu estado', es:'Tu estado', pt:'O teu estado', en:'Your status' },
     n_sesions_previstas:{ gl:'{n} sesións previstas', es:'{n} sesiones previstas', pt:'{n} sessões previstas', en:'{n} sessions planned' },
     todos_estados:      { gl:'Todos os estados', es:'Todos los estados', pt:'Todos os estados', en:'All statuses' },
     meses_curtos:       { gl:['Xan','Feb','Mar','Abr','Mai','Xuñ','Xul','Ago','Set','Out','Nov','Dec'], es:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'], pt:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], en:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] },
@@ -685,6 +689,10 @@ const TRANSLATIONS = {
     lopd_checkbox_link:     { gl:'Lin e acepto a {link} e o tratamento dos meus datos persoais', es:'He leido y acepto la {link} y el tratamiento de mis datos personales', pt:'Li e aceito a {link} e o tratamento dos meus dados pessoais', en:'I have read and accept the {link} and the processing of my personal data' },
     // ---- Benvida ----
     benvido:                { gl:'Benvido/a', es:'Bienvenido/a', pt:'Bem-vindo/a', en:'Welcome' },
+    bo_dia:                 { gl:'Bo día', es:'Buenos días', pt:'Bom dia', en:'Good morning' },
+    boas_tardes:            { gl:'Boas tardes', es:'Buenas tardes', pt:'Boa tarde', en:'Good afternoon' },
+    boas_noites:            { gl:'Boas noites', es:'Buenas noches', pt:'Boa noite', en:'Good evening' },
+    dias_semana:            { gl:['Domingo','Luns','Martes','Mércores','Xoves','Venres','Sábado'], es:['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'], pt:['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'], en:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] },
 
     // ---- Config labels ----
     smtp_host:              { gl:'SMTP Host', es:'SMTP Host', pt:'SMTP Host', en:'SMTP Host' },

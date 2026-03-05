@@ -2,6 +2,7 @@
  * Bolos — Actuacións management module (unified eventos + contratos)
  */
 var _bolosView = 'list';
+var _bolosAsistencia = {};
 var _bolosCalendar = new CalendarWidget('bolos-calendar', {
     onDayClick: function(date, events) {
         if (events.length > 0) {
@@ -46,14 +47,29 @@ async function bolosLoad() {
     try {
         var results = await Promise.all([
             api('/bolos'),
-            Object.keys(AppState.config || {}).length ? Promise.resolve(AppState.config) : api('/config').catch(function() { return {}; })
+            Object.keys(AppState.config || {}).length ? Promise.resolve(AppState.config) : api('/config').catch(function() { return {}; }),
+            api('/bolos/mi-asistencia').catch(function() { return {}; })
         ]);
         AppState.bolos = results[0];
         AppState.config = results[1] || {};
+        _bolosAsistencia = results[2] || {};
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
         AppState.bolos = AppState.bolos || [];
     }
+
+    // Deep link: #bolos/ID → open confirm modal
+    if (AppState.routeParam) {
+        var targetId = parseInt(AppState.routeParam, 10);
+        AppState.routeParam = null;
+        if (targetId) {
+            bolosRender();
+            if (_bolosView === 'calendar') bolosRenderCalendar();
+            bolosConfirmModal(targetId);
+            return;
+        }
+    }
+
     bolosRender();
     if (_bolosView === 'calendar') bolosRenderCalendar();
 }
@@ -120,6 +136,19 @@ function bolosRender() {
         }
 
         var actions = '';
+
+        // Attendance buttons for future/upcoming bolos
+        var isFuture = b.data >= today();
+        var myEstado = _bolosAsistencia[b.id] || null;
+        if (isFuture) {
+            actions += '<button class="btn-icon' + (myEstado === 'confirmado' ? ' btn-success' : '') + '" onclick="bolosAsistenciaRapida(' + b.id + ',\'confirmado\')" title="' + t('confirmo') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>';
+            actions += '<button class="btn-icon' + (myEstado === 'non_podo' ? ' btn-danger' : '') + '" onclick="bolosAsistenciaRapida(' + b.id + ',\'non_podo\')" title="' + t('non_podo') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+        }
+        // WhatsApp share — always visible for socios
+        if (isAdmin) {
+            actions += '<button class="btn-icon btn-whatsapp" onclick="bolosShareWhatsapp(' + b.id + ')" title="' + t('compartir_whatsapp') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>';
+        }
+
         if (b.contrato_arquivo) {
             actions += '<a href="' + esc(uploadUrl(b.contrato_arquivo)) + '" target="_blank" class="btn-icon" title="Download"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>';
         }
@@ -136,6 +165,8 @@ function bolosRender() {
                 (b.descricion ? '<p class="card-text">' + esc(truncate(stripHtml(b.descricion), 100)) + '</p>' : '') +
                 '<div class="card-badges">' + tipoBadge + ' ' + estadoBadge +
                     (b.publica ? ' <span class="badge badge-primary">' + t('publica') + '</span>' : '') +
+                    (isFuture && myEstado === 'confirmado' ? ' <span class="badge badge-success">' + t('confirmo') + '</span>' : '') +
+                    (isFuture && myEstado === 'non_podo' ? ' <span class="badge badge-danger">' + t('non_podo') + '</span>' : '') +
                 '</div>' +
                 (actions ? '<div class="card-actions">' + actions + '</div>' : '') +
             '</div>' +
@@ -326,6 +357,135 @@ async function bolosDelete(id) {
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }
+}
+
+/* ==========================================================
+   Asistencia a bolos — WhatsApp + confirm modal
+   ========================================================== */
+
+async function bolosAsistenciaRapida(boloId, estado) {
+    try {
+        await api('/bolos/asistencia', { method: 'POST', body: { bolo_id: boloId, estado: estado } });
+        _bolosAsistencia[boloId] = estado;
+        toast(t('exito'), 'success');
+        bolosRender();
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    }
+}
+
+async function bolosShareWhatsapp(id) {
+    var b = (AppState.bolos || []).find(function(x) { return x.id == id; });
+    if (!b) return;
+
+    var asistentes = [];
+    try {
+        asistentes = await api('/bolos/asistencia/' + id);
+    } catch (e) { /* ignore */ }
+
+    var confirmados = asistentes.filter(function(a) { return a.estado === 'confirmado'; });
+
+    var lines = [];
+    lines.push('*' + b.titulo + '*');
+    lines.push('');
+    if (b.data) lines.push(formatDate(b.data) + (b.hora ? ' ' + b.hora : ''));
+    if (b.lugar) lines.push(b.lugar);
+    lines.push('');
+
+    if (b.descricion) {
+        var desc = b.descricion.replace(/<[^>]+>/g, '').trim();
+        if (desc.length > 150) desc = desc.substring(0, 150) + '...';
+        if (desc) { lines.push(desc); lines.push(''); }
+    }
+
+    lines.push(t('confirmados_bolo') + ' (' + confirmados.length + '):');
+    if (confirmados.length > 0) {
+        confirmados.forEach(function(a) { lines.push('  - ' + a.nome_completo); });
+    } else {
+        lines.push('  ' + t('ninguen_confirmou'));
+    }
+    lines.push('');
+
+    var baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'app.html#bolos/' + id;
+    lines.push(t('confirmar_asistencia_link') + ':');
+    lines.push(baseUrl);
+
+    var url = 'https://wa.me/?text=' + encodeURIComponent(lines.join('\n'));
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+async function bolosConfirmModal(boloId) {
+    var b = (AppState.bolos || []).find(function(x) { return x.id == boloId; });
+    if (!b) return;
+
+    var asistentes = [];
+    try {
+        asistentes = await api('/bolos/asistencia/' + boloId);
+    } catch (e) { /* ignore */ }
+
+    var confirmados = asistentes.filter(function(a) { return a.estado === 'confirmado'; });
+    var declinados = asistentes.filter(function(a) { return a.estado === 'non_podo'; });
+    var myEstado = _bolosAsistencia[boloId] || null;
+
+    $('#modal-title').textContent = b.titulo;
+
+    var html = '';
+
+    // Bolo info
+    html += '<div class="card-meta" style="margin-bottom:12px">';
+    if (b.data) html += '<span>' + formatDate(b.data) + (b.hora ? ' ' + b.hora : '') + '</span>';
+    if (b.lugar) html += '<span>' + esc(b.lugar) + '</span>';
+    html += '</div>';
+    if (b.descricion) {
+        html += '<div class="rt-content" style="margin-bottom:12px">' + sanitizeHtml(b.descricion) + '</div>';
+    }
+
+    // My status
+    if (myEstado) {
+        var badgeClass = myEstado === 'confirmado' ? 'badge-success' : 'badge-danger';
+        var badgeText = myEstado === 'confirmado' ? t('confirmo') : t('non_podo');
+        html += '<p style="margin-bottom:12px"><strong>' + t('o_teu_estado') + ':</strong> <span class="badge ' + badgeClass + '">' + badgeText + '</span></p>';
+    }
+
+    // Confirmed list
+    html += '<h4 style="margin:12px 0 8px">' + t('confirmados_bolo') + ' (' + confirmados.length + ')</h4>';
+    if (confirmados.length > 0) {
+        html += '<ul style="list-style:none;padding:0;margin:0">';
+        confirmados.forEach(function(a) {
+            html += '<li style="padding:4px 0">' + esc(a.nome_completo) +
+                (a.instrumento ? ' <span class="badge">' + esc(a.instrumento) + '</span>' : '') + '</li>';
+        });
+        html += '</ul>';
+    } else {
+        html += '<p class="text-muted">' + t('ninguen_confirmou') + '</p>';
+    }
+
+    // Declined list
+    if (declinados.length > 0) {
+        html += '<h4 style="margin:12px 0 8px">' + t('non_podo') + ' (' + declinados.length + ')</h4>';
+        html += '<ul style="list-style:none;padding:0;margin:0">';
+        declinados.forEach(function(a) {
+            html += '<li style="padding:4px 0">' + esc(a.nome_completo) +
+                (a.instrumento ? ' <span class="badge">' + esc(a.instrumento) + '</span>' : '') + '</li>';
+        });
+        html += '</ul>';
+    }
+
+    $('#modal-body').innerHTML = html;
+
+    var isFuture = b.data >= today();
+    $('#modal-footer').innerHTML =
+        (isFuture ? '<button class="btn btn-success" onclick="bolosAsistenciaRapida(' + boloId + ',\'confirmado\');hideModal(\'modal-overlay\')">' + t('confirmo') + '</button>' +
+        '<button class="btn btn-danger" onclick="bolosAsistenciaRapida(' + boloId + ',\'non_podo\');hideModal(\'modal-overlay\')">' + t('non_podo') + '</button>' : '') +
+        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+
+    showModal('modal-overlay');
 }
 
 /* ==========================================================

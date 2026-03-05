@@ -262,6 +262,7 @@ function _youtube_upload($input) {
         send_json(['error' => 'Non se obtivo ID do vídeo'], 500);
     }
 
+    audit_log('UPLOAD', 'youtube', null, $title);
     send_json([
         'youtube_id'  => $videoId,
         'youtube_url' => 'https://www.youtube.com/embed/' . $videoId,
@@ -272,6 +273,7 @@ function _youtube_upload($input) {
 function _youtube_disconnect() {
     $db = get_db();
     $db->exec("DELETE FROM youtube_tokens WHERE id = 1");
+    audit_log('DISCONNECT', 'youtube');
     send_json(['ok' => true]);
 }
 

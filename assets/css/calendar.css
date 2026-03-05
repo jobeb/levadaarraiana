@@ -248,6 +248,13 @@
     font-size: 0.7rem;
     color: var(--text-muted);
 }
+.cal-day-popup-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    white-space: nowrap;
+}
 
 /* Highlight day with events on hover */
 .calendar-mini .calendar-cell.has-events {
@@ -326,6 +333,25 @@
         display: none;
     }
     .cal-day-popup {
-        min-width: 260px;
+        min-width: 0;
+        width: calc(100vw - 16px);
+        max-width: 340px;
+        left: 8px !important;
+        right: 8px !important;
+        transform: none !important;
+    }
+    .cal-day-popup-item {
+        flex-wrap: wrap;
+    }
+    .cal-day-popup-title {
+        white-space: normal;
+        word-break: break-word;
+    }
+    .cal-day-popup-btn {
+        margin-left: 0;
+        margin-top: 4px;
+        width: 100%;
+        text-align: center;
+        padding: 4px 8px;
     }
 }

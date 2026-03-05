@@ -122,8 +122,23 @@ function initApp() {
             document.querySelector('.header-profile-btn').insertBefore(ph, document.querySelector('.header-profile-btn').firstChild);
         }
     }
+    // Greeting based on time of day
+    var hour = new Date().getHours();
+    var greeting = hour < 13 ? t('bo_dia') : (hour < 20 ? t('boas_tardes') : t('boas_noites'));
     document.getElementById('welcome-msg').textContent =
-        t('benvido') + ', ' + (u.nome_completo || u.username) + '!';
+        (greeting || t('benvido')) + ', ' + (u.nome_completo || u.username) + '!';
+    // Show current date
+    var dateEl = document.getElementById('dashboard-date');
+    if (dateEl) {
+        var now = new Date();
+        var meses = t('meses');
+        var dias = t('dias_semana');
+        if (Array.isArray(meses) && Array.isArray(dias)) {
+            dateEl.textContent = dias[now.getDay()] + ', ' + now.getDate() + ' de ' + meses[now.getMonth()] + ' de ' + now.getFullYear();
+        } else {
+            dateEl.textContent = now.toLocaleDateString();
+        }
+    }
 
     // Admin-only elements
     const isAdmin = AppState.isAdmin();
@@ -180,19 +195,32 @@ async function loadDashboard() {
         var proxBol = bolos.filter(function(b) { return b.data >= hoxe; }).length;
         var pastBol = bolos.filter(function(b) { return b.data < hoxe; }).length;
         var proxEns = ensaios.filter(function(e) { return e.data >= hoxe && e.estado === 'programado'; }).length;
+        var _statIcons = {
+            usuarios: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+            noticias: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+            bolos: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+            check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 3 9"/></svg>',
+            ensaios: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+        };
+        function _statCard(cls, icon, val, label) {
+            return '<div class="stat-card ' + cls + '">' +
+                '<div class="stat-icon">' + icon + '</div>' +
+                '<div class="stat-body"><div class="stat-value">' + val + '</div><div class="stat-label">' + label + '</div></div>' +
+            '</div>';
+        }
         statsEl.innerHTML =
-            '<div class="stat-card stat-blue"><div class="stat-value">' + activos + '</div><div class="stat-label">' + t('usuarios') + '</div></div>' +
-            '<div class="stat-card stat-gold"><div class="stat-value">' + noticias.length + '</div><div class="stat-label">' + t('noticias') + '</div></div>' +
-            '<div class="stat-card stat-red"><div class="stat-value">' + proxBol + '</div><div class="stat-label">' + t('proximos_bolos') + '</div></div>' +
-            '<div class="stat-card stat-magenta"><div class="stat-value">' + pastBol + '</div><div class="stat-label">' + t('bolos_realizados') + '</div></div>' +
-            '<div class="stat-card stat-green"><div class="stat-value">' + proxEns + '</div><div class="stat-label">' + t('ensaios') + '</div></div>';
+            _statCard('stat-blue', _statIcons.usuarios, activos, t('usuarios')) +
+            _statCard('stat-gold', _statIcons.noticias, noticias.length, t('noticias')) +
+            _statCard('stat-red', _statIcons.bolos, proxBol, t('proximos_bolos')) +
+            _statCard('stat-magenta', _statIcons.check, pastBol, t('bolos_realizados')) +
+            _statCard('stat-green', _statIcons.ensaios, proxEns, t('ensaios'));
 
         // Mini calendar
         _renderDashboardCalendar(ensaios, bolos, noticias, votacions);
         // Timeline
         _renderDashboardTimeline(ensaios, bolos);
-        // Activity
-        _renderDashboardActivity(noticias);
+        // Activity (mixed: noticias + bolos + ensaios)
+        _renderDashboardActivity(noticias, bolos, ensaios);
         // Quick actions
         _renderDashboardActions();
 
@@ -385,7 +413,7 @@ function _renderDashboardTimeline(ensaios, bolos) {
     });
 
     items.sort(function(a, b) { return a.data.localeCompare(b.data); });
-    items = items.slice(0, 5);
+    items = items.slice(0, 6);
 
     if (items.length === 0) {
         listEl.innerHTML = '<p class="text-muted text-sm">' + t('sen_eventos') + '</p>';
@@ -398,8 +426,9 @@ function _renderDashboardTimeline(ensaios, bolos) {
         var parts = item.data.split('-');
         var day = parts[2] || '';
         var month = monthNames[parseInt(parts[1], 10) - 1] || '';
-        html += '<div class="dashboard-timeline-item">' +
-            '<div class="timeline-date"><div class="day">' + day + '</div><div class="month">' + month + '</div></div>' +
+        var route = item.type === 'bolo' ? 'bolos' : 'ensaios';
+        html += '<div class="dashboard-timeline-item" onclick="Router.navigate(\'' + route + '\')">' +
+            '<div class="timeline-date timeline-' + item.type + '"><div class="day">' + day + '</div><div class="month">' + month + '</div></div>' +
             '<div class="timeline-info"><div class="title">' + esc(item.title) + '</div><div class="meta">' + esc(item.meta) + '</div></div>' +
             '<span class="badge badge-' + (item.type === 'bolo' ? 'warning' : 'primary') + '">' + t(item.type === 'bolo' ? 'bolo' : 'ensaio') + '</span>' +
         '</div>';
@@ -407,15 +436,30 @@ function _renderDashboardTimeline(ensaios, bolos) {
     listEl.innerHTML = html;
 }
 
-function _renderDashboardActivity(noticias) {
+function _renderDashboardActivity(noticias, bolos, ensaios) {
     var listEl = document.getElementById('dashboard-activity-list');
     if (!listEl) return;
 
+    var _actIcons = {
+        noticia: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+        bolo: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+        ensaio: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+    };
+
     var items = [];
-    (noticias || []).slice(0, 5).forEach(function(n) {
-        items.push({ text: t('noticias') + ': ' + (n.titulo || ''), date: n.data });
+    (noticias || []).forEach(function(n) {
+        items.push({ text: t('nova_noticia') + ': ' + (n.titulo || ''), date: n.data || n.creado, type: 'noticia', route: 'noticias' });
+    });
+    (bolos || []).forEach(function(b) {
+        items.push({ text: t('novo_bolo') + ': ' + (b.titulo || ''), date: b.creado || b.data, type: 'bolo', route: 'bolos' });
+    });
+    (ensaios || []).forEach(function(e) {
+        if (e.estado === 'programado') {
+            items.push({ text: t('ensaio') + ': ' + (e.lugar || e.data || ''), date: e.creado || e.data, type: 'ensaio', route: 'ensaios' });
+        }
     });
     items.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+    items = items.slice(0, 6);
 
     if (items.length === 0) {
         listEl.innerHTML = '<p class="text-muted text-sm">' + t('sen_resultados') + '</p>';
@@ -424,9 +468,10 @@ function _renderDashboardActivity(noticias) {
 
     var html = '';
     items.forEach(function(item) {
-        html += '<div class="dashboard-activity-item">' +
-            '<span>' + esc(truncate(item.text, 60)) + '</span>' +
-            '<span class="text-muted text-sm" style="float:right">' + formatDate(item.date) + '</span>' +
+        html += '<div class="dashboard-activity-item" onclick="Router.navigate(\'' + item.route + '\')">' +
+            '<span class="activity-icon activity-' + item.type + '">' + (_actIcons[item.type] || '') + '</span>' +
+            '<span class="activity-text">' + esc(truncate(item.text, 50)) + '</span>' +
+            '<span class="activity-date">' + formatDate(item.date) + '</span>' +
         '</div>';
     });
     listEl.innerHTML = html;
@@ -436,6 +481,16 @@ function _renderDashboardActions() {
     var listEl = document.getElementById('dashboard-actions-list');
     if (!listEl || !AppState.isSocio()) return;
 
+    var _actionIcons = {
+        noticias:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+        bolos:      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+        ensaios:    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+        galeria:    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+        propostas:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>',
+        votacions:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        actas:      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>',
+        documentos: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
+    };
     var actions = [
         { key: 'nova_noticia',   section: 'noticias',   fn: 'noticiasModal',   color: '#005f97' },
         { key: 'novo_bolo',      section: 'bolos',      fn: 'bolosModal',      color: '#e3c300' },
@@ -448,9 +503,9 @@ function _renderDashboardActions() {
     ];
     var html = '<div class="dashboard-actions-grid">';
     actions.forEach(function(a) {
+        var icon = _actionIcons[a.section] || '';
         html += '<button class="btn btn-sm" style="background:' + a.color + ';color:#fff;border:none" ' +
-            'onmouseenter="this.style.opacity=\'0.85\'" onmouseleave="this.style.opacity=\'1\'" ' +
-            'onclick="Router.navigate(\'' + a.section + '\');setTimeout(' + a.fn + ',200)">+ ' + t(a.key) + '</button>';
+            'onclick="Router.navigate(\'' + a.section + '\');setTimeout(' + a.fn + ',200)">' + icon + ' ' + t(a.key) + '</button>';
     });
     html += '</div>';
     listEl.innerHTML = html;
@@ -559,8 +614,10 @@ async function saveProfile() {
             var ph = document.querySelector('.header-profile-btn .avatar-placeholder');
             if (ph) ph.remove();
         }
+        var _h = new Date().getHours();
+        var _g = _h < 13 ? t('bo_dia') : (_h < 20 ? t('boas_tardes') : t('boas_noites'));
         document.getElementById('welcome-msg').textContent =
-            t('benvido') + ', ' + (updated.nome_completo || updated.username) + '!';
+            (_g || t('benvido')) + ', ' + (updated.nome_completo || updated.username) + '!';
 
         hideModal('modal-overlay');
         toast(t('perfil_actualizado'), 'success');

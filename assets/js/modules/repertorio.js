@@ -431,9 +431,10 @@ function _repMedioDualSlotHtml(repId, parteIdx, instrId, medioAudio, medioYT, ca
         var deleteBtn2 = canEdit
             ? '<button class="btn-icon btn-danger btn-sm" onclick="_repMedioDelete(' + repId + ',' + medioYT.id + ')" title="' + t('eliminar') + '">' + _delIcon + '</button>'
             : '';
-        html += '<div class="medios-slot"><label class="medios-slot-label">' + t('video') + '</label>' +
-            '<iframe width="280" height="158" src="' + esc(medioYT.arquivo) + '" frameborder="0" allowfullscreen style="border-radius:var(--radius);max-width:100%"></iframe>' +
-            dlBtn2 + deleteBtn2 + '</div>';
+        html += '<div class="medios-slot medios-slot-stacked"><div class="medios-slot-row"><label class="medios-slot-label">' + t('video') + '</label>' +
+            '<span class="medios-slot-name" title="' + esc(medioYT.arquivo_nome || 'video') + '">' + esc(medioYT.arquivo_nome || 'video') + '</span>' +
+            dlBtn2 + deleteBtn2 + '</div>' +
+            '<iframe src="' + esc(medioYT.arquivo) + '" frameborder="0" allowfullscreen class="medios-slot-video"></iframe></div>';
     } else if (canEdit) {
         var vidInputId = 'medio-video-' + parteIdx + '-' + instrId;
         var recVideoId = 'rec-video-' + parteIdx + '-' + instrId;
@@ -623,10 +624,32 @@ async function _repDownloadZip(repId) {
 var _repRecorder = null;
 var _repRecChunks = [];
 var _repRecStream = null;
+var _repRecTimer = null;
+var _repRecElapsed = 0;
+var _repRecTimerStart = 0;
+var _repRecFacing = 'environment';  // default: trasera (más útil para grabar)
 
+function _repTimerTick(timerSpan) {
+    var secs = _repRecElapsed + Math.floor((Date.now() - _repRecTimerStart) / 1000);
+    var mins = String(Math.floor(secs / 60)).padStart(2, '0');
+    var ss = String(secs % 60).padStart(2, '0');
+    if (timerSpan) timerSpan.textContent = mins + ':' + ss;
+}
+
+function _repTimerPause() {
+    _repRecElapsed += Math.floor((Date.now() - _repRecTimerStart) / 1000);
+    if (_repRecTimer) { clearInterval(_repRecTimer); _repRecTimer = null; }
+}
+
+function _repTimerResume(timerSpan) {
+    _repRecTimerStart = Date.now();
+    _repRecTimer = setInterval(function() { _repTimerTick(timerSpan); }, 1000);
+}
+
+// Phase 1: show camera preview with switch button, user clicks "Gravar" to start
 async function _repStartRec(parteIdx, instrId, tipo, btn) {
     // If already recording, stop
-    if (_repRecorder && _repRecorder.state === 'recording') {
+    if (_repRecorder && (_repRecorder.state === 'recording' || _repRecorder.state === 'paused')) {
         _repRecorder.stop();
         return;
     }
@@ -635,7 +658,22 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
         toast(t('erro_permiso_micro') + ' (getUserMedia non dispoñible — require HTTPS)', 'error');
         return;
     }
-    var constraints = tipo === 'video' ? { audio: true, video: true } : { audio: true };
+
+    var slotDiv = btn.closest('.medios-slot');
+    if (!slotDiv) return;
+
+    // If preview already open, close it
+    var existing = document.querySelector('.rec-live-preview[data-rec-slot="' + parteIdx + '-' + instrId + '-' + tipo + '"]');
+    if (existing) {
+        var oldStream = existing._previewStream;
+        if (oldStream) oldStream.getTracks().forEach(function(tk) { tk.stop(); });
+        existing.remove();
+        return;
+    }
+
+    var constraints = tipo === 'video'
+        ? { audio: true, video: { facingMode: _repRecFacing } }
+        : { audio: true };
     try {
         _repRecStream = await navigator.mediaDevices.getUserMedia(constraints);
     } catch (e) {
@@ -643,13 +681,78 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
         return;
     }
 
+    var preview = document.createElement('div');
+    preview.className = 'rec-live rec-live-preview';
+    preview.setAttribute('data-rec-slot', parteIdx + '-' + instrId + '-' + tipo);
+    preview._previewStream = _repRecStream;
+
+    var previewHtml = '';
+    if (tipo === 'video') {
+        previewHtml += '<video class="rec-live-video" autoplay muted playsinline></video>';
+    } else {
+        previewHtml += '<div class="rec-live-indicator"><span class="rec-live-dot"></span><span class="rec-live-text">' + t('listo') + '</span></div>';
+    }
+    previewHtml += '<div class="rec-live-controls">';
+    if (tipo === 'video') {
+        previewHtml += '<button class="btn btn-sm btn-secondary rec-live-switch" title="' + t('cambiar_camara') + '">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16v4a2 2 0 01-2 2h-4"/><polyline points="14 22 20 22 20 16"/><path d="M4 8V4a2 2 0 012-2h4"/><polyline points="10 2 4 2 4 8"/><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 0110 10"/><path d="M12 22A10 10 0 012 12"/></svg>' +
+        '</button>';
+    }
+    previewHtml += '<button class="btn btn-sm btn-danger rec-live-start">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg> ' +
+        t('gravar') +
+    '</button>' +
+    '<button class="btn btn-sm btn-secondary rec-live-cancel">' + t('cancelar') + '</button>' +
+    '</div>';
+    preview.innerHTML = previewHtml;
+
+    slotDiv.parentNode.insertBefore(preview, slotDiv.nextSibling);
+
+    // Video-specific: preview + switch camera
+    if (tipo === 'video') {
+        var vid = preview.querySelector('.rec-live-video');
+        vid.srcObject = _repRecStream;
+        if (_repRecFacing === 'user') vid.style.transform = 'scaleX(-1)';
+
+        preview.querySelector('.rec-live-switch').addEventListener('click', async function() {
+            _repRecFacing = _repRecFacing === 'user' ? 'environment' : 'user';
+            try {
+                var newStream = await navigator.mediaDevices.getUserMedia({
+                    audio: true, video: { facingMode: _repRecFacing }
+                });
+                _repRecStream.getTracks().forEach(function(tk) { tk.stop(); });
+                _repRecStream = newStream;
+                preview._previewStream = newStream;
+                vid.srcObject = newStream;
+                vid.style.transform = _repRecFacing === 'user' ? 'scaleX(-1)' : 'none';
+            } catch (e) {
+                toast(t('erro') + ': ' + e.message, 'error');
+            }
+        });
+    }
+
+    // Cancel
+    preview.querySelector('.rec-live-cancel').addEventListener('click', function() {
+        _repRecStream.getTracks().forEach(function(tk) { tk.stop(); });
+        _repRecStream = null;
+        preview.remove();
+    });
+
+    // Start recording
+    preview.querySelector('.rec-live-start').addEventListener('click', function() {
+        preview.remove();
+        _repDoRecord(parteIdx, instrId, tipo, btn);
+    });
+}
+
+// Phase 2: actual recording (stream already in _repRecStream)
+function _repDoRecord(parteIdx, instrId, tipo, btn) {
     _repRecChunks = [];
 
-    // Determine best supported mime type
     var mimeType = '';
     var tryTypes = tipo === 'video'
-        ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
-        : ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+        ? ['video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+        : ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
     for (var i = 0; i < tryTypes.length; i++) {
         if (MediaRecorder.isTypeSupported(tryTypes[i])) { mimeType = tryTypes[i]; break; }
     }
@@ -658,7 +761,6 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
         ? new MediaRecorder(_repRecStream, { mimeType: mimeType })
         : new MediaRecorder(_repRecStream);
 
-    // Ensure we have a mime - read back from recorder if needed
     if (!mimeType) mimeType = _repRecorder.mimeType || (tipo === 'video' ? 'video/webm' : 'audio/webm');
 
     _repRecorder.ondataavailable = function(e) {
@@ -666,6 +768,10 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
     };
 
     _repRecorder.onstop = function() {
+        _repTimerPause();
+        var liveEl = document.querySelector('.rec-live[data-rec-slot="' + parteIdx + '-' + instrId + '-' + tipo + '"]');
+        if (liveEl) liveEl.remove();
+
         _repRecStream.getTracks().forEach(function(tk) { tk.stop(); });
 
         var blob = new Blob(_repRecChunks, { type: mimeType });
@@ -674,9 +780,6 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
                 : 'webm';
         var file = new File([blob], 'gravacion_' + Date.now() + '.' + ext, { type: mimeType });
 
-        // Debug removed — blob is valid
-
-        // Show preview below the slot
         var slotDiv = btn.closest('.medios-slot');
         if (slotDiv) {
             var existing = slotDiv.parentNode.querySelector('.rec-preview[data-slot="' + parteIdx + '-' + instrId + '-' + tipo + '"]');
@@ -701,7 +804,6 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
             slotDiv.parentNode.insertBefore(preview, slotDiv.nextSibling);
         }
 
-        // Queue the file
         _repPendingUploads = _repPendingUploads.filter(function(p) {
             return !(p.parteIdx === parteIdx && p.instrId === instrId && p.tipo === tipo);
         });
@@ -711,11 +813,83 @@ async function _repStartRec(parteIdx, instrId, tipo, btn) {
         btn.title = t('gravar');
         _repRecorder = null;
         _repRecStream = null;
+        _repRecElapsed = 0;
     };
 
     _repRecorder.start();
     btn.classList.add('rec-active');
     btn.title = t('gravando_pulsa_parar');
     toast(t('gravando'), 'info');
+
+    // ---- Live recording UI (no switch button) ----
+    var slotDiv = btn.closest('.medios-slot');
+    if (slotDiv) {
+        var recLive = document.createElement('div');
+        recLive.className = 'rec-live';
+        recLive.setAttribute('data-rec-slot', parteIdx + '-' + instrId + '-' + tipo);
+
+        var recHtml = '';
+        if (tipo === 'video') {
+            recHtml += '<video class="rec-live-video" autoplay muted playsinline></video>';
+        }
+        recHtml += '<div class="rec-live-indicator">' +
+            '<span class="rec-live-dot"></span>' +
+            (tipo === 'audio' ? '<span class="rec-live-text">' + t('gravando') + '</span>' : '') +
+            '<span class="rec-live-timer">00:00</span>' +
+        '</div>';
+        recHtml += '<div class="rec-live-controls">';
+        recHtml += '<button class="btn btn-sm btn-secondary rec-live-pause" title="' + t('pausa') + '">' +
+            '<svg class="rec-pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>' +
+            '<svg class="rec-resume-icon" style="display:none" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>' +
+        '</button>';
+        recHtml += '<button class="btn btn-sm btn-danger rec-live-stop">' + t('parar') + '</button>';
+        recHtml += '</div>';
+        recLive.innerHTML = recHtml;
+
+        slotDiv.parentNode.insertBefore(recLive, slotDiv.nextSibling);
+
+        if (tipo === 'video') {
+            var liveVideo = recLive.querySelector('.rec-live-video');
+            if (liveVideo) {
+                liveVideo.srcObject = _repRecStream;
+                if (_repRecFacing === 'user') liveVideo.style.transform = 'scaleX(-1)';
+            }
+        }
+
+        recLive.querySelector('.rec-live-stop').addEventListener('click', function() {
+            if (_repRecorder && (_repRecorder.state === 'recording' || _repRecorder.state === 'paused')) _repRecorder.stop();
+        });
+
+        var pauseBtn = recLive.querySelector('.rec-live-pause');
+        var timerSpan = recLive.querySelector('.rec-live-timer');
+        var dotEl = recLive.querySelector('.rec-live-dot');
+        var textEl = recLive.querySelector('.rec-live-text');
+
+        pauseBtn.addEventListener('click', function() {
+            if (!_repRecorder) return;
+            if (_repRecorder.state === 'recording') {
+                _repRecorder.pause();
+                _repTimerPause();
+                pauseBtn.querySelector('.rec-pause-icon').style.display = 'none';
+                pauseBtn.querySelector('.rec-resume-icon').style.display = '';
+                pauseBtn.title = t('continuar');
+                if (dotEl) dotEl.classList.add('rec-live-dot-paused');
+                if (textEl) textEl.textContent = t('pausa');
+                recLive.classList.add('rec-live-paused');
+            } else if (_repRecorder.state === 'paused') {
+                _repRecorder.resume();
+                _repTimerResume(timerSpan);
+                pauseBtn.querySelector('.rec-pause-icon').style.display = '';
+                pauseBtn.querySelector('.rec-resume-icon').style.display = 'none';
+                pauseBtn.title = t('pausa');
+                if (dotEl) dotEl.classList.remove('rec-live-dot-paused');
+                if (textEl) textEl.textContent = t('gravando');
+                recLive.classList.remove('rec-live-paused');
+            }
+        });
+
+        _repRecElapsed = 0;
+        _repTimerResume(timerSpan);
+    }
 }
 

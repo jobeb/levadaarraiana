@@ -13,6 +13,19 @@ function handle_ensaios($method, $uri, $input) {
 
     // ---- ASISTENCIA routes ----
     if (strpos($uri, '/asistencia') === 0) {
+        // GET /asistencia/mi-asistencia — map {ensaio_id: estado} for current user
+        if ($uri === '/asistencia/mi-asistencia' && $method === 'GET') {
+            $user = require_auth();
+            $stmt = $db->prepare("SELECT ensaio_id, estado FROM asistencia WHERE socio_id = ?");
+            $stmt->execute([$user['id']]);
+            $rows = $stmt->fetchAll();
+            $map = [];
+            foreach ($rows as $r) {
+                $map[$r['ensaio_id']] = $r['estado'];
+            }
+            send_json($map);
+        }
+
         // GET /asistencia/resumo — attendance summary per socio (must be before generic GET)
         if ($uri === '/asistencia/resumo' && $method === 'GET') {
             require_auth();

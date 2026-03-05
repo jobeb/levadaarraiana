@@ -1,0 +1,14 @@
+{
+  "name": "Levada Arraiana",
+  "short_name": "Levada",
+  "description": "Batucada de Estás, Tomiño",
+  "start_url": "./app.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#e3c300",
+  "icons": [
+    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

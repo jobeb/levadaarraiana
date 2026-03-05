@@ -149,7 +149,7 @@
         grid-template-columns: 1fr;
     }
     .stats-row {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
     }
     .section-header {
         flex-direction: column;
@@ -181,8 +181,11 @@
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
+    .dashboard-card {
+        padding: 12px;
+    }
     .dashboard-actions-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
     }
     .cookie-banner {
         flex-direction: column;
@@ -215,7 +218,18 @@
         grid-template-columns: 1fr;
     }
     .stats-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .stat-card .stat-value {
+        font-size: 1.2rem;
+    }
+    .stat-card .stat-icon {
+        width: 30px;
+        height: 30px;
+    }
+    .stat-card .stat-icon svg {
+        width: 14px;
+        height: 14px;
     }
     .tabs {
         overflow-x: auto;

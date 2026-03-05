@@ -11,6 +11,54 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'bolos.php') {
 function handle_bolos($method, $uri, $input) {
     $db = get_db();
 
+    // --- Asistencia a bolos ---
+
+    // GET /bolos/mi-asistencia — mapa {bolo_id: estado} do usuario actual
+    if ($method === 'GET' && $uri === '/bolos/mi-asistencia') {
+        $user = require_auth();
+        $stmt = $db->prepare("SELECT bolo_id, estado FROM bolos_asistencia WHERE socio_id = ?");
+        $stmt->execute([$user['id']]);
+        $rows = $stmt->fetchAll();
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r['bolo_id']] = $r['estado'];
+        }
+        send_json($map);
+    }
+
+    // GET /bolos/asistencia/123 — lista de confirmados/declinados para un bolo
+    if ($method === 'GET' && preg_match('#^/bolos/asistencia/(\d+)$#', $uri, $m)) {
+        require_auth();
+        $boloId = (int)$m[1];
+        $stmt = $db->prepare(
+            "SELECT ba.socio_id, ba.estado, u.nome_completo, u.instrumento
+             FROM bolos_asistencia ba
+             JOIN usuarios u ON u.id = ba.socio_id
+             WHERE ba.bolo_id = ?
+             ORDER BY ba.estado ASC, u.nome_completo ASC"
+        );
+        $stmt->execute([$boloId]);
+        send_json($stmt->fetchAll());
+    }
+
+    // POST /bolos/asistencia — confirmar/declinar {bolo_id, estado}
+    if ($method === 'POST' && $uri === '/bolos/asistencia') {
+        $user = require_auth();
+        $boloId = (int)($input['bolo_id'] ?? 0);
+        $estado = $input['estado'] ?? 'confirmado';
+        if (!$boloId || !in_array($estado, ['confirmado', 'non_podo'])) {
+            send_error('Datos incorrectos', 'erro_campos_obrigatorios', 400);
+        }
+        $stmt = $db->prepare(
+            "INSERT INTO bolos_asistencia (bolo_id, socio_id, estado)
+             VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE estado = VALUES(estado)"
+        );
+        $stmt->execute([$boloId, $user['id'], $estado]);
+        audit_log('UPDATE', 'bolos_asistencia', $boloId, $estado);
+        send_json(['ok' => true, 'estado' => $estado]);
+    }
+
     // Extract ID from URI: /bolos/123
     $id = null;
     if (preg_match('#^/bolos/(\d+)$#', $uri, $m)) {
