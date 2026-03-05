@@ -366,4 +366,18 @@ CREATE TABLE `audit_log` (
   KEY `idx_audit_usuario` (`usuario_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 28. Instrumentos por usuario (multi-instrumento con orde de preferencia)
+DROP TABLE IF EXISTS `usuario_instrumentos`;
+CREATE TABLE `usuario_instrumentos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `usuario_id` int(11) NOT NULL,
+  `instrumento_id` int(11) NOT NULL,
+  `orde` int(11) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_usuario_instrumento` (`usuario_id`, `instrumento_id`),
+  KEY `idx_usuario_orde` (`usuario_id`, `orde`),
+  FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`instrumento_id`) REFERENCES `instrumentos` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

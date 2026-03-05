@@ -55,14 +55,16 @@ function handle_ensaios($method, $uri, $input) {
             if (!$ensaio_id) send_error('ID de ensaio requerido', 'erro_campos_obrigatorios', 400);
 
             $stmt = $db->prepare(
-                "SELECT a.*, s.nome_completo AS socio_nome, s.instrumento
+                "SELECT a.*, s.nome_completo AS socio_nome, s.instrumento, a.socio_id AS id
                  FROM asistencia a
                  LEFT JOIN usuarios s ON s.id = a.socio_id
                  WHERE a.ensaio_id = ?
                  ORDER BY s.nome_completo ASC"
             );
             $stmt->execute([$ensaio_id]);
-            send_json($stmt->fetchAll());
+            $rows = $stmt->fetchAll();
+            enrich_users_instruments($rows, $db);
+            send_json($rows);
         }
 
         // POST /asistencia/solicitar — non-socio request to attend

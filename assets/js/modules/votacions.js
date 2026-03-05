@@ -446,31 +446,34 @@ function votacionsShare(id) {
     var opcions = (v.opcions || []).map(function(o) {
         return typeof o === 'string' ? o : (o.texto || o.opcion || '');
     });
+    var nome = (AppState.config || {}).nome_asociacion || 'Levada Arraiana';
 
-    var lines = [];
-    lines.push('*' + v.titulo + '*');
-    lines.push('');
+    var l = [];
+    l.push('\uD83D\uDDF3\uFE0F *' + nome + ' \u2014 ' + v.titulo + '*');
+    l.push('');
 
-    // Description (strip HTML tags, limit length)
     if (v.descripcion) {
         var desc = v.descripcion.replace(/<[^>]+>/g, '').trim();
-        if (desc.length > 150) desc = desc.substring(0, 150) + '...';
-        if (desc) { lines.push(desc); lines.push(''); }
+        if (desc.length > 120) desc = desc.substring(0, 120) + '...';
+        if (desc) { l.push('_' + desc + '_'); l.push(''); }
     }
 
     if (opcions.length > 0) {
-        opcions.forEach(function(op) { lines.push('  - ' + op); });
-        lines.push('');
+        l.push('*' + t('opcions') + ':*');
+        opcions.forEach(function(op, i) { l.push('   ' + (i + 1) + '. ' + op); });
+        l.push('');
     }
 
-    if (v.data_limite) lines.push(t('data_limite') + ': ' + formatDate(v.data_limite));
-    if (v.estado === 'aberta') lines.push(t('aberta'));
-    lines.push('');
+    l.push('\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500');
+    if (v.data_limite) l.push('\u23F0 ' + t('data_limite') + ': *' + formatDate(v.data_limite) + '*');
+    if (v.estado === 'aberta') l.push('\uD83D\uDFE2 ' + t('aberta'));
+    l.push('');
 
     var baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'app.html#votacions/' + v.id;
-    lines.push(baseUrl);
+    l.push('\uD83D\uDC49 *' + t('votar') + ':*');
+    l.push(baseUrl);
 
-    var url = 'https://wa.me/?text=' + encodeURIComponent(lines.join('\n'));
+    var url = 'https://wa.me/?text=' + encodeURIComponent(l.join('\n'));
     var a = document.createElement('a');
     a.href = url;
     a.target = '_blank';

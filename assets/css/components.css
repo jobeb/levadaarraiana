@@ -1076,6 +1076,40 @@ tbody tr:last-child td {
     transform: scale(0.95);
 }
 
+/* ---- Multi-instrument profile list ---- */
+.profile-instruments-list { margin-bottom: 4px; }
+.instrument-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; background: var(--bg-surface-2, var(--bg-surface));
+    border-radius: var(--radius); margin-bottom: 4px;
+}
+.instrument-item .instrument-orde {
+    font-weight: 700; min-width: 20px; color: var(--primary); font-size: 0.9rem;
+}
+.instrument-item .instrument-img {
+    width: 24px; height: 24px; border-radius: 50%; object-fit: cover;
+}
+.instrument-item .instrument-nome { flex: 1; font-size: 0.9rem; }
+.instrument-item .btn-icon {
+    background: none; border: none; cursor: pointer; padding: 2px 4px;
+    color: var(--text-muted); font-size: 0.85rem; line-height: 1;
+}
+.instrument-item .btn-icon:hover { color: var(--primary); }
+.instrument-add-row {
+    display: flex; gap: 6px; align-items: center; margin-top: 6px;
+}
+.instrument-add-row select { flex: 1; }
+.instrument-add-row .btn { padding: 6px 12px; }
+
+/* ---- Dashboard instrument levels ---- */
+.dashboard-inst-level {
+    font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; margin-right: 4px; letter-spacing: 0.3px;
+}
+.dashboard-inst-level-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 2px;
+}
+
 /* ---- Modal language selector (admin modals — content i18n) ---- */
 .modal-lang-bar { display: flex; gap: 4px; margin-bottom: var(--gap-md); }
 .modal-lang-btn { padding: 4px 14px; border-radius: var(--radius); background: var(--bg-surface); border: 1px solid var(--border); cursor: pointer; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.15s; }

@@ -15,6 +15,7 @@ function handle_usuarios($method, $uri, $input) {
     if ($uri === '/usuarios/me' && $method === 'GET') {
         $user = require_auth();
         unset($user['password'], $user['session_token'], $user['session_expires']);
+        enrich_user_instruments($user, $db);
         send_json(fix_row($user));
     }
 
@@ -51,19 +52,41 @@ function handle_usuarios($method, $uri, $input) {
             $params[] = hash_password($input['password_new']);
         }
 
-        if (empty($fields)) {
+        if (empty($fields) && !isset($input['instrumentos'])) {
             send_error('Non hai campos para actualizar', 'erro_campos_obrigatorios', 400);
         }
 
-        $params[] = $id;
-        $sql = "UPDATE usuarios SET " . implode(', ', $fields) . " WHERE id = ?";
-        $db->prepare($sql)->execute($params);
+        // Handle multi-instrument
+        if (isset($input['instrumentos']) && is_array($input['instrumentos'])) {
+            $db->prepare("DELETE FROM usuario_instrumentos WHERE usuario_id = ?")->execute([$id]);
+            $ins = $db->prepare("INSERT INTO usuario_instrumentos (usuario_id, instrumento_id, orde) VALUES (?, ?, ?)");
+            foreach ($input['instrumentos'] as $item) {
+                $ins->execute([$id, (int)$item['instrumento_id'], (int)$item['orde']]);
+            }
+            // Sync legacy instrumento field with principal (orde=1)
+            $principal = $db->prepare(
+                "SELECT i.nome FROM usuario_instrumentos ui JOIN instrumentos i ON i.id = ui.instrumento_id WHERE ui.usuario_id = ? ORDER BY ui.orde ASC LIMIT 1"
+            );
+            $principal->execute([$id]);
+            $pRow = $principal->fetch();
+            $legacyInst = $pRow ? $pRow['nome'] : '';
+            $db->prepare("UPDATE usuarios SET instrumento = ? WHERE id = ?")->execute([$legacyInst, $id]);
+            // Remove instrumento from fields if it was set to avoid double-write
+            // (already handled by the legacy sync above)
+        }
+
+        if (!empty($fields)) {
+            $params[] = $id;
+            $sql = "UPDATE usuarios SET " . implode(', ', $fields) . " WHERE id = ?";
+            $db->prepare($sql)->execute($params);
+        }
 
         // Return updated user data
         $stmt = $db->prepare("SELECT * FROM usuarios WHERE id = ?");
         $stmt->execute([$id]);
         $updated = $stmt->fetch();
         unset($updated['password'], $updated['session_token'], $updated['session_expires']);
+        enrich_user_instruments($updated, $db);
         $updated['token'] = $user['session_token'];
         send_json($updated);
     }
@@ -95,6 +118,7 @@ function handle_usuarios($method, $uri, $input) {
         }
         unset($row);
         $rows = fix_rows($rows);
+        enrich_users_instruments($rows, $db);
         send_json($rows);
     }
 
@@ -107,6 +131,7 @@ function handle_usuarios($method, $uri, $input) {
         if (!$row) send_error('Usuario non atopado', 'erro_non_atopado', 404);
         unset($row['password'], $row['session_token'], $row['session_expires']);
         $row = fix_row($row);
+        enrich_user_instruments($row, $db);
         send_json($row);
     }
 
@@ -195,13 +220,31 @@ function handle_usuarios($method, $uri, $input) {
             $params[] = hash_password($input['password']);
         }
 
-        if (empty($fields)) {
+        // Handle multi-instrument (admin)
+        if (isset($input['instrumentos']) && is_array($input['instrumentos'])) {
+            $db->prepare("DELETE FROM usuario_instrumentos WHERE usuario_id = ?")->execute([$id]);
+            $ins = $db->prepare("INSERT INTO usuario_instrumentos (usuario_id, instrumento_id, orde) VALUES (?, ?, ?)");
+            foreach ($input['instrumentos'] as $item) {
+                $ins->execute([$id, (int)$item['instrumento_id'], (int)$item['orde']]);
+            }
+            $principal = $db->prepare(
+                "SELECT i.nome FROM usuario_instrumentos ui JOIN instrumentos i ON i.id = ui.instrumento_id WHERE ui.usuario_id = ? ORDER BY ui.orde ASC LIMIT 1"
+            );
+            $principal->execute([$id]);
+            $pRow = $principal->fetch();
+            $legacyInst = $pRow ? $pRow['nome'] : '';
+            $db->prepare("UPDATE usuarios SET instrumento = ? WHERE id = ?")->execute([$legacyInst, $id]);
+        }
+
+        if (empty($fields) && !isset($input['instrumentos'])) {
             send_error('Non hai campos para actualizar', 'erro_campos_obrigatorios', 400);
         }
 
-        $params[] = $id;
-        $sql = "UPDATE usuarios SET " . implode(', ', $fields) . " WHERE id = ?";
-        $db->prepare($sql)->execute($params);
+        if (!empty($fields)) {
+            $params[] = $id;
+            $sql = "UPDATE usuarios SET " . implode(', ', $fields) . " WHERE id = ?";
+            $db->prepare($sql)->execute($params);
+        }
 
         audit_log('UPDATE', 'usuarios', $id);
         send_json(['ok' => true, 'id' => $id]);

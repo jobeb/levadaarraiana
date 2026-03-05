@@ -31,14 +31,16 @@ function handle_bolos($method, $uri, $input) {
         require_auth();
         $boloId = (int)$m[1];
         $stmt = $db->prepare(
-            "SELECT ba.socio_id, ba.estado, u.nome_completo, u.instrumento
+            "SELECT ba.socio_id, ba.socio_id AS id, ba.estado, u.nome_completo, u.instrumento
              FROM bolos_asistencia ba
              JOIN usuarios u ON u.id = ba.socio_id
              WHERE ba.bolo_id = ?
              ORDER BY ba.estado ASC, u.nome_completo ASC"
         );
         $stmt->execute([$boloId]);
-        send_json($stmt->fetchAll());
+        $rows = $stmt->fetchAll();
+        enrich_users_instruments($rows, $db);
+        send_json($rows);
     }
 
     // POST /bolos/asistencia — confirmar/declinar {bolo_id, estado}

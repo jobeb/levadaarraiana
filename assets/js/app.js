@@ -187,9 +187,14 @@ async function loadDashboard() {
             api('/ensaios').catch(function() { return []; }),
             api('/votacions').catch(function() { return []; }),
             api('/config').catch(function() { return {}; }),
+            api('/asistencia/mi-asistencia').catch(function() { return {}; }),
+            api('/bolos/mi-asistencia').catch(function() { return {}; }),
         ]);
         var usuarios = results[0], noticias = results[1], bolos = results[2], ensaios = results[3], votacions = results[4];
         AppState.config = results[5] || {};
+        // Populate my-attendance maps for confirm modals
+        if (typeof _ensaiosAsistencia !== 'undefined') Object.assign(_ensaiosAsistencia, results[6] || {});
+        if (typeof _bolosAsistencia !== 'undefined') Object.assign(_bolosAsistencia, results[7] || {});
         var activos = usuarios.filter(function(s) { return s.estado !== 'Desactivado'; }).length;
         var hoxe = today();
         var proxBol = bolos.filter(function(b) { return b.data >= hoxe; }).length;
@@ -214,6 +219,10 @@ async function loadDashboard() {
             _statCard('stat-red', _statIcons.bolos, proxBol, t('proximos_bolos')) +
             _statCard('stat-magenta', _statIcons.check, pastBol, t('bolos_realizados')) +
             _statCard('stat-green', _statIcons.ensaios, proxEns, t('ensaios'));
+
+        // Store in AppState so confirm modals can find the event
+        AppState.ensaios = ensaios;
+        AppState.bolos = bolos;
 
         // Next ensaio & next bolo with attendance
         _renderDashboardNextEnsaio(ensaios);
@@ -400,26 +409,58 @@ function _showCalendarDayPopup(date, events) {
 function _buildInstrumentCount(asistentes) {
     var present = asistentes.filter(function(a) { return a.estado === 'confirmado' || a.estado === 'chegarei_tarde'; });
     if (present.length === 0) return '';
-    var counts = {};
-    present.forEach(function(a) {
-        var inst = (a.instrumento || '').trim();
-        if (!inst) return;
-        var key = inst.toLowerCase();
-        if (!counts[key]) counts[key] = { nome: inst, n: 0 };
-        counts[key].n++;
-    });
-    var keys = Object.keys(counts).sort(function(a, b) { return counts[b].n - counts[a].n; });
-    if (keys.length === 0) return '';
     var imgExts = { surdo:'jpg', caixa:'jpg', repinique:'jpg', tamborim:'jpg', timbao:'jpg', agogo:'jpg', ganza:'jpg', apito:'jpg', outro:'png' };
+    var levelNames = ['', 'principal', 'secundario', 'terciario'];
+
+    // Group instruments by orde level
+    var levels = {}; // { orde: { instKey: { nome, n } } }
+    present.forEach(function(a) {
+        var insts = a.instrumentos;
+        if (Array.isArray(insts) && insts.length > 0) {
+            insts.forEach(function(inst) {
+                var orde = parseInt(inst.orde) || 1;
+                var nome = (inst.nome || '').trim();
+                if (!nome) return;
+                var key = nome.toLowerCase();
+                if (!levels[orde]) levels[orde] = {};
+                if (!levels[orde][key]) levels[orde][key] = { nome: nome, n: 0 };
+                levels[orde][key].n++;
+            });
+        } else {
+            // Fallback: legacy instrumento field as orde=1
+            var inst = (a.instrumento || '').trim();
+            if (!inst) return;
+            var key = inst.toLowerCase();
+            if (!levels[1]) levels[1] = {};
+            if (!levels[1][key]) levels[1][key] = { nome: inst, n: 0 };
+            levels[1][key].n++;
+        }
+    });
+
+    var ordes = Object.keys(levels).map(Number).sort();
+    if (ordes.length === 0) return '';
+
     var html = '<div class="dashboard-instruments">';
-    keys.forEach(function(k) {
-        var ext = imgExts[k] || null;
-        var img = ext ? '<img src="assets/img/instrumentos/' + k + '.' + ext + '" alt="" class="dashboard-inst-img">' : '';
-        html += '<span class="dashboard-inst-chip">' + img + esc(counts[k].nome) + ' <strong>' + counts[k].n + '</strong></span>';
+    ordes.forEach(function(orde) {
+        var label = levelNames[orde] ? t(levelNames[orde]) : t('nivel_n').replace('{n}', orde);
+        var counts = levels[orde];
+        var keys = Object.keys(counts).sort(function(a, b) { return counts[b].n - counts[a].n; });
+        html += '<div class="dashboard-inst-level-row">';
+        if (ordes.length > 1) {
+            html += '<span class="dashboard-inst-level">' + esc(label) + ':</span>';
+        }
+        keys.forEach(function(k) {
+            var ext = imgExts[k] || null;
+            var img = ext ? '<img src="assets/img/instrumentos/' + k + '.' + ext + '" alt="" class="dashboard-inst-img">' : '';
+            html += '<span class="dashboard-inst-chip">' + img + esc(counts[k].nome) + ' <strong>' + counts[k].n + '</strong></span>';
+        });
+        html += '</div>';
     });
     html += '</div>';
     return html;
 }
+
+var _whatsappSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
 
 async function _renderDashboardNextEnsaio(ensaios) {
     var bodyEl = document.getElementById('dashboard-next-ensaio-body');
@@ -432,8 +473,14 @@ async function _renderDashboardNextEnsaio(ensaios) {
 
     if (!next) {
         bodyEl.innerHTML = '<p class="text-muted text-sm">' + t('sen_proximos') + '</p>';
+        bodyEl.style.cursor = '';
+        bodyEl.onclick = null;
         return;
     }
+
+    // Make card clickable to open confirm modal
+    bodyEl.style.cursor = 'pointer';
+    bodyEl.onclick = function() { ensaiosConfirmModal(next.id); };
 
     var html = '<div class="dashboard-next-event">' +
         '<div class="dashboard-next-date">' + formatDate(next.data) + '</div>' +
@@ -469,6 +516,7 @@ async function _renderDashboardNextEnsaio(ensaios) {
             listHtml = '<p class="text-muted text-sm">' + t('ninguen_confirmou') + '</p>';
         }
         listHtml += _buildInstrumentCount(asist);
+        listHtml += '<div style="margin-top:8px;text-align:right"><button class="btn-icon btn-whatsapp" onclick="event.stopPropagation();ensaiosShareWhatsapp(' + next.id + ')" title="' + t('compartir_whatsapp') + '">' + _whatsappSvg + '</button></div>';
         bodyEl.innerHTML = html + listHtml;
     } catch (e) {
         bodyEl.innerHTML = html;
@@ -486,8 +534,14 @@ async function _renderDashboardNextBolo(bolos) {
 
     if (!next) {
         bodyEl.innerHTML = '<p class="text-muted text-sm">' + t('sen_proximos') + '</p>';
+        bodyEl.style.cursor = '';
+        bodyEl.onclick = null;
         return;
     }
+
+    // Make card clickable to open confirm modal
+    bodyEl.style.cursor = 'pointer';
+    bodyEl.onclick = function() { bolosConfirmModal(next.id); };
 
     var html = '<div class="dashboard-next-event">' +
         '<div class="dashboard-next-title">' + esc(next.titulo) + '</div>' +
@@ -518,6 +572,7 @@ async function _renderDashboardNextBolo(bolos) {
             listHtml = '<p class="text-muted text-sm">' + t('ninguen_confirmou') + '</p>';
         }
         listHtml += _buildInstrumentCount(asist);
+        listHtml += '<div style="margin-top:8px;text-align:right"><button class="btn-icon btn-whatsapp" onclick="event.stopPropagation();bolosShareWhatsapp(' + next.id + ')" title="' + t('compartir_whatsapp') + '">' + _whatsappSvg + '</button></div>';
         bodyEl.innerHTML = html + listHtml;
     } catch (e) {
         bodyEl.innerHTML = html;
@@ -683,8 +738,12 @@ function openProfileModal() {
             '<input type="tel" class="form-control" id="perfil-telefono" value="' + esc(u.telefono || '') + '">' +
         '</div>' +
         '<div class="form-group">' +
-            '<label>' + t('instrumento') + '</label>' +
-            '<input type="text" class="form-control" id="perfil-instrumento" value="' + esc(u.instrumento || '') + '">' +
+            '<label>' + t('meus_instrumentos') + '</label>' +
+            '<div id="perfil-instruments-list" class="profile-instruments-list"></div>' +
+            '<div class="instrument-add-row">' +
+                '<select class="form-control" id="perfil-instrument-add"><option value="">—</option></select>' +
+                '<button type="button" class="btn btn-sm btn-secondary" onclick="_profileAddInstrument()">+</button>' +
+            '</div>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('foto_perfil') + '</label>' +
@@ -706,6 +765,86 @@ function openProfileModal() {
         '<button class="btn btn-primary" onclick="saveProfile()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');
+
+    // Populate multi-instrument list
+    window._profileInstruments = (u.instrumentos || []).map(function(i) {
+        return { instrumento_id: parseInt(i.instrumento_id), nome: i.nome, orde: parseInt(i.orde) };
+    });
+    window._allInstruments = [];
+    api('/instrumentos').then(function(list) {
+        window._allInstruments = list || [];
+        _profileRenderInstruments();
+    }).catch(function() {});
+}
+
+function _profileRenderInstruments() {
+    var listEl = document.getElementById('perfil-instruments-list');
+    if (!listEl) return;
+    var items = window._profileInstruments || [];
+    var imgExts = { surdo:'jpg', caixa:'jpg', repinique:'jpg', tamborim:'jpg', timbao:'jpg', agogo:'jpg', ganza:'jpg', apito:'jpg', outro:'png' };
+    var html = '';
+    items.sort(function(a, b) { return a.orde - b.orde; });
+    items.forEach(function(item, idx) {
+        var key = (item.nome || '').toLowerCase();
+        var ext = imgExts[key] || null;
+        var img = ext ? '<img src="assets/img/instrumentos/' + key + '.' + ext + '" class="instrument-img">' : '';
+        html += '<div class="instrument-item" data-idx="' + idx + '">' +
+            '<span class="instrument-orde">' + item.orde + '</span>' +
+            img +
+            '<span class="instrument-nome">' + esc(item.nome) + '</span>' +
+            (idx > 0 ? '<button type="button" class="btn-icon" onclick="_profileMoveInstrument(' + idx + ',-1)" title="Subir">&uarr;</button>' : '<span style="width:22px"></span>') +
+            (idx < items.length - 1 ? '<button type="button" class="btn-icon" onclick="_profileMoveInstrument(' + idx + ',1)" title="Baixar">&darr;</button>' : '<span style="width:22px"></span>') +
+            '<button type="button" class="btn-icon" onclick="_profileRemoveInstrument(' + idx + ')" title="' + t('eliminar') + '">&times;</button>' +
+        '</div>';
+    });
+    listEl.innerHTML = html;
+
+    // Update add-select to exclude already selected
+    var sel = document.getElementById('perfil-instrument-add');
+    if (!sel) return;
+    var selectedIds = items.map(function(i) { return parseInt(i.instrumento_id); });
+    sel.innerHTML = '<option value="">— ' + t('engadir_instrumento') + ' —</option>';
+    (window._allInstruments || []).forEach(function(inst) {
+        if (selectedIds.indexOf(parseInt(inst.id)) >= 0) return;
+        var opt = document.createElement('option');
+        opt.value = inst.id;
+        opt.textContent = inst.nome;
+        sel.appendChild(opt);
+    });
+}
+
+function _profileAddInstrument() {
+    var sel = document.getElementById('perfil-instrument-add');
+    if (!sel || !sel.value) return;
+    var instId = parseInt(sel.value);
+    var inst = (window._allInstruments || []).find(function(i) { return (i.id || parseInt(i.id)) === instId; });
+    if (!inst) return;
+    var items = window._profileInstruments || [];
+    var maxOrde = items.length > 0 ? Math.max.apply(null, items.map(function(i) { return i.orde; })) : 0;
+    items.push({ instrumento_id: instId, nome: inst.nome, orde: maxOrde + 1 });
+    window._profileInstruments = items;
+    _profileRenderInstruments();
+}
+
+function _profileMoveInstrument(idx, dir) {
+    var items = window._profileInstruments || [];
+    var newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= items.length) return;
+    var tmp = items[idx];
+    items[idx] = items[newIdx];
+    items[newIdx] = tmp;
+    // Recalculate orde
+    items.forEach(function(item, i) { item.orde = i + 1; });
+    window._profileInstruments = items;
+    _profileRenderInstruments();
+}
+
+function _profileRemoveInstrument(idx) {
+    var items = window._profileInstruments || [];
+    items.splice(idx, 1);
+    items.forEach(function(item, i) { item.orde = i + 1; });
+    window._profileInstruments = items;
+    _profileRenderInstruments();
 }
 
 async function saveProfile() {
@@ -713,7 +852,9 @@ async function saveProfile() {
         nome_completo: ($('#perfil-nome') || {}).value || '',
         email: ($('#perfil-email') || {}).value || '',
         telefono: ($('#perfil-telefono') || {}).value || '',
-        instrumento: ($('#perfil-instrumento') || {}).value || '',
+        instrumentos: (window._profileInstruments || []).map(function(i) {
+            return { instrumento_id: i.instrumento_id, orde: i.orde };
+        }),
     };
 
     var pwOld = ($('#perfil-pw-old') || {}).value || '';

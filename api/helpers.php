@@ -166,6 +166,51 @@ function audit_log($accion, $modulo, $registro_id = null, $detalles = null) {
     }
 }
 
+// ---- Multi-instrument enrichment ----
+function enrich_user_instruments(&$user, $db) {
+    if (!$user || empty($user['id'])) return;
+    $stmt = $db->prepare(
+        "SELECT ui.instrumento_id, ui.orde, i.nome, i.imaxe
+         FROM usuario_instrumentos ui
+         JOIN instrumentos i ON i.id = ui.instrumento_id
+         WHERE ui.usuario_id = ?
+         ORDER BY ui.orde ASC"
+    );
+    $stmt->execute([$user['id']]);
+    $user['instrumentos'] = $stmt->fetchAll();
+    // Sync legacy field with principal (orde=1)
+    if (!empty($user['instrumentos'])) {
+        $user['instrumento'] = $user['instrumentos'][0]['nome'];
+    }
+}
+
+function enrich_users_instruments(&$users, $db) {
+    if (empty($users)) return;
+    $ids = array_unique(array_column($users, 'id'));
+    if (empty($ids)) return;
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = $db->prepare(
+        "SELECT ui.usuario_id, ui.instrumento_id, ui.orde, i.nome, i.imaxe
+         FROM usuario_instrumentos ui
+         JOIN instrumentos i ON i.id = ui.instrumento_id
+         WHERE ui.usuario_id IN ($placeholders)
+         ORDER BY ui.usuario_id, ui.orde ASC"
+    );
+    $stmt->execute(array_values($ids));
+    $rows = $stmt->fetchAll();
+    $map = [];
+    foreach ($rows as $r) {
+        $map[$r['usuario_id']][] = $r;
+    }
+    foreach ($users as &$u) {
+        $u['instrumentos'] = $map[$u['id']] ?? [];
+        if (!empty($u['instrumentos'])) {
+            $u['instrumento'] = $u['instrumentos'][0]['nome'];
+        }
+    }
+    unset($u);
+}
+
 // ---- Email header injection prevention ----
 function sanitize_email_header($value) {
     return preg_replace('/[\r\n]/', '', $value);

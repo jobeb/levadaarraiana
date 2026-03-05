@@ -207,11 +207,21 @@ const TRANSLATIONS = {
     chegarei_tarde:     { gl:'Chegarei tarde', es:'Llegaré tarde', pt:'Chegarei tarde', en:'Will be late' },
     confirmados_bolo:   { gl:'Confirmados', es:'Confirmados', pt:'Confirmados', en:'Confirmed' },
     ninguen_confirmou:  { gl:'Aínda ninguén confirmou', es:'Todavía nadie confirmó', pt:'Ainda ninguém confirmou', en:'No one confirmed yet' },
+    reconto_instrumentos: { gl:'Reconto de instrumentos', es:'Recuento de instrumentos', pt:'Contagem de instrumentos', en:'Instrument count' },
+    sen_confirmados_instrumentos: { gl:'Non hai confirmados con instrumento', es:'No hay confirmados con instrumento', pt:'Não há confirmados com instrumento', en:'No confirmed with instrument' },
     confirmar_asistencia_link: { gl:'Confirma a túa asistencia aquí', es:'Confirma tu asistencia aquí', pt:'Confirma a tua presença aqui', en:'Confirm your attendance here' },
     o_teu_estado:       { gl:'O teu estado', es:'Tu estado', pt:'O teu estado', en:'Your status' },
     n_sesions_previstas:{ gl:'{n} sesións previstas', es:'{n} sesiones previstas', pt:'{n} sessões previstas', en:'{n} sessions planned' },
     todos_estados:      { gl:'Todos os estados', es:'Todos los estados', pt:'Todos os estados', en:'All statuses' },
     meses_curtos:       { gl:['Xan','Feb','Mar','Abr','Mai','Xuñ','Xul','Ago','Set','Out','Nov','Dec'], es:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'], pt:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], en:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] },
+
+    // ---- Multi-instrumento ----
+    principal:           { gl:'Principal', es:'Principal', pt:'Principal', en:'Primary' },
+    secundario:          { gl:'Secundario', es:'Secundario', pt:'Secundário', en:'Secondary' },
+    terciario:           { gl:'Terciario', es:'Terciario', pt:'Terciário', en:'Tertiary' },
+    nivel_n:             { gl:'Nivel {n}', es:'Nivel {n}', pt:'Nível {n}', en:'Level {n}' },
+    engadir_instrumento: { gl:'Engadir instrumento', es:'Añadir instrumento', pt:'Adicionar instrumento', en:'Add instrument' },
+    meus_instrumentos:   { gl:'Os meus instrumentos', es:'Mis instrumentos', pt:'Meus instrumentos', en:'My instruments' },
 
     // ---- Instrumentos ----
     novo_instrumento:   { gl:'Novo instrumento', es:'Nuevo instrumento', pt:'Novo instrumento', en:'New instrument' },
