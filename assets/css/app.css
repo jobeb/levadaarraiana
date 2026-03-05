@@ -369,6 +369,14 @@
 .dashboard-next-meta { display: flex; gap: 12px; flex-wrap: wrap; color: var(--text-dim); font-size: 0.85rem; margin-top: 2px; }
 .dashboard-asist-group { margin-top: 8px; }
 .dashboard-asist-names { font-size: 0.85rem; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+.dashboard-instruments { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.dashboard-inst-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--bg-surface-2); border-radius: var(--radius); padding: 3px 8px;
+    font-size: 0.8rem; color: var(--text-dim);
+}
+.dashboard-inst-chip strong { color: var(--text); }
+.dashboard-inst-img { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
 .dashboard-timeline-item {
     display: flex;
     gap: var(--gap);

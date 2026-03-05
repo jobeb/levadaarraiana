@@ -397,6 +397,30 @@ function _showCalendarDayPopup(date, events) {
     }, 10);
 }
 
+function _buildInstrumentCount(asistentes) {
+    var present = asistentes.filter(function(a) { return a.estado === 'confirmado' || a.estado === 'chegarei_tarde'; });
+    if (present.length === 0) return '';
+    var counts = {};
+    present.forEach(function(a) {
+        var inst = (a.instrumento || '').trim();
+        if (!inst) return;
+        var key = inst.toLowerCase();
+        if (!counts[key]) counts[key] = { nome: inst, n: 0 };
+        counts[key].n++;
+    });
+    var keys = Object.keys(counts).sort(function(a, b) { return counts[b].n - counts[a].n; });
+    if (keys.length === 0) return '';
+    var imgExts = { surdo:'jpg', caixa:'jpg', repinique:'jpg', tamborim:'jpg', timbao:'jpg', agogo:'jpg', ganza:'jpg', apito:'jpg', outro:'png' };
+    var html = '<div class="dashboard-instruments">';
+    keys.forEach(function(k) {
+        var ext = imgExts[k] || null;
+        var img = ext ? '<img src="assets/img/instrumentos/' + k + '.' + ext + '" alt="" class="dashboard-inst-img">' : '';
+        html += '<span class="dashboard-inst-chip">' + img + esc(counts[k].nome) + ' <strong>' + counts[k].n + '</strong></span>';
+    });
+    html += '</div>';
+    return html;
+}
+
 async function _renderDashboardNextEnsaio(ensaios) {
     var bodyEl = document.getElementById('dashboard-next-ensaio-body');
     if (!bodyEl) return;
@@ -444,6 +468,7 @@ async function _renderDashboardNextEnsaio(ensaios) {
         if (!listHtml) {
             listHtml = '<p class="text-muted text-sm">' + t('ninguen_confirmou') + '</p>';
         }
+        listHtml += _buildInstrumentCount(asist);
         bodyEl.innerHTML = html + listHtml;
     } catch (e) {
         bodyEl.innerHTML = html;
@@ -492,6 +517,7 @@ async function _renderDashboardNextBolo(bolos) {
         if (!listHtml) {
             listHtml = '<p class="text-muted text-sm">' + t('ninguen_confirmou') + '</p>';
         }
+        listHtml += _buildInstrumentCount(asist);
         bodyEl.innerHTML = html + listHtml;
     } catch (e) {
         bodyEl.innerHTML = html;

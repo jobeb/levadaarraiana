@@ -55,7 +55,7 @@ function handle_ensaios($method, $uri, $input) {
             if (!$ensaio_id) send_error('ID de ensaio requerido', 'erro_campos_obrigatorios', 400);
 
             $stmt = $db->prepare(
-                "SELECT a.*, s.nome_completo AS socio_nome
+                "SELECT a.*, s.nome_completo AS socio_nome, s.instrumento
                  FROM asistencia a
                  LEFT JOIN usuarios s ON s.id = a.socio_id
                  WHERE a.ensaio_id = ?
