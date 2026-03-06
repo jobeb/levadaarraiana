@@ -175,7 +175,7 @@ async function actasModal(item) {
     var usuarios = [];
     try {
         usuarios = await api('/usuarios');
-        usuarios = usuarios.filter(function(u) { return u.estado === 'Activo' && u.rol !== 'Admin' && (u.nome_completo || '').trim(); });
+        usuarios = usuarios.filter(function(u) { return u.estado === 'Activo' && u.role !== 'Admin' && (u.nome_completo || '').trim(); });
         usuarios.sort(function(a, b) { return (a.nome_completo || '').localeCompare(b.nome_completo || ''); });
     } catch (e) { /* ignore */ }
 
