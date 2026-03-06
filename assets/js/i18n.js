@@ -259,6 +259,11 @@ const TRANSLATIONS = {
     gravando:           { gl:'Gravando... Pulsa de novo para parar', es:'Grabando... Pulsa de nuevo para parar', pt:'Gravando... Clique novamente para parar', en:'Recording... Click again to stop' },
     gravando_pulsa_parar: { gl:'Gravando — pulsa para parar', es:'Grabando — pulsa para parar', pt:'Gravando — clique para parar', en:'Recording — click to stop' },
     erro_permiso_micro: { gl:'Non se puido acceder ao micrófono/cámara', es:'No se pudo acceder al micrófono/cámara', pt:'Não foi possível aceder ao microfone/câmera', en:'Could not access microphone/camera' },
+    listo:              { gl:'Listo', es:'Listo', pt:'Pronto', en:'Ready' },
+    pausa:              { gl:'Pausa', es:'Pausa', pt:'Pausa', en:'Pause' },
+    parar:              { gl:'Parar', es:'Parar', pt:'Parar', en:'Stop' },
+    continuar:          { gl:'Continuar', es:'Continuar', pt:'Continuar', en:'Continue' },
+    gravar_audio:       { gl:'Gravar audio', es:'Grabar audio', pt:'Gravar áudio', en:'Record audio' },
 
     // ---- Config ----
     nome_asociacion:    { gl:'Nome asociación', es:'Nombre asociación', pt:'Nome associação', en:'Association name' },

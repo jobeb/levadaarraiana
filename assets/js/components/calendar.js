@@ -8,6 +8,7 @@ function CalendarWidget(containerId, opts) {
     this.containerId = containerId;
     this.mini = (opts && opts.mini) || false;
     this.onDayClick = (opts && opts.onDayClick) || null;
+    this.onDayHover = (opts && opts.onDayHover) || null;
     this.onEventClick = (opts && opts.onEventClick) || null;
     this.year = new Date().getFullYear();
     this.month = new Date().getMonth(); // 0-indexed
@@ -180,6 +181,16 @@ CalendarWidget.prototype.render = function() {
                 self.onDayClick(date, events);
             }
         });
+        // Bind hover for desktop (non-touch)
+        if (self.onDayHover) {
+            cell.addEventListener('mouseenter', function() {
+                var date = cell.dataset.date;
+                var events = self._eventsForDay(date);
+                if (events.length > 0) {
+                    self.onDayHover(date, events, cell);
+                }
+            });
+        }
     });
 
     // Bind event clicks

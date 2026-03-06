@@ -6,6 +6,15 @@
 // Module-level state for file management in modal
 var _actaExistingFiles = [];
 
+// Audio recording state
+var _actaRecorder = null;
+var _actaRecChunks = [];
+var _actaRecStream = null;
+var _actaRecTimer = null;
+var _actaRecElapsed = 0;
+var _actaRecTimerStart = 0;
+var _actaRecordedFiles = []; // recorded audio blobs pending upload
+
 async function actasLoad() {
     try {
         AppState.actas = await api('/actas');
@@ -79,20 +88,20 @@ function actasRender() {
             ? ' <span class="badge" title="' + t('asistentes_reunion') + '">' + asistCount + ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>'
             : '';
 
-        html += '<div class="card">' +
+        var actions = '';
+        if (isAdmin) {
+            actions += '<button class="btn-icon btn-whatsapp" onclick="event.stopPropagation();actasShareWhatsapp(' + a.id + ')" title="' + t('compartir_whatsapp') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>';
+            actions += '<button class="btn-icon" onclick="event.stopPropagation();actasModal(AppState.actas.find(function(x){return x.id==' + a.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
+            actions += '<button class="btn-icon btn-danger" onclick="event.stopPropagation();actasDelete(' + a.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>';
+        }
+
+        html += '<div class="card" style="cursor:pointer" onclick="actasView(' + a.id + ')">' +
             '<div class="card-body">' +
                 '<h3 class="card-title">' + esc(a.titulo) + '</h3>' +
                 '<p class="card-meta">' + formatDate(a.data) + ' ' + estadoBadge + asistBadge + '</p>' +
                 '<p class="card-text">' + esc(truncate(stripHtml(a.contido), 120)) + '</p>' +
             '</div>' +
-            '<div class="card-actions">' +
-                '<button class="btn-icon" onclick="actasView(' + a.id + ')" title="' + t('ver') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>' +
-                (isAdmin
-                    ? '<button class="btn-icon btn-whatsapp" onclick="actasShareWhatsapp(' + a.id + ')" title="' + t('compartir_whatsapp') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>' +
-                      '<button class="btn-icon" onclick="actasModal(AppState.actas.find(function(x){return x.id==' + a.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
-                      '<button class="btn-icon btn-danger" onclick="actasDelete(' + a.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
-                    : '') +
-            '</div>' +
+            (actions ? '<div class="card-actions">' + actions + '</div>' : '') +
         '</div>';
     });
 
@@ -107,11 +116,21 @@ function actasView(id) {
 
     var arquivosHtml = '';
     if (acta.arquivos && acta.arquivos.length) {
-        arquivosHtml = '<div style="margin-top:16px"><strong>' + t('ficheiros') + ':</strong><ul>';
+        arquivosHtml = '<div style="margin-top:16px"><strong>' + t('ficheiros') + ':</strong><ul style="list-style:none;padding:0">';
         acta.arquivos.forEach(function(f) {
             var name = typeof f === 'string' ? f : f.name || f;
             var url = typeof f === 'object' && f.url ? f.url : name;
-            arquivosHtml += '<li><a href="' + esc(uploadUrl(url)) + '" target="_blank">' + esc(name) + '</a></li>';
+            var fullUrl = uploadUrl(url);
+            var ext = (name || '').split('.').pop().toLowerCase();
+            var isAudio = ['mp3','wav','ogg','m4a','webm','mp4'].indexOf(ext) !== -1;
+            if (isAudio) {
+                arquivosHtml += '<li style="margin-bottom:8px">' +
+                    '<div>' + esc(name) + '</div>' +
+                    '<audio controls preload="none" style="width:100%;max-width:400px"><source src="' + esc(fullUrl) + '"></audio>' +
+                '</li>';
+            } else {
+                arquivosHtml += '<li style="margin-bottom:4px"><a href="' + esc(fullUrl) + '" target="_blank">' + esc(name) + '</a></li>';
+            }
         });
         arquivosHtml += '</ul></div>';
     }
@@ -200,8 +219,18 @@ async function actasModal(item) {
         '<div class="form-group">' +
             '<label>' + t('ficheiros') + '</label>' +
             '<div id="acta-files-existing"></div>' +
-            '<input type="file" class="form-control" id="acta-arquivos" multiple>' +
+            '<div id="acta-rec-container"></div>' +
+            '<div style="display:flex;gap:8px;align-items:start">' +
+                '<input type="file" class="form-control" id="acta-arquivos" multiple style="flex:1">' +
+                '<button type="button" class="btn btn-secondary" id="acta-rec-btn" onclick="_actaStartRec()" title="' + t('gravar_audio') + '" style="white-space:nowrap;display:flex;align-items:center;gap:4px">' +
+                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> ' +
+                    t('gravar_audio') +
+                '</button>' +
+            '</div>' +
         '</div>';
+
+    // Init recording state
+    _actaRecordedFiles = [];
 
     // Render existing files
     _actaRenderFiles();
@@ -268,6 +297,13 @@ async function actasSave() {
             var f64 = await fileToBase64(arquivosInput.files[i]);
             arquivos.push({ name: f64.name, data: f64.data });
         }
+    }
+
+    // Include recorded audio files
+    for (var r = 0; r < _actaRecordedFiles.length; r++) {
+        if (!_actaRecordedFiles[r]) continue; // removed
+        var rf = await fileToBase64(_actaRecordedFiles[r]);
+        arquivos.push({ name: rf.name, data: rf.data });
     }
 
     // Always send arquivos so backend knows about removals
@@ -358,4 +394,227 @@ function actasShareWhatsapp(id) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+}
+
+// ---- Audio recording ----
+
+function _actaTimerTick(timerSpan) {
+    var elapsed = _actaRecElapsed + (Date.now() - _actaRecTimerStart);
+    var secs = Math.floor(elapsed / 1000);
+    var m = String(Math.floor(secs / 60)).padStart(2, '0');
+    var s = String(secs % 60).padStart(2, '0');
+    timerSpan.textContent = m + ':' + s;
+}
+
+function _actaTimerPause() {
+    if (_actaRecTimer) { clearInterval(_actaRecTimer); _actaRecTimer = null; }
+    if (_actaRecTimerStart) _actaRecElapsed += Date.now() - _actaRecTimerStart;
+    _actaRecTimerStart = 0;
+}
+
+function _actaTimerResume(timerSpan) {
+    _actaRecTimerStart = Date.now();
+    _actaRecTimer = setInterval(function() { _actaTimerTick(timerSpan); }, 1000);
+}
+
+async function _actaStartRec() {
+    // If already recording, stop
+    if (_actaRecorder && (_actaRecorder.state === 'recording' || _actaRecorder.state === 'paused')) {
+        _actaRecorder.stop();
+        return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast(t('erro_permiso_micro') + ' (getUserMedia non dispoñible — require HTTPS)', 'error');
+        return;
+    }
+
+    var container = $('#acta-rec-container');
+    if (!container) return;
+
+    // If preview already open, close it
+    var existing = container.querySelector('.rec-live-preview');
+    if (existing) {
+        var oldStream = existing._previewStream;
+        if (oldStream) oldStream.getTracks().forEach(function(tk) { tk.stop(); });
+        existing.remove();
+        return;
+    }
+
+    try {
+        _actaRecStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+        toast(t('erro_permiso_micro') + ': ' + e.message, 'error');
+        return;
+    }
+
+    var preview = document.createElement('div');
+    preview.className = 'rec-live rec-live-preview';
+    preview._previewStream = _actaRecStream;
+
+    preview.innerHTML =
+        '<div class="rec-live-indicator"><span class="rec-live-dot"></span><span class="rec-live-text">' + t('listo') + '</span></div>' +
+        '<div class="rec-live-controls">' +
+            '<button class="btn btn-sm btn-danger rec-live-start">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg> ' +
+                t('gravar') +
+            '</button>' +
+            '<button class="btn btn-sm btn-secondary rec-live-cancel">' + t('cancelar') + '</button>' +
+        '</div>';
+
+    container.appendChild(preview);
+
+    preview.querySelector('.rec-live-cancel').addEventListener('click', function() {
+        _actaRecStream.getTracks().forEach(function(tk) { tk.stop(); });
+        _actaRecStream = null;
+        preview.remove();
+    });
+
+    preview.querySelector('.rec-live-start').addEventListener('click', function() {
+        preview.remove();
+        _actaDoRecord();
+    });
+}
+
+function _actaDoRecord() {
+    _actaRecChunks = [];
+
+    var mimeType = '';
+    var tryTypes = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+    for (var i = 0; i < tryTypes.length; i++) {
+        if (MediaRecorder.isTypeSupported(tryTypes[i])) { mimeType = tryTypes[i]; break; }
+    }
+
+    _actaRecorder = mimeType
+        ? new MediaRecorder(_actaRecStream, { mimeType: mimeType })
+        : new MediaRecorder(_actaRecStream);
+
+    if (!mimeType) mimeType = _actaRecorder.mimeType || 'audio/webm';
+
+    _actaRecorder.ondataavailable = function(e) {
+        if (e.data.size > 0) _actaRecChunks.push(e.data);
+    };
+
+    _actaRecorder.onstop = function() {
+        _actaTimerPause();
+        var liveEl = document.querySelector('#acta-rec-container .rec-live');
+        if (liveEl) liveEl.remove();
+
+        _actaRecStream.getTracks().forEach(function(tk) { tk.stop(); });
+
+        var blob = new Blob(_actaRecChunks, { type: mimeType });
+        var ext = mimeType.indexOf('mp4') !== -1 ? 'mp4'
+                : mimeType.indexOf('ogg') !== -1 ? 'ogg'
+                : 'webm';
+        var file = new File([blob], 'gravacion_' + Date.now() + '.' + ext, { type: mimeType });
+
+        // Add to recorded files
+        _actaRecordedFiles.push(file);
+
+        // Show preview
+        var container = $('#acta-rec-container');
+        if (container) {
+            var blobUrl = URL.createObjectURL(blob);
+            var previewDiv = document.createElement('div');
+            previewDiv.className = 'rec-preview';
+            previewDiv.style.marginBottom = '8px';
+
+            var idx = _actaRecordedFiles.length - 1;
+
+            var player = document.createElement('audio');
+            player.controls = true;
+            player.className = 'rec-preview-audio';
+            player.src = blobUrl;
+
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'medios-slot-name';
+            nameSpan.textContent = file.name;
+
+            var removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn-icon btn-danger';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.title = t('eliminar');
+            removeBtn.setAttribute('data-rec-idx', idx);
+            removeBtn.addEventListener('click', function() {
+                var ri = parseInt(this.getAttribute('data-rec-idx'));
+                _actaRecordedFiles[ri] = null; // mark as removed
+                previewDiv.remove();
+            });
+
+            previewDiv.appendChild(player);
+            previewDiv.appendChild(nameSpan);
+            previewDiv.appendChild(removeBtn);
+            container.appendChild(previewDiv);
+        }
+
+        var btn = $('#acta-rec-btn');
+        if (btn) btn.classList.remove('rec-active');
+        _actaRecorder = null;
+        _actaRecStream = null;
+        _actaRecElapsed = 0;
+    };
+
+    _actaRecorder.start();
+    var btn = $('#acta-rec-btn');
+    if (btn) btn.classList.add('rec-active');
+    toast(t('gravando'), 'info');
+
+    // Live recording UI
+    var container = $('#acta-rec-container');
+    if (container) {
+        var recLive = document.createElement('div');
+        recLive.className = 'rec-live';
+
+        recLive.innerHTML =
+            '<div class="rec-live-indicator">' +
+                '<span class="rec-live-dot"></span>' +
+                '<span class="rec-live-text">' + t('gravando') + '</span>' +
+                '<span class="rec-live-timer">00:00</span>' +
+            '</div>' +
+            '<div class="rec-live-controls">' +
+                '<button class="btn btn-sm btn-secondary rec-live-pause" title="' + t('pausa') + '">' +
+                    '<svg class="rec-pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>' +
+                    '<svg class="rec-resume-icon" style="display:none" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>' +
+                '</button>' +
+                '<button class="btn btn-sm btn-danger rec-live-stop">' + t('parar') + '</button>' +
+            '</div>';
+
+        container.appendChild(recLive);
+
+        recLive.querySelector('.rec-live-stop').addEventListener('click', function() {
+            if (_actaRecorder && (_actaRecorder.state === 'recording' || _actaRecorder.state === 'paused')) _actaRecorder.stop();
+        });
+
+        var pauseBtn = recLive.querySelector('.rec-live-pause');
+        var timerSpan = recLive.querySelector('.rec-live-timer');
+        var dotEl = recLive.querySelector('.rec-live-dot');
+        var textEl = recLive.querySelector('.rec-live-text');
+
+        pauseBtn.addEventListener('click', function() {
+            if (!_actaRecorder) return;
+            if (_actaRecorder.state === 'recording') {
+                _actaRecorder.pause();
+                _actaTimerPause();
+                pauseBtn.querySelector('.rec-pause-icon').style.display = 'none';
+                pauseBtn.querySelector('.rec-resume-icon').style.display = '';
+                pauseBtn.title = t('continuar');
+                if (dotEl) dotEl.classList.add('rec-live-dot-paused');
+                if (textEl) textEl.textContent = t('pausa');
+                recLive.classList.add('rec-live-paused');
+            } else if (_actaRecorder.state === 'paused') {
+                _actaRecorder.resume();
+                _actaTimerResume(timerSpan);
+                pauseBtn.querySelector('.rec-pause-icon').style.display = '';
+                pauseBtn.querySelector('.rec-resume-icon').style.display = 'none';
+                pauseBtn.title = t('pausa');
+                if (dotEl) dotEl.classList.remove('rec-live-dot-paused');
+                if (textEl) textEl.textContent = t('gravando');
+                recLive.classList.remove('rec-live-paused');
+            }
+        });
+
+        _actaRecElapsed = 0;
+        _actaTimerResume(timerSpan);
+    }
 }

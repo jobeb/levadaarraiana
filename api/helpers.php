@@ -45,7 +45,7 @@ function validate_file_extension($filename, $type = 'document') {
         'video'    => ['mp4','webm','ogg','mov','avi'],
         'audio'    => ['mp3','wav','ogg','m4a','webm'],
         'media'    => ['mp3','wav','ogg','m4a','mp4','webm','mov'],
-        'attachment'=> ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','odt','ods','jpg','jpeg','png','gif','webp'],
+        'attachment'=> ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','odt','ods','jpg','jpeg','png','gif','webp','mp3','wav','ogg','m4a','webm','mp4'],
     ];
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     $list = $allowed[$type] ?? $allowed['document'];

@@ -321,8 +321,9 @@ async function bolosSave() {
     // Contract file
     var contratoInput = $('#bolo-contrato-arquivo');
     if (contratoInput && contratoInput.files && contratoInput.files.length > 0) {
-        body.contrato_arquivo_data = await fileToBase64(contratoInput.files[0]);
-        body.contrato_arquivo_nome = contratoInput.files[0].name;
+        var _cf = await fileToBase64(contratoInput.files[0]);
+        body.contrato_arquivo_data = _cf.data;
+        body.contrato_arquivo_nome = _cf.name;
     }
 
     try {

@@ -256,49 +256,69 @@ function _renderDashboardCalendar(ensaios, bolos, noticias, votacions) {
         _dashboardCal = new CalendarWidget('dashboard-calendar', {
             mini: true,
             onDayClick: function(date, events) {
+                // Click always works (needed for mobile/touch)
+                _showCalendarDayPopup(date, events);
+            },
+            onDayHover: function(date, events, cell) {
+                // Hover only on desktop (non-touch)
+                if ('ontouchstart' in window) return;
                 _showCalendarDayPopup(date, events);
             }
         });
     }
     var cc = _calColors();
+    var isSocio = AppState.isSocio();
     var events = [];
+
+    // Ensaios — todos
     (ensaios || []).forEach(function(e) {
         if (e.estado !== 'cancelado') {
             events.push({ date: e.data, title: t('ensaio') + (e.lugar ? ' — ' + e.lugar : ''), color: cc.ensaios, type: 'ensaio', id: e.id, hora: e.hora_inicio || '' });
         }
     });
+
+    // Bolos — usuarios solo ven públicos
     (bolos || []).forEach(function(b) {
-        events.push({ date: b.data, title: b.titulo, color: cc.bolos, type: 'bolo', id: b.id, hora: b.hora || '' });
+        if (isSocio || b.publica) {
+            events.push({ date: b.data, title: b.titulo, color: cc.bolos, type: 'bolo', id: b.id, hora: b.hora || '' });
+        }
     });
+
+    // Noticias — todos
     (noticias || []).forEach(function(n) {
         if (n.data) {
             events.push({ date: n.data, title: n.titulo, color: cc.noticias, type: 'noticia', id: n.id });
         }
     });
-    (votacions || []).forEach(function(v) {
-        var inicio = (v.creado || '').substring(0, 10);
-        if (inicio) {
-            events.push({ date: inicio, title: t('votacion') + ': ' + v.titulo, color: cc.votacions, type: 'votacion', id: v.id, label: t('cal_inicio') });
-        }
-        if (v.data_limite) {
-            events.push({ date: v.data_limite, title: t('votacion') + ': ' + v.titulo, color: cc.votacions, type: 'votacion', id: v.id, label: t('cal_peche') });
-        }
-    });
+
+    // Votacións — socio-only
+    if (isSocio) {
+        (votacions || []).forEach(function(v) {
+            var inicio = (v.creado || '').substring(0, 10);
+            if (inicio) {
+                events.push({ date: inicio, title: t('votacion') + ': ' + v.titulo, color: cc.votacions, type: 'votacion', id: v.id, label: t('cal_inicio') });
+            }
+            if (v.data_limite) {
+                events.push({ date: v.data_limite, title: t('votacion') + ': ' + v.titulo, color: cc.votacions, type: 'votacion', id: v.id, label: t('cal_peche') });
+            }
+        });
+    }
     _dashboardCal.setEvents(events);
 
-    // Set legend BEFORE render() so it appends it once
-    _dashboardCal._legendHtml =
-        '<div class="cal-legend" id="dashboard-cal-legend">' +
-        '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.ensaios + '"></span>' + t('ensaios') + '</span>' +
-        '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.bolos + '"></span>' + t('bolos') + '</span>' +
-        '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.noticias + '"></span>' + t('noticias') + '</span>' +
-        '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.votacions + '"></span>' + t('votacions') + '</span>' +
-        '</div>';
+    // Legend — solo items visibles para este rol
+    var legendItems = '';
+    legendItems += '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.ensaios + '"></span>' + t('ensaios') + '</span>';
+    legendItems += '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.bolos + '"></span>' + t('bolos') + '</span>';
+    legendItems += '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.noticias + '"></span>' + t('noticias') + '</span>';
+    if (isSocio) legendItems += '<span class="cal-legend-item"><span class="cal-legend-dot" style="background:' + cc.votacions + '"></span>' + t('votacions') + '</span>';
+    _dashboardCal._legendHtml = '<div class="cal-legend" id="dashboard-cal-legend">' + legendItems + '</div>';
 
     _dashboardCal.render();
 }
 
 var _calPopupOutsideHandler = null;
+var _calPopupHoverTimeout = null;
+var _calPopupCurrentCell = null;
 
 function _closeCalendarPopup() {
     var p = document.querySelector('.cal-day-popup');
@@ -307,17 +327,25 @@ function _closeCalendarPopup() {
         document.removeEventListener('click', _calPopupOutsideHandler);
         _calPopupOutsideHandler = null;
     }
+    if (_calPopupHoverTimeout) {
+        clearTimeout(_calPopupHoverTimeout);
+        _calPopupHoverTimeout = null;
+    }
+    _calPopupCurrentCell = null;
 }
 
 function _showCalendarDayPopup(date, events) {
+    // If same cell already has popup open, skip
+    var cell = document.querySelector('.calendar-cell[data-date="' + date + '"]');
+    if (!cell) return;
+    if (_calPopupCurrentCell === cell && document.querySelector('.cal-day-popup')) return;
+
     // Always clean up previous popup and listener
     _closeCalendarPopup();
 
     if (!events || events.length === 0) return;
 
-    // Find the clicked cell
-    var cell = document.querySelector('.calendar-cell[data-date="' + date + '"]');
-    if (!cell) return;
+    _calPopupCurrentCell = cell;
 
     // Format date
     var parts = date.split('-');
@@ -388,12 +416,30 @@ function _showCalendarDayPopup(date, events) {
         popup.style.top = (cellRect.top - popRect.height) + 'px';
     }
 
-    // Close popup when clicking outside
+    // Hover close: when mouse leaves both cell and popup, close after delay
+    var isTouch = 'ontouchstart' in window;
+    if (!isTouch) {
+        var scheduleClose = function() {
+            _calPopupHoverTimeout = setTimeout(function() {
+                _closeCalendarPopup();
+            }, 200);
+        };
+        var cancelClose = function() {
+            if (_calPopupHoverTimeout) {
+                clearTimeout(_calPopupHoverTimeout);
+                _calPopupHoverTimeout = null;
+            }
+        };
+        cell.addEventListener('mouseleave', scheduleClose, { once: true });
+        popup.addEventListener('mouseenter', cancelClose);
+        popup.addEventListener('mouseleave', scheduleClose);
+    }
+
+    // Close popup when clicking outside (works for both touch and desktop)
     setTimeout(function() {
         _calPopupOutsideHandler = function(e) {
             var p = document.querySelector('.cal-day-popup');
             if (!p) {
-                // Popup already gone, clean up
                 document.removeEventListener('click', _calPopupOutsideHandler);
                 _calPopupOutsideHandler = null;
                 return;
@@ -591,8 +637,9 @@ function _renderDashboardTimeline(ensaios, bolos) {
             items.push({ data: e.data, title: t('ensaio') + (e.lugar ? ' - ' + e.lugar : ''), meta: (e.hora_inicio || '') + '-' + (e.hora_fin || ''), type: 'ensaio' });
         }
     });
+    var isSocio = AppState.isSocio();
     (bolos || []).forEach(function(b) {
-        if (b.data >= todayStr && b.estado !== 'cancelado') {
+        if (b.data >= todayStr && b.estado !== 'cancelado' && (isSocio || b.publica)) {
             items.push({ data: b.data, title: b.titulo, meta: (b.hora || '') + ' ' + (b.lugar || ''), type: 'bolo' });
         }
     });
