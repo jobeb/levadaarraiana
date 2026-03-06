@@ -155,6 +155,10 @@ const TRANSLATIONS = {
     acta:               { gl:'Acta', es:'Acta', pt:'Ata', en:'Minutes' },
     nova_acta:          { gl:'Nova acta', es:'Nueva acta', pt:'Nova ata', en:'New minutes' },
     contido:            { gl:'Contido', es:'Contenido', pt:'Conteúdo', en:'Content' },
+    asistentes_reunion: { gl:'Asistentes', es:'Asistentes', pt:'Presentes', en:'Attendees' },
+    desde:              { gl:'Desde', es:'Desde', pt:'Desde', en:'From' },
+    ata:                { gl:'Ata', es:'Hasta', pt:'Até', en:'Until' },
+    ver_acta:           { gl:'Ver acta completa', es:'Ver acta completa', pt:'Ver ata completa', en:'View full minutes' },
 
     // ---- Documentos / Arquivos ----
     documento:          { gl:'Documento', es:'Documento', pt:'Documento', en:'Document' },

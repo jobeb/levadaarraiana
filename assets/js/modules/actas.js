@@ -1,6 +1,10 @@
 /**
  * Actas — Meeting minutes module
+ * Features: CRUD, file management, asistentes, date range filter, WhatsApp share
  */
+
+// Module-level state for file management in modal
+var _actaExistingFiles = [];
 
 async function actasLoad() {
     try {
@@ -34,6 +38,16 @@ function actasRender() {
         list = list.filter(function(a) { return a.estado === estadoFilter; });
     }
 
+    // Date range filter
+    var desde = ($('#actas-data-desde') || {}).value || '';
+    var ata = ($('#actas-data-ata') || {}).value || '';
+    if (desde) {
+        list = list.filter(function(a) { return (a.data || '') >= desde; });
+    }
+    if (ata) {
+        list = list.filter(function(a) { return (a.data || '') <= ata; });
+    }
+
     // Sort
     var sort = ($('#actas-sort') || {}).value || 'recentes';
     if (sort === 'recentes') {
@@ -60,16 +74,22 @@ function actasRender() {
             estadoBadge = '<span class="badge badge-warning">' + t('borrador') + '</span>';
         }
 
+        var asistCount = (a.asistentes && a.asistentes.length) ? a.asistentes.length : 0;
+        var asistBadge = asistCount > 0
+            ? ' <span class="badge" title="' + t('asistentes_reunion') + '">' + asistCount + ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>'
+            : '';
+
         html += '<div class="card">' +
             '<div class="card-body">' +
                 '<h3 class="card-title">' + esc(a.titulo) + '</h3>' +
-                '<p class="card-meta">' + formatDate(a.data) + ' ' + estadoBadge + '</p>' +
+                '<p class="card-meta">' + formatDate(a.data) + ' ' + estadoBadge + asistBadge + '</p>' +
                 '<p class="card-text">' + esc(truncate(stripHtml(a.contido), 120)) + '</p>' +
             '</div>' +
             '<div class="card-actions">' +
                 '<button class="btn-icon" onclick="actasView(' + a.id + ')" title="' + t('ver') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>' +
                 (isAdmin
-                    ? '<button class="btn-icon" onclick="actasModal(AppState.actas.find(function(x){return x.id==' + a.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+                    ? '<button class="btn-icon btn-whatsapp" onclick="actasShareWhatsapp(' + a.id + ')" title="' + t('compartir_whatsapp') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>' +
+                      '<button class="btn-icon" onclick="actasModal(AppState.actas.find(function(x){return x.id==' + a.id + '}))" title="' + t('editar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
                       '<button class="btn-icon btn-danger" onclick="actasDelete(' + a.id + ')" title="' + t('eliminar') + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
                     : '') +
             '</div>' +
@@ -96,9 +116,20 @@ function actasView(id) {
         arquivosHtml += '</ul></div>';
     }
 
+    // Asistentes section
+    var asistHtml = '';
+    if (acta.asistentes && acta.asistentes.length) {
+        asistHtml = '<div style="margin-top:16px"><strong>' + t('asistentes_reunion') + ' (' + acta.asistentes.length + '):</strong><ul>';
+        acta.asistentes.forEach(function(a) {
+            asistHtml += '<li>' + esc(a.nome_completo) + '</li>';
+        });
+        asistHtml += '</ul></div>';
+    }
+
     $('#modal-body').innerHTML =
         '<p class="card-meta">' + formatDate(acta.data) + '</p>' +
         '<div class="rt-content" style="margin-top:12px">' + sanitizeHtml(acta.contido) + '</div>' +
+        asistHtml +
         arquivosHtml;
 
     $('#modal-footer').innerHTML =
@@ -107,15 +138,39 @@ function actasView(id) {
     showModal('modal-overlay');
 }
 
-function actasModal(item) {
+async function actasModal(item) {
     var isEdit = item && item.id;
     var title = isEdit ? t('editar') + ' ' + t('acta') : t('nova_acta');
+
+    // Init existing files
+    _actaExistingFiles = isEdit && item.arquivos ? item.arquivos.slice() : [];
 
     $('#modal-title').textContent = title;
 
     var estadoOptions = ['borrador', 'publicada'].map(function(e) {
         var sel = (isEdit && item.estado === e) ? ' selected' : '';
         return '<option value="' + e + '"' + sel + '>' + t(e) + '</option>';
+    }).join('');
+
+    // Fetch active users for asistentes checkboxes
+    var usuarios = [];
+    try {
+        usuarios = await api('/usuarios');
+        usuarios = usuarios.filter(function(u) { return u.estado === 'Activo'; });
+        usuarios.sort(function(a, b) { return (a.nome_completo || '').localeCompare(b.nome_completo || ''); });
+    } catch (e) { /* ignore */ }
+
+    var existingAsistIds = {};
+    if (isEdit && item.asistentes) {
+        item.asistentes.forEach(function(a) { existingAsistIds[a.socio_id] = true; });
+    }
+
+    var asistCheckboxes = usuarios.map(function(u) {
+        var checked = existingAsistIds[u.id] ? ' checked' : '';
+        return '<label style="display:flex;align-items:center;gap:6px;padding:2px 0;cursor:pointer">' +
+            '<input type="checkbox" class="acta-asistente-cb" value="' + u.id + '"' + checked + '> ' +
+            esc(u.nome_completo) +
+        '</label>';
     }).join('');
 
     $('#modal-body').innerHTML =
@@ -137,9 +192,19 @@ function actasModal(item) {
             '<select class="form-control" id="acta-estado">' + estadoOptions + '</select>' +
         '</div>' +
         '<div class="form-group">' +
+            '<label>' + t('asistentes_reunion') + '</label>' +
+            '<div id="acta-asistentes-list" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:8px">' +
+                (asistCheckboxes || '<p class="text-muted">' + t('sen_resultados') + '</p>') +
+            '</div>' +
+        '</div>' +
+        '<div class="form-group">' +
             '<label>' + t('ficheiros') + '</label>' +
+            '<div id="acta-files-existing"></div>' +
             '<input type="file" class="form-control" id="acta-arquivos" multiple>' +
         '</div>';
+
+    // Render existing files
+    _actaRenderFiles();
 
     initRichTextEditor('acta-contido-editor', isEdit ? item.contido || '' : '', { uploadDir: 'actas' });
 
@@ -148,6 +213,30 @@ function actasModal(item) {
         '<button class="btn btn-primary" onclick="actasSave()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');
+}
+
+function _actaRenderFiles() {
+    var container = $('#acta-files-existing');
+    if (!container) return;
+    if (!_actaExistingFiles.length) {
+        container.innerHTML = '';
+        return;
+    }
+    var html = '';
+    _actaExistingFiles.forEach(function(f, idx) {
+        var name = typeof f === 'string' ? f : f.name || '';
+        html += '<div class="file-list-item">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>' +
+            '<span>' + esc(name) + '</span>' +
+            '<button type="button" class="btn-icon btn-danger" onclick="_actaRemoveFile(' + idx + ')" title="' + t('eliminar') + '">&times;</button>' +
+        '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function _actaRemoveFile(idx) {
+    _actaExistingFiles.splice(idx, 1);
+    _actaRenderFiles();
 }
 
 async function actasSave() {
@@ -161,14 +250,28 @@ async function actasSave() {
         estado: ($('#acta-estado') || {}).value || 'borrador'
     };
 
+    // Collect asistentes
+    var asistentes = [];
+    document.querySelectorAll('.acta-asistente-cb:checked').forEach(function(cb) {
+        asistentes.push(parseInt(cb.value));
+    });
+    body.asistentes = asistentes;
+
+    // Merge existing files (with url) + new files (with data)
+    var arquivos = _actaExistingFiles.map(function(f) {
+        return { name: f.name, url: f.url };
+    });
+
     var arquivosInput = $('#acta-arquivos');
     if (arquivosInput && arquivosInput.files && arquivosInput.files.length > 0) {
-        var arquivos = [];
         for (var i = 0; i < arquivosInput.files.length; i++) {
-            arquivos.push(await fileToBase64(arquivosInput.files[i]));
+            var f64 = await fileToBase64(arquivosInput.files[i]);
+            arquivos.push({ name: f64.name, data: f64.data });
         }
-        body.arquivos = arquivos;
     }
+
+    // Always send arquivos so backend knows about removals
+    body.arquivos = arquivos;
 
     try {
         if (isEdit) {
@@ -205,4 +308,54 @@ async function actasDelete(id) {
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }
+}
+
+function actasShareWhatsapp(id) {
+    var acta = (AppState.actas || []).find(function(a) { return a.id === id; });
+    if (!acta) return;
+
+    var nome = (AppState.config || {}).nome_asociacion || 'Levada Arraiana';
+    var l = [];
+
+    l.push(String.fromCodePoint(0x1F4CB) + ' *' + nome + ' \u2014 ' + t('acta') + '*');
+    l.push(String.fromCodePoint(0x1F4C5) + ' ' + (acta.data ? formatDate(acta.data) : ''));
+    l.push('*' + (acta.titulo || '') + '*');
+
+    if (acta.contido) {
+        var desc = acta.contido.replace(/<[^>]+>/g, '').trim();
+        if (desc.length > 120) desc = desc.substring(0, 120) + '...';
+        if (desc) l.push('_' + desc + '_');
+    }
+
+    l.push('\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500');
+
+    // Asistentes
+    if (acta.asistentes && acta.asistentes.length) {
+        l.push(String.fromCodePoint(0x1F465) + ' *' + t('asistentes_reunion') + '* (' + acta.asistentes.length + ')');
+        var nomes = acta.asistentes.map(function(a) { return a.nome_completo; }).join(', ');
+        l.push('   ' + nomes);
+    }
+
+    // Ficheiros adxuntos
+    if (acta.arquivos && acta.arquivos.length) {
+        l.push(String.fromCodePoint(0x1F4CE) + ' *' + t('ficheiros') + '* (' + acta.arquivos.length + ')');
+        acta.arquivos.forEach(function(f) {
+            l.push('   ' + (f.name || f));
+        });
+    }
+
+    l.push('\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500');
+
+    var baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'app.html#actas/' + id;
+    l.push(String.fromCodePoint(0x1F449) + ' *' + t('ver_acta') + ':*');
+    l.push(baseUrl);
+
+    var url = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(l.join('\n'));
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }

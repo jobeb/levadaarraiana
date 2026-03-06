@@ -380,4 +380,16 @@ CREATE TABLE `usuario_instrumentos` (
   FOREIGN KEY (`instrumento_id`) REFERENCES `instrumentos` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 29. Asistentes a actas (reunions)
+DROP TABLE IF EXISTS `actas_asistentes`;
+CREATE TABLE `actas_asistentes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `acta_id` int(11) NOT NULL,
+  `socio_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_acta_socio` (`acta_id`, `socio_id`),
+  FOREIGN KEY (`acta_id`) REFERENCES `actas` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`socio_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

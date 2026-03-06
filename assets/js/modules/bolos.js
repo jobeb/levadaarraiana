@@ -432,7 +432,7 @@ async function bolosShareWhatsapp(id) {
     l.push('\uD83D\uDC49 *' + t('confirmar_asistencia_link') + ':*');
     l.push(baseUrl);
 
-    var url = 'https://wa.me/?text=' + encodeURIComponent(l.join('\n'));
+    var url = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(l.join('\n'));
     var a = document.createElement('a');
     a.href = url;
     a.target = '_blank';
