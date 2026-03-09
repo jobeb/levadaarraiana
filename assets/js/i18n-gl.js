@@ -410,6 +410,7 @@ var LANG_GL = {
     fondo_imaxe: 'Imaxe de fondo',
     fondo_video: 'Video de fondo',
     fondo_cor: 'Cor de fondo',
+    ancho_card: 'Ancho card',
     parallax: 'Efecto parallax',
     overlay_opacidade: 'Opacidade do overlay',
     seccion_activa: 'Activa',

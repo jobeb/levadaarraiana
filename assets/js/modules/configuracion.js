@@ -552,6 +552,10 @@ function _renderLandingTab(seccions) {
             '<div class="form-group" style="flex:0 0 auto;min-width:120px">' +
                 '<label>' + t('max_elementos_movil') + '</label>' +
                 '<input type="number" class="form-control" id="landing-max-mobile-' + s.id + '" value="' + (s.max_items_mobile || 0) + '" min="0" step="1" style="width:80px" placeholder="0 = ' + t('todos') + '">' +
+            '</div>' +
+            '<div class="form-group" style="flex:0 0 auto;min-width:130px">' +
+                '<label>' + t('ancho_card') + ' (%)</label>' +
+                '<input type="number" class="form-control" id="landing-cardwidth-' + s.id + '" value="' + (s.card_width || 0) + '" min="0" max="100" step="5" style="width:80px" placeholder="0 = auto">' +
             '</div>' : '') +
             (s.id === 'galeria' ? '<div class="form-group" style="flex:0 0 auto;min-width:140px">' +
                 '<label>' + t('max_fotos_destacadas') + '</label>' +
@@ -726,6 +730,10 @@ async function _landingSaveSec(secId) {
     // Max fotos destacadas (galeria only)
     var maxDestInput = $('#landing-max-destacadas-' + secId);
     if (maxDestInput) body.max_fotos_destacadas = parseInt(maxDestInput.value) || 0;
+
+    // Card width (percentage)
+    var cardWidthInput = $('#landing-cardwidth-' + secId);
+    if (cardWidthInput) body.card_width = parseInt(cardWidthInput.value) || 0;
 
     try {
         await api('/landing-seccions/' + secId, { method: 'PUT', body: body });

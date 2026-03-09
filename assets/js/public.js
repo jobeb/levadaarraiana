@@ -286,6 +286,19 @@ function _pubMaxItems(secId) {
     return cfg.max_items || 0;
 }
 
+// Helper: apply card_width percentage to a grid
+function _pubApplyCardWidth(gridId, secId) {
+    var grid = document.getElementById(gridId);
+    if (!grid) return;
+    var cfg = _landingCfg[secId];
+    var w = cfg && cfg.card_width ? cfg.card_width : 0;
+    if (w > 0 && w <= 100) {
+        grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(calc(' + w + '% - 24px), 1fr))';
+    } else {
+        grid.style.gridTemplateColumns = '';
+    }
+}
+
 // Helper: render a "Ver mais" button if items were truncated
 function _pubVerMaisBtn(gridId, secId, total, shown) {
     if (shown >= total) return '';
@@ -789,6 +802,7 @@ async function _pubRefreshLang() {
         ng.innerHTML = pubNot.length ? pubNot.map(_renderNoticiaCard).join('')
             + _pubVerMaisBtn('pub-noticias-grid', 'noticias', allNot.length, pubNot.length)
             : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+        _pubApplyCardWidth('pub-noticias-grid', 'noticias');
     }
 
     // Bolos futuros
@@ -800,6 +814,7 @@ async function _pubRefreshLang() {
         eg.innerHTML = pubBol.length ? pubBol.map(_renderBoloCard).join('')
             + _pubVerMaisBtn('pub-bolos-grid', 'bolos', allBol.length, pubBol.length)
             : '';
+        _pubApplyCardWidth('pub-bolos-grid', 'bolos');
     }
     var bolosSec = document.querySelector('[data-landing-section="bolos"]');
     if (bolosSec) bolosSec.style.display = allBol.length ? '' : 'none';
@@ -813,6 +828,7 @@ async function _pubRefreshLang() {
         pg.innerHTML = pubPas.length ? pubPas.map(_renderBoloCard).join('')
             + _pubVerMaisBtn('pub-bolos-pasados-grid', 'bolos_pasados', allPas.length, pubPas.length)
             : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+        _pubApplyCardWidth('pub-bolos-pasados-grid', 'bolos_pasados');
     }
 
     // Galeria
@@ -847,10 +863,12 @@ async function _pubRefreshLang() {
                 '</div></div>';
         }).join('') + _pubVerMaisBtn('pub-galeria-grid', 'galeria', allAlb.length, pubAlb.length)
             : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+        _pubApplyCardWidth('pub-galeria-grid', 'galeria');
     }
 
     // Instrumentos
     _renderInstrumentCards();
+    _pubApplyCardWidth('pub-instrumentos-grid', 'instrumentos');
 
     // Sobre nos (language-dependent from config)
     try {
@@ -897,6 +915,7 @@ async function loadPublicContent() {
             ng.innerHTML = pubNoticias.length ? pubNoticias.map(n => _renderNoticiaCard(n)).join('')
                 + _pubVerMaisBtn('pub-noticias-grid', 'noticias', allPubNoticias.length, pubNoticias.length)
                 : `<p class="text-muted" style="text-align:center">${t('sen_resultados')}</p>`;
+            _pubApplyCardWidth('pub-noticias-grid', 'noticias');
         }
 
         // Bolos publicos: futuros + pasados
@@ -913,6 +932,7 @@ async function loadPublicContent() {
             eg.innerHTML = pubBolosFuturos.length ? pubBolosFuturos.map(b => _renderBoloCard(b)).join('')
                 + _pubVerMaisBtn('pub-bolos-grid', 'bolos', allBolosFuturos.length, pubBolosFuturos.length)
                 : '';
+            _pubApplyCardWidth('pub-bolos-grid', 'bolos');
         }
         var bolosSec = document.querySelector('[data-landing-section="bolos"]');
         if (bolosSec) bolosSec.style.display = allBolosFuturos.length ? '' : 'none';
@@ -928,6 +948,7 @@ async function loadPublicContent() {
             pg.innerHTML = pubBolosPasados.length ? pubBolosPasados.map(b => _renderBoloCard(b)).join('')
                 + _pubVerMaisBtn('pub-bolos-pasados-grid', 'bolos_pasados', allBolosPasados.length, pubBolosPasados.length)
                 : `<p class="text-muted" style="text-align:center">${t('sen_resultados')}</p>`;
+            _pubApplyCardWidth('pub-bolos-pasados-grid', 'bolos_pasados');
         }
 
         // Galeria con lightbox
@@ -970,10 +991,12 @@ async function loadPublicContent() {
                 </div>
             `}).join('') + _pubVerMaisBtn('pub-galeria-grid', 'galeria', allAlbums.length, shownAlbums.length)
                 : `<p class="text-muted" style="text-align:center">${t('sen_resultados')}</p>`;
+            _pubApplyCardWidth('pub-galeria-grid', 'galeria');
         }
 
         // Instrumentos (dynamic from API)
         _renderInstrumentCards();
+        _pubApplyCardWidth('pub-instrumentos-grid', 'instrumentos');
 
         // Sobre nos + Contacto
         try {

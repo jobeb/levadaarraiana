@@ -317,6 +317,7 @@ CREATE TABLE `landing_seccions` (
   `max_items` INT NOT NULL DEFAULT 0,
   `max_items_mobile` INT NOT NULL DEFAULT 0,
   `max_fotos_destacadas` INT NOT NULL DEFAULT 0,
+  `card_width` INT NOT NULL DEFAULT 0,
   `bg_size` VARCHAR(50) NOT NULL DEFAULT 'cover',
   `bg_repeat` VARCHAR(20) NOT NULL DEFAULT 'no-repeat',
   `bg_position` VARCHAR(50) NOT NULL DEFAULT 'center',

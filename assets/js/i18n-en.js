@@ -410,6 +410,7 @@ var LANG_EN = {
     fondo_imaxe: 'Background image',
     fondo_video: 'Background video',
     fondo_cor: 'Background color',
+    ancho_card: 'Card width',
     parallax: 'Parallax effect',
     overlay_opacidade: 'Overlay opacity',
     seccion_activa: 'Active',

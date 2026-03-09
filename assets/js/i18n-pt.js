@@ -410,6 +410,7 @@ var LANG_PT = {
     fondo_imaxe: 'Imagem de fundo',
     fondo_video: 'Vídeo de fundo',
     fondo_cor: 'Cor de fundo',
+    ancho_card: 'Largura card',
     parallax: 'Efeito parallax',
     overlay_opacidade: 'Opacidade do overlay',
     seccion_activa: 'Ativa',
