@@ -196,6 +196,12 @@
     <button class="sidebar-link socio-only" data-section="votacions" onclick="Router.navigate('votacions')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span data-i18n="votacions">Votacións</span>
     </button>
+    <button class="sidebar-link socio-only" data-section="newsletter-admin" onclick="Router.navigate('newsletter-admin')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span data-i18n="newsletter">Newsletter</span>
+    </button>
+    <button class="sidebar-link socio-only" data-section="papeleira" onclick="Router.navigate('papeleira')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><span data-i18n="papeleira">Papeleira</span>
+    </button>
 
     <!-- Música -->
     <div class="sidebar-section" data-i18n="sec_musica">Música</div>
@@ -211,14 +217,11 @@
 
     <!-- Config (socio+) -->
     <div class="sidebar-section socio-only" data-i18n="configuracion">Configuración</div>
+    <button class="sidebar-link socio-only" data-section="paxina-inicio" onclick="Router.navigate('paxina-inicio')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><span data-i18n="portada">Portada</span>
+    </button>
     <button class="sidebar-link socio-only" data-section="configuracion" onclick="Router.navigate('configuracion')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span data-i18n="configuracion">Configuración</span>
-    </button>
-    <button class="sidebar-link admin-only" data-section="newsletter-admin" onclick="Router.navigate('newsletter-admin')">
-        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span data-i18n="newsletter">Newsletter</span>
-    </button>
-    <button class="sidebar-link admin-only" data-section="papeleira" onclick="Router.navigate('papeleira')">
-        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><span data-i18n="papeleira">Papeleira</span>
     </button>
     <button class="sidebar-link admin-only" data-section="auditoria" onclick="Router.navigate('auditoria')">
         <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></span><span data-i18n="auditoria">Auditoría</span>
@@ -301,6 +304,7 @@
     <div class="section" id="sec-noticias">
         <div class="section-header"><h2 data-i18n="noticias">Noticias</h2></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <input type="text" class="form-control" id="noticias-search" data-i18n-placeholder="buscar" placeholder="Buscar..." style="max-width:220px">
             <div class="export-dropdown socio-only" style="margin-left:auto">
                 <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
                 <div class="export-dropdown-menu">
@@ -317,6 +321,7 @@
     <div class="section" id="sec-bolos">
         <div class="section-header"><h2 data-i18n="bolos">Bolos</h2></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);align-items:center">
+            <input type="text" class="form-control" id="bolos-search" data-i18n-placeholder="buscar" placeholder="Buscar..." style="max-width:220px">
             <div class="view-toggle" id="bolos-view-toggle">
                 <button class="active" onclick="bolosSetView('list')" data-i18n="vista_lista">Lista</button>
                 <button onclick="bolosSetView('calendar')" data-i18n="vista_calendario">Calendario</button>
@@ -550,11 +555,27 @@
         <div id="config-form"></div>
     </div>
 
+    <!-- Páxina de inicio -->
+    <div class="section socio-only" id="sec-paxina-inicio">
+        <div class="section-header">
+            <h2 data-i18n="portada">Portada</h2>
+            <button class="btn btn-sm btn-secondary" onclick="window.open('index.html','_blank')" data-i18n="vista_previa_landing">Vista previa</button>
+        </div>
+        <div id="landing-config-container"></div>
+    </div>
+
     <!-- Newsletter Admin -->
-    <div class="section admin-only" id="sec-newsletter-admin">
+    <div class="section socio-only" id="sec-newsletter-admin">
         <div class="section-header">
             <h2 data-i18n="newsletter">Newsletter</h2>
             <span id="newsletter-admin-count" class="badge" style="margin-left:8px"></span>
+            <div class="export-dropdown admin-only" style="margin-left:auto">
+                <button class="btn btn-sm btn-secondary export-dropdown-toggle"><span data-i18n="exportar">Exportar</span> &#9662;</button>
+                <div class="export-dropdown-menu">
+                    <button onclick="newsletterExportCSV()">CSV</button>
+                    <button onclick="newsletterExportPDF()">PDF</button>
+                </div>
+            </div>
         </div>
         <div class="table-wrap"><table id="newsletter-admin-table"><thead><tr>
             <th>Email</th>
@@ -565,7 +586,7 @@
     </div>
 
     <!-- Papeleira -->
-    <div class="section admin-only" id="sec-papeleira">
+    <div class="section socio-only" id="sec-papeleira">
         <div class="section-header"><h2 data-i18n="papeleira">Papeleira</h2></div>
         <p style="color:var(--text-muted);margin-bottom:16px" data-i18n="papeleira_desc">Elementos eliminados nos últimos 30 días</p>
         <div class="table-wrap"><table id="papeleira-table"><thead><tr>
@@ -592,11 +613,11 @@
 </footer>
 
 <!-- Modal container (reusable) -->
-<div class="modal-overlay" id="modal-overlay">
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal" id="modal-box">
         <div class="modal-header">
             <h3 id="modal-title"></h3>
-            <button class="modal-close" onclick="hideModal('modal-overlay')">&times;</button>
+            <button class="modal-close" onclick="closeModal()" aria-label="Pechar">&times;</button>
         </div>
         <div class="modal-body" id="modal-body"></div>
         <div class="modal-footer" id="modal-footer"></div>
@@ -609,8 +630,8 @@
 </div>
 
 <!-- Lightbox -->
-<div class="lightbox" id="lightbox">
-    <button class="lightbox-close" onclick="galeriaCloseLightbox()">&times;</button>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Visor de imaxes">
+    <button class="lightbox-close" onclick="galeriaCloseLightbox()" aria-label="Pechar">&times;</button>
     <button class="lightbox-nav lightbox-prev" onclick="galeriaLightboxNav(-1)">&#10094;</button>
     <img id="lightbox-img" src="" alt="">
     <video id="lightbox-video" controls style="display:none;max-width:90vw;max-height:90vh"></video>
@@ -626,7 +647,8 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/state.js"></script>
 <script src="assets/js/utils.js"></script>
-<script src="assets/js/i18n.js"></script>
+<script src="assets/js/i18n-gl.js?v=1"></script>
+<script src="assets/js/i18n.js?v=8"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/router.js"></script>
 <script src="assets/js/components/modal-confirm.js"></script>

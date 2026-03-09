@@ -220,7 +220,7 @@ function repertorioModal(item) {
     _repRenderEstructura();
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="repertorioSave()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');
@@ -305,7 +305,7 @@ async function repertorioMediosModal(repId) {
     $('#modal-title').textContent = t('medios') + ' — ' + ritmo.nome;
     $('#modal-body').innerHTML = '<p class="text-center">' + t('cargando') + '</p>';
     _repPendingUploads = [];
-    var footerHtml = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>';
+    var footerHtml = '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>';
     if (AppState.isSocio()) {
         footerHtml += '<button class="btn btn-primary" onclick="_repMediosSaveAll(' + repId + ')">' + t('gardar') + '</button>';
     }

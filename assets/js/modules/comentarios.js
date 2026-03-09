@@ -89,7 +89,7 @@ async function comentariosRexeitar(id) {
 }
 
 async function comentariosDelete(id) {
-    if (!confirm(t('confirmar_eliminar'))) return;
+    if (!(await confirmAction(t('confirmar_eliminar')))) return;
     try {
         await api('/comentarios/' + id, { method: 'DELETE' });
         toast(t('comentario_eliminado'), 'success');

@@ -7,6 +7,16 @@
     <link rel="icon" href="assets/img/favicon.jpg">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#e3c300">
+    <meta name="description" content="Levada Arraiana — Batucada de Estás, Tomiño (Galicia). Percusión brasileira, escola de batucada, bolos e eventos.">
+    <meta property="og:title" content="Levada Arraiana — Batucada de Estás, Tomiño">
+    <meta property="og:description" content="Percusión brasileira, escola de batucada, bolos e eventos en Tomiño, Galicia.">
+    <meta property="og:image" content="https://levada.fordema.es/assets/img/logo-shadow.png">
+    <meta property="og:url" content="https://levada.fordema.es/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Levada Arraiana — Batucada de Estás, Tomiño">
+    <meta name="twitter:description" content="Percusión brasileira, escola de batucada, bolos e eventos en Tomiño, Galicia.">
+    <meta name="twitter:image" content="https://levada.fordema.es/assets/img/logo-shadow.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="assets/img/icon-192.png">
     <link rel="stylesheet" href="assets/css/variables.css?v=2">
@@ -14,6 +24,9 @@
     <link rel="stylesheet" href="assets/css/components.css?v=2">
     <link rel="stylesheet" href="assets/css/public.css?v=7">
     <link rel="stylesheet" href="assets/css/responsive.css?v=4">
+    <script>
+    (function(){var t=localStorage.getItem('theme');if(!t)t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';if(t==='light')document.documentElement.classList.add('light-mode');})();
+    </script>
 </head>
 <body>
 
@@ -22,12 +35,12 @@
     <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">
         <img src="assets/img/logo-white.png" alt="Levada Arraiana">
     </a>
-    <button class="pub-nav-toggle" id="pub-nav-toggle" onclick="togglePubNav()">
+    <button class="pub-nav-toggle" id="pub-nav-toggle" onclick="togglePubNav()" aria-label="Menú de navegación" aria-expanded="false" aria-controls="pub-nav-links-container">
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
     </button>
-    <div class="pub-nav-links">
+    <div class="pub-nav-links" id="pub-nav-links-container">
         <a href="#noticias-pub" data-i18n="noticias">Noticias</a>
         <a href="#bolos-pub" data-i18n="bolos">Bolos</a>
         <a href="#galeria-pub" data-i18n="galeria">Galeria</a>
@@ -232,9 +245,14 @@
   </div>
 </div>
 
+<!-- Confirm overlay (for themed confirmAction) -->
+<div class="modal-overlay" id="confirm-overlay">
+    <div class="modal confirm-box" style="max-width:400px"></div>
+</div>
+
 <!-- Lightbox -->
-<div id="lightbox" class="lightbox" onclick="if(event.target===this)closeLightbox()">
-    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Visor de imaxes" onclick="if(event.target===this)closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()" aria-label="Pechar">&times;</button>
     <button class="lightbox-prev" onclick="lightboxNav(-1)">&#10094;</button>
     <img id="lightbox-img" src="" alt="">
     <video id="lightbox-video" controls style="display:none;max-width:90vw;max-height:85vh"></video>
@@ -252,7 +270,7 @@
 </div>
 
 <!-- Scroll to top -->
-<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#9650;</button>
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Volver arriba">&#9650;</button>
 
 <!-- Content -->
 <div id="pub-content">
@@ -466,7 +484,9 @@
 <script src="assets/js/config.js?v=2"></script>
 <script src="assets/js/state.js?v=2"></script>
 <script src="assets/js/utils.js?v=2"></script>
-<script src="assets/js/i18n.js?v=7"></script>
+<script src="assets/js/components/modal-confirm.js"></script>
+<script src="assets/js/i18n-gl.js?v=1"></script>
+<script src="assets/js/i18n.js?v=8"></script>
 <script src="assets/js/auth.js?v=2"></script>
 <script src="assets/js/public.js?v=10"></script>
 <script>

@@ -26,6 +26,16 @@ async function api(endpoint, opts = {}) {
     return data;
 }
 
+function debounce(fn, delay) {
+    var timer;
+    return function() {
+        var args = arguments;
+        var ctx = this;
+        clearTimeout(timer);
+        timer = setTimeout(function() { fn.apply(ctx, args); }, delay);
+    };
+}
+
 function esc(str) {
     if (!str) return '';
     const d = document.createElement('div');
@@ -111,13 +121,30 @@ function $$(sel, ctx) {
     return [...(ctx || document).querySelectorAll(sel)];
 }
 
+var _modalDirty = false;
+
 function showModal(id) {
     const m = document.getElementById(id);
-    if (m) m.classList.add('show');
+    if (m) {
+        m.classList.add('show');
+        _modalDirty = false;
+        var body = m.querySelector('.modal-body');
+        if (body) {
+            body.addEventListener('input', function() { _modalDirty = true; });
+            body.addEventListener('change', function() { _modalDirty = true; });
+        }
+    }
 }
 function hideModal(id) {
     const m = document.getElementById(id);
     if (m) m.classList.remove('show');
+    _modalDirty = false;
+}
+async function closeModal() {
+    if (_modalDirty) {
+        if (!(await confirmAction(t('confirmar_saír_sen_gardar')))) return;
+    }
+    hideModal('modal-overlay');
 }
 
 function confirmAction(msg, opts) {

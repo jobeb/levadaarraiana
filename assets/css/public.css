@@ -1743,6 +1743,8 @@
 .pub-comment-avatar {
     width: 32px;
     height: 32px;
+    max-width: 32px;
+    max-height: 32px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
@@ -2228,6 +2230,10 @@
     outline: none;
     border-color: var(--primary, #e3c300);
 }
+.newsletter-form input:focus-visible {
+    outline: 2px solid var(--primary, #e3c300);
+    outline-offset: 2px;
+}
 .newsletter-form button {
     white-space: nowrap;
 }
@@ -2256,4 +2262,11 @@
 }
 .pub-comments-more:hover {
     background: var(--bg-hover, #2a3244);
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton, .skeleton-card, .skeleton-img, .skeleton-line { animation: none !important; }
+    .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 1 !important; transform: none !important; transition: none !important; }
+    [data-landing-section] > .landing-bg.parallax { background-attachment: scroll; }
 }

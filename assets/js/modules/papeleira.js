@@ -45,7 +45,7 @@ async function papeleiraRestaurar(modulo, id) {
 }
 
 async function papeleiraEliminar(modulo, id) {
-    if (!confirm(t('confirmar_eliminar_definitivo'))) return;
+    if (!(await confirmAction(t('confirmar_eliminar_definitivo')))) return;
     try {
         await api('/papeleira/definitivo', { method: 'DELETE', body: { modulo: modulo, id: id } });
         toast(t('eliminado_definitivo'), 'success');

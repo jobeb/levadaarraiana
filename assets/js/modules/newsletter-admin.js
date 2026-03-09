@@ -42,8 +42,24 @@ function newsletterAdminRender() {
     }).join('');
 }
 
+function newsletterExportCSV() {
+    var headers = ['Email', t('estado'), t('data')];
+    var rows = _newsletterData.map(function(s) {
+        return [s.email, s.activo == 1 ? t('activo') : t('inactivo'), s.creado || ''];
+    });
+    exportCSV('newsletter.csv', headers, rows);
+}
+
+function newsletterExportPDF() {
+    var headers = ['Email', t('estado'), t('data')];
+    var rows = _newsletterData.map(function(s) {
+        return [s.email, s.activo == 1 ? t('activo') : t('inactivo'), s.creado || ''];
+    });
+    exportPDF('Newsletter', headers, rows);
+}
+
 async function newsletterAdminDelete(id) {
-    if (!confirm(t('confirmar_eliminar'))) return;
+    if (!(await confirmAction(t('confirmar_eliminar')))) return;
     try {
         await api('/newsletter/' + id, { method: 'DELETE' });
         toast(t('exito'), 'success');

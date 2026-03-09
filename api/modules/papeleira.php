@@ -25,7 +25,7 @@ function handle_papeleira($method, $uri, $input) {
 
     // GET /papeleira — listar todos os elementos eliminados
     if ($uri === '/papeleira' && $method === 'GET') {
-        require_admin();
+        require_socio();
 
         // Auto-purge: delete items older than 30 days
         foreach (array_keys($tables) as $tbl) {
@@ -61,7 +61,7 @@ function handle_papeleira($method, $uri, $input) {
 
     // PUT /papeleira/restaurar — restaurar un elemento {modulo, id}
     if ($uri === '/papeleira/restaurar' && $method === 'PUT') {
-        require_admin();
+        require_socio();
         $modulo = $input['modulo'] ?? '';
         $id = (int)($input['id'] ?? 0);
         if (!isset($tables[$modulo]) || !$id) {
@@ -75,7 +75,7 @@ function handle_papeleira($method, $uri, $input) {
 
     // DELETE /papeleira/definitivo — eliminar definitivamente {modulo, id}
     if ($uri === '/papeleira/definitivo' && $method === 'DELETE') {
-        require_admin();
+        require_socio();
         $modulo = $input['modulo'] ?? '';
         $id = (int)($input['id'] ?? 0);
         if (!isset($tables[$modulo]) || !$id) {

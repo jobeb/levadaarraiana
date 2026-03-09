@@ -105,12 +105,31 @@ function _instrumentoClearRecording() {
     if (preview) preview.innerHTML = '';
 }
 
+var _instrumentoUserCounts = {};
+
 async function instrumentosLoad() {
     try {
         AppState.instrumentos = await api('/instrumentos');
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
         AppState.instrumentos = [];
+    }
+    _instrumentoUserCounts = {};
+    if (AppState.isSocio()) {
+        try {
+            var users = await api('/usuarios');
+            users.forEach(function(u) {
+                if (u.instrumentos && u.instrumentos.length) {
+                    u.instrumentos.forEach(function(inst) {
+                        var iid = inst.instrumento_id;
+                        _instrumentoUserCounts[iid] = (_instrumentoUserCounts[iid] || 0) + 1;
+                    });
+                } else if (u.instrumento) {
+                    var match = (AppState.instrumentos || []).find(function(i) { return i.nome === u.instrumento; });
+                    if (match) _instrumentoUserCounts[match.id] = (_instrumentoUserCounts[match.id] || 0) + 1;
+                }
+            });
+        } catch (e) { /* ignore */ }
     }
     instrumentosRender();
 }
@@ -167,7 +186,7 @@ function instrumentosRender() {
             '<div class="instrumento-card-header">' +
                 '<img src="' + esc(iconSrc) + '" alt="' + esc(i.tipo || '') + '" class="instrumento-card-icon">' +
                 '<div class="instrumento-card-info">' +
-                    '<h4>' + esc(i.nome) + (i.audio_mostra ? ' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;opacity:0.7" title="' + t('audio_mostra') + '"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>' : '') + '</h4>' +
+                    '<h4>' + esc(i.nome) + (i.audio_mostra ? ' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;opacity:0.7" title="' + t('audio_mostra') + '"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>' : '') + (AppState.isSocio() && _instrumentoUserCounts[i.id] ? ' <span class="badge badge-info">' + _instrumentoUserCounts[i.id] + ' socios</span>' : '') + '</h4>' +
                     notasHtml +
                 '</div>' +
                 (actions ? '<div class="instrumento-card-actions" onclick="event.stopPropagation()">' + actions + '</div>' : '') +
@@ -274,7 +293,7 @@ function instrumentosModal(item) {
     }
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="instrumentosSave()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');

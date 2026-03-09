@@ -88,6 +88,7 @@ function handle_comentarios($method, $uri, $input) {
 
     // POST /comentarios → crear comentario (require auth)
     if ($uri === '/comentarios' && $method === 'POST') {
+        rate_limit('comentarios', 10, 600);
         $user = require_auth();
 
         $item_type = trim($input['item_type'] ?? '');

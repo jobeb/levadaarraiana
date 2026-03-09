@@ -72,6 +72,11 @@ async function bolosLoad() {
 
     bolosRender();
     if (_bolosView === 'calendar') bolosRenderCalendar();
+    var searchEl = $('#bolos-search');
+    if (searchEl && !searchEl._deb) {
+        searchEl._deb = true;
+        searchEl.addEventListener('input', debounce(bolosRender, 300));
+    }
 }
 
 function bolosRender() {
@@ -79,6 +84,17 @@ function bolosRender() {
     if (!grid) return;
 
     var list = AppState.bolos || [];
+
+    var searchEl = $('#bolos-search');
+    var searchTerm = searchEl ? searchEl.value.trim().toLowerCase() : '';
+    if (searchTerm) {
+        list = list.filter(function(b) {
+            return (b.titulo || '').toLowerCase().indexOf(searchTerm) !== -1 ||
+                   (b.lugar || '').toLowerCase().indexOf(searchTerm) !== -1 ||
+                   (b.cliente_nome || '').toLowerCase().indexOf(searchTerm) !== -1 ||
+                   (b.estado || '').toLowerCase().indexOf(searchTerm) !== -1;
+        });
+    }
 
     // Dashboard filter: proximos / realizados
     if (AppState.dashboardFilter === 'proximos' || AppState.dashboardFilter === 'realizados') {
@@ -291,7 +307,7 @@ function bolosModal(item) {
     ], isEdit ? item : null);
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="bolosSave()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');

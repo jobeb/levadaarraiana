@@ -170,7 +170,7 @@ function galeriaView(id) {
     }
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('voltar') + '</button>';
 
     showModal('modal-overlay');
 }
@@ -233,6 +233,23 @@ function _lightboxShow() {
     var nextBtn = lb.querySelector('.lightbox-next');
     if (prevBtn) prevBtn.style.display = _lightboxPhotos.length > 1 ? '' : 'none';
     if (nextBtn) nextBtn.style.display = _lightboxPhotos.length > 1 ? '' : 'none';
+
+    var dlBtn = lb.querySelector('.lightbox-download');
+    if (!dlBtn) {
+        dlBtn = document.createElement('a');
+        dlBtn.className = 'lightbox-download socio-only';
+        dlBtn.title = t('descargar');
+        dlBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+        dlBtn.style.cssText = 'position:absolute;bottom:16px;right:16px;z-index:10;background:rgba(0,0,0,0.6);border-radius:50%;padding:10px;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none';
+        lb.appendChild(dlBtn);
+    }
+    if (!isYT && !isVideo && src && AppState.isSocio()) {
+        dlBtn.href = src;
+        dlBtn.download = src.split('/').pop() || 'foto';
+        dlBtn.style.display = 'flex';
+    } else {
+        dlBtn.style.display = 'none';
+    }
 }
 
 function galeriaLightboxNav(dir) {

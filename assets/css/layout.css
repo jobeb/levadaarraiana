@@ -333,7 +333,7 @@
 .sidebar-section[data-i18n="sec_administracion"]::before { background: var(--secondary); }
 .sidebar-section[data-i18n="sec_finanzas"]::before     { background: var(--accent-magenta); }
 .sidebar-section[data-i18n="sec_musica"]::before       { background: var(--primary); }
-.sidebar-section[data-i18n="configuracion"]::before    { background: var(--text-muted); }
+.sidebar-section[data-i18n="configuracion"]::before    { background: var(--accent-magenta); }
 
 .sidebar-link {
     display: flex;

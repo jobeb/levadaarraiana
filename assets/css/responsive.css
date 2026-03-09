@@ -47,13 +47,13 @@
         top: 100%;
         left: 0;
         right: 0;
-        background: rgba(12, 14, 20, 0.98);
+        background: var(--bg-dark, rgba(12, 14, 20, 0.98));
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         flex-direction: column;
         padding: var(--gap);
         gap: 4px;
-        border-bottom: 1px solid rgba(232, 168, 50, 0.1);
+        border-bottom: 1px solid var(--primary-dim, rgba(232, 168, 50, 0.1));
         box-shadow: 0 12px 40px rgba(0,0,0,0.4);
     }
     .pub-nav-links.open {
@@ -69,7 +69,7 @@
     }
     .pub-nav-links a:not(.btn):not(.btn-outline):hover,
     .pub-nav-links a:not(.btn):not(.btn-outline).active {
-        background: rgba(232, 168, 50, 0.12);
+        background: var(--primary-dim, rgba(232, 168, 50, 0.12));
     }
     .pub-nav-links .lang-selector {
         padding-top: var(--gap-sm);

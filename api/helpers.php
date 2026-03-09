@@ -113,11 +113,19 @@ function process_and_save_image($subdir, $filename, $b64data, $preset = 'default
         $src = $dst;
     }
 
-    $filename = preg_replace('/\.[^.]+$/', '.jpg', $filename);
-    $dir = UPLOADS_DIR . '/' . $subdir;
-    if (!is_dir($dir)) mkdir($dir, 0755, true);
-    $path = $dir . '/' . $filename;
-    imagejpeg($src, $path, $p['quality']);
+    if (function_exists('imagewebp')) {
+        $filename = preg_replace('/\.[^.]+$/', '.webp', $filename);
+        $dir = UPLOADS_DIR . '/' . $subdir;
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $path = $dir . '/' . $filename;
+        imagewebp($src, $path, $p['quality']);
+    } else {
+        $filename = preg_replace('/\.[^.]+$/', '.jpg', $filename);
+        $dir = UPLOADS_DIR . '/' . $subdir;
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $path = $dir . '/' . $filename;
+        imagejpeg($src, $path, $p['quality']);
+    }
     imagedestroy($src);
 
     return $subdir . '/' . $filename;

@@ -164,6 +164,7 @@ function handle_propostas($method, $uri, $input) {
         ]);
         $newId = (int)$db->lastInsertId();
         audit_log('CREATE', 'propostas', $newId, $input['titulo'] ?? '');
+        notify_socios('Nova proposta: ' . trim($input['titulo'] ?? ''), 'Creouse unha nova proposta en Levada Arraiana: ' . trim($input['titulo'] ?? ''));
         send_json(['ok' => true, 'id' => $newId], 201);
     }
 

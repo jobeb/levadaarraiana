@@ -152,9 +152,62 @@ function actasView(id) {
         arquivosHtml;
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+        '<button class="btn btn-sm btn-secondary" onclick="actaExportPDF(' + id + ')" style="margin-right:auto">' + t('exportar_pdf') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('voltar') + '</button>';
 
     showModal('modal-overlay');
+}
+
+function actaExportPDF(id) {
+    var acta = (AppState.actas || []).find(function(a) { return a.id == id; });
+    if (!acta) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        toast('PDF library not loaded.', 'error');
+        return;
+    }
+    var doc = new jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+    var pageWidth = doc.internal.pageSize.getWidth();
+    var margin = 14;
+    var maxWidth = pageWidth - margin * 2;
+    var y = 18;
+
+    doc.setFontSize(16);
+    var titleLines = doc.splitTextToSize(acta.titulo || '', maxWidth);
+    doc.text(titleLines, margin, y);
+    y += titleLines.length * 7 + 4;
+
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text(formatDate(acta.data), margin, y);
+    y += 8;
+    doc.setTextColor(0);
+
+    var plainText = stripHtml(acta.contido || '');
+    if (plainText) {
+        doc.setFontSize(11);
+        var lines = doc.splitTextToSize(plainText, maxWidth);
+        lines.forEach(function(line) {
+            if (y > 275) { doc.addPage(); y = 18; }
+            doc.text(line, margin, y);
+            y += 5.5;
+        });
+    }
+
+    if (acta.asistentes && acta.asistentes.length) {
+        y += 6;
+        if (y > 260) { doc.addPage(); y = 18; }
+        doc.setFontSize(12);
+        doc.text(t('asistentes_reunion') + ' (' + acta.asistentes.length + '):', margin, y);
+        y += 6;
+        doc.setFontSize(10);
+        acta.asistentes.forEach(function(a) {
+            if (y > 280) { doc.addPage(); y = 18; }
+            doc.text('- ' + (a.nome_completo || ''), margin + 4, y);
+            y += 5;
+        });
+    }
+
+    doc.save((acta.titulo || 'acta').replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
 }
 
 async function actasModal(item) {
@@ -238,7 +291,7 @@ async function actasModal(item) {
     initRichTextEditor('acta-contido-editor', isEdit ? item.contido || '' : '', { uploadDir: 'actas' });
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="actasSave()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');

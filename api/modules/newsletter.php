@@ -14,14 +14,22 @@ function handle_newsletter($method, $uri, $input) {
     // GET /newsletter/baixa/TOKEN — desuscribir (público, link desde email)
     if ($method === 'GET' && preg_match('#^/newsletter/baixa/([a-zA-Z0-9]+)$#', $uri, $m)) {
         $token = $m[1];
+        $lang = $_GET['lang'] ?? 'gl';
+        $i18n_unsub = [
+            'gl' => ['ok_title' => 'Desuscrito correctamente', 'ok_msg' => 'Non recibirás máis correos da newsletter.', 'err_title' => 'Enlace non válido', 'err_msg' => 'Este enlace xa foi usado ou non é válido.'],
+            'es' => ['ok_title' => 'Desuscrito correctamente', 'ok_msg' => 'No recibirás más correos de la newsletter.', 'err_title' => 'Enlace no válido', 'err_msg' => 'Este enlace ya fue usado o no es válido.'],
+            'pt' => ['ok_title' => 'Cancelado com sucesso', 'ok_msg' => 'Não receberá mais emails da newsletter.', 'err_title' => 'Link inválido', 'err_msg' => 'Este link já foi usado ou não é válido.'],
+            'en' => ['ok_title' => 'Unsubscribed successfully', 'ok_msg' => 'You will no longer receive newsletter emails.', 'err_title' => 'Invalid link', 'err_msg' => 'This link has already been used or is not valid.'],
+        ];
+        $txt = $i18n_unsub[$lang] ?? $i18n_unsub['gl'];
         $stmt = $db->prepare("UPDATE newsletter SET activo = 0 WHERE token_baixa = ? AND activo = 1");
         $stmt->execute([$token]);
         header('Content-Type: text/html; charset=UTF-8');
-        echo '<!DOCTYPE html><html><body style="font-family:sans-serif;text-align:center;padding:60px">';
+        echo '<!DOCTYPE html><html lang="' . htmlspecialchars($lang) . '"><body style="font-family:sans-serif;text-align:center;padding:60px">';
         if ($stmt->rowCount() > 0) {
-            echo '<h2>Desuscrito correctamente</h2><p>Non recibirás máis correos da newsletter.</p>';
+            echo '<h2>' . $txt['ok_title'] . '</h2><p>' . $txt['ok_msg'] . '</p>';
         } else {
-            echo '<h2>Enlace non válido</h2><p>Este enlace xa foi usado ou non é válido.</p>';
+            echo '<h2>' . $txt['err_title'] . '</h2><p>' . $txt['err_msg'] . '</p>';
         }
         echo '</body></html>';
         exit;
@@ -66,6 +74,7 @@ function handle_newsletter($method, $uri, $input) {
 
     // POST /newsletter — suscribir (público)
     if ($uri === '/newsletter' && $method === 'POST') {
+        rate_limit('newsletter', 5, 600);
         $email = trim($input['email'] ?? '');
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             send_error('Email non válido', 'erro_email_invalido', 400);
@@ -84,16 +93,16 @@ function handle_newsletter($method, $uri, $input) {
         send_json(['ok' => true]);
     }
 
-    // GET /newsletter — listar suscritores (admin)
+    // GET /newsletter — listar suscritores (socio+)
     if ($uri === '/newsletter' && $method === 'GET') {
-        require_admin();
+        require_socio();
         $rows = $db->query("SELECT id, email, activo, creado FROM newsletter ORDER BY creado DESC")->fetchAll();
         send_json($rows);
     }
 
-    // DELETE /newsletter/ID — eliminar suscritor (admin)
+    // DELETE /newsletter/ID — eliminar suscritor (socio+)
     if (preg_match('#^/newsletter/(\d+)$#', $uri, $m) && $method === 'DELETE') {
-        require_admin();
+        require_socio();
         $id = (int)$m[1];
         $db->prepare("DELETE FROM newsletter WHERE id = ?")->execute([$id]);
         audit_log('DELETE', 'newsletter', $id);

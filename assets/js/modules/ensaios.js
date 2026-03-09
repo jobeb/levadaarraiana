@@ -49,7 +49,7 @@ function _showDayPopup(date, events) {
     $('#modal-body').innerHTML = html;
     $('#modal-footer').innerHTML =
         (isSocio ? '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');ensaiosModal();setTimeout(function(){var d=$(\'#ensaio-data\');if(d)d.value=\'' + date + '\';},50)">+ ' + t('novo_ensaio') + '</button> ' : '') +
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('voltar') + '</button>';
     showModal('modal-overlay');
 }
 
@@ -79,7 +79,7 @@ function ensaiosSolicitarAsistencia(id) {
         '<div style="padding:12px;background:var(--bg-surface-2);border-radius:var(--radius);margin-top:8px">' + detail + '</div>';
     $('#modal-footer').innerHTML =
         '<button class="btn btn-primary" id="btn-confirmar-solicitude">' + t('enviar') + '</button> ' +
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>';
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>';
     showModal('modal-overlay');
 
     $('#btn-confirmar-solicitude').onclick = function() {
@@ -424,7 +424,7 @@ function ensaiosExpandGroup(grupo) {
 
     html += '</tbody></table></div>';
     $('#modal-body').innerHTML = html;
-    $('#modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+    $('#modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">' + t('voltar') + '</button>';
     showModal('modal-overlay');
 }
 
@@ -588,7 +588,7 @@ function ensaiosModal(item) {
         ) : '');
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="ensaiosSave()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');
@@ -761,7 +761,7 @@ async function ensaiosAsistencia(id) {
 
     $('#modal-body').innerHTML = html;
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="_saveAsistencia()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');
@@ -831,7 +831,7 @@ async function ensaiosAsistenciaResumo() {
     }
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('voltar') + '</button>';
     showModal('modal-overlay');
 }
 

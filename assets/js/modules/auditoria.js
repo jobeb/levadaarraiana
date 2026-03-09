@@ -191,7 +191,7 @@ async function _auditoriaLimparAntigos() {
 }
 
 async function _auditoriaLimparTodo() {
-    if (!confirm(t('confirmar_limpar_todo'))) return;
+    if (!(await confirmAction(t('confirmar_limpar_todo')))) return;
     try {
         var res = await api('/auditoria', { method: 'DELETE' });
         toast(res.deleted + ' ' + t('rexistros_eliminados'), 'success');

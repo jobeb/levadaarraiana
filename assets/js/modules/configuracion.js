@@ -32,21 +32,12 @@ function configuracionRender() {
 
     /* ---- Tabs ---- */
     var html = '<div class="tabs" id="config-tabs">' +
-        '<button class="tab-btn" data-tab="cfg-landing" onclick="_configTab(\'cfg-landing\')">' + t('paxina_inicio') + '</button>' +
         '<button class="tab-btn active" data-tab="cfg-xeral" onclick="_configTab(\'cfg-xeral\')">' + t('sec_xeral') + '</button>' +
         (_isAdmin ? '<button class="tab-btn" data-tab="cfg-smtp" onclick="_configTab(\'cfg-smtp\')">' + t('smtp') + '</button>' : '') +
         '<button class="tab-btn" data-tab="cfg-fiscal" onclick="_configTab(\'cfg-fiscal\')">' + t('datos_fiscais') + '</button>' +
         '<button class="tab-btn" data-tab="cfg-calendario" onclick="_configTab(\'cfg-calendario\')">' + t('calendario') + '</button>' +
         (_isAdmin ? '<button class="tab-btn" data-tab="cfg-youtube" onclick="_configTab(\'cfg-youtube\')">' + t('servizos_externos') + '</button>' : '') +
         (_isAdmin ? '<button class="tab-btn" data-tab="cfg-backup" onclick="_configTab(\'cfg-backup\')">' + t('copias_seguridade') + '</button>' : '') +
-    '</div>';
-
-    /* ---- Landing tab ---- */
-    html += '<div class="config-tab-panel" id="cfg-landing" style="display:none">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
-            '<p style="color:var(--text-muted);margin:0">' + t('cargando') + '</p>' +
-            '<button class="btn btn-sm btn-secondary" onclick="window.open(\'index.html\',\'_blank\')">' + t('vista_previa_landing') + '</button>' +
-        '</div>' +
     '</div>';
 
     /* ---- General tab ---- */
@@ -111,6 +102,7 @@ function configuracionRender() {
             '<label>' + t('email_destino') + '</label>' +
             '<input type="email" class="form-control" id="cfg-email-dest" value="' + esc(cfg.email_dest || '') + '">' +
         '</div>' +
+        '<button class="btn btn-sm btn-secondary" id="cfg-test-smtp-btn" onclick="_cfgTestSmtp()" style="margin-top:8px">' + t('probar_smtp') + '</button>' +
     '</div>';
     }
 
@@ -244,11 +236,9 @@ function _configTab(tabId) {
     $$('#config-tabs .tab-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.tab === tabId);
     });
-    // Hide save button on backup and landing tabs (they have their own save)
+    // Hide save button on backup tab (it has its own save)
     var saveWrap = $('#cfg-save-wrap');
-    if (saveWrap) saveWrap.style.display = (tabId === 'cfg-backup' || tabId === 'cfg-landing') ? 'none' : '';
-    // Load landing data when switching to that tab
-    if (tabId === 'cfg-landing') _loadLandingSeccions();
+    if (saveWrap) saveWrap.style.display = (tabId === 'cfg-backup') ? 'none' : '';
 }
 
 async function configuracionSave() {
@@ -306,6 +296,19 @@ async function configuracionSave() {
 }
 
 // ---- Calendar color helpers ----
+
+async function _cfgTestSmtp() {
+    var btn = $('#cfg-test-smtp-btn');
+    if (btn) { btn.disabled = true; btn.textContent = t('cargando'); }
+    try {
+        await api('/config/test-smtp', { method: 'POST' });
+        toast(t('email_proba_enviado') || 'Email de proba enviado correctamente', 'success');
+    } catch (e) {
+        toast(t('erro') + ': ' + e.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = t('probar_smtp'); }
+    }
+}
 
 function _cfgToggleSmtp() {
     var metodo = ($('#cfg-email-metodo') || {}).value || 'php_mail';
@@ -420,24 +423,30 @@ var _landingSecNames = {
 
 var _landingSeccions = [];
 
+async function paxinaInicioLoad() {
+    try {
+        AppState.config = await api('/config');
+    } catch (e) {
+        AppState.config = AppState.config || {};
+    }
+    _loadLandingSeccions();
+}
+
 async function _loadLandingSeccions() {
     try {
         _landingSeccions = await api('/landing-seccions');
         _renderLandingTab(_landingSeccions);
     } catch (e) {
-        var panel = $('#cfg-landing');
+        var panel = $('#landing-config-container');
         if (panel) panel.innerHTML = '<p style="color:var(--danger)">' + t('erro') + ': ' + esc(e.message) + '</p>';
     }
 }
 
 function _renderLandingTab(seccions) {
-    var panel = $('#cfg-landing');
+    var panel = $('#landing-config-container');
     if (!panel) return;
 
-    var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
-        '<p style="color:var(--text-muted);margin:0">' + t('paxina_inicio') + '</p>' +
-        '<button class="btn btn-sm btn-secondary" onclick="window.open(\'index.html\',\'_blank\')">' + t('vista_previa_landing') + '</button>' +
-    '</div>';
+    var html = '';
 
     seccions.forEach(function(s) {
         var name = _landingSecNames[s.id] || s.id;
@@ -642,7 +651,7 @@ function _landingToggleBgSizeCustom(secId) {
 }
 
 async function _landingSaveOrder() {
-    var cards = $$('#cfg-landing .landing-sec-card');
+    var cards = $$('#landing-config-container .landing-sec-card');
     var ids = cards.map(function(c) { return c.dataset.secId; });
     try {
         await api('/landing-seccions/reorder', { method: 'PUT', body: { ids: ids } });

@@ -44,11 +44,12 @@ function handle_noticias($method, $uri, $input) {
         $i18n = isset($input['i18n']) ? json_encode($input['i18n'], JSON_UNESCAPED_UNICODE) : null;
         $stmt = $db->prepare(
             "INSERT INTO noticias (titulo, texto, data, autor, imaxes, estado, publica, i18n)
-             VALUES (?, ?, NOW(), ?, '[]', ?, ?, ?)"
+             VALUES (?, ?, ?, ?, '[]', ?, ?, ?)"
         );
         $stmt->execute([
             trim($input['titulo'] ?? ''),
             $input['texto'] ?? '',
+            $input['data'] ?? date('Y-m-d'),
             $user['nome_completo'] ?? $user['username'],
             $input['estado'] ?? 'publicada',
             isset($input['publica']) ? (int)(bool)$input['publica'] : 1,
@@ -99,7 +100,7 @@ function handle_noticias($method, $uri, $input) {
         $fields = [];
         $params = [];
 
-        $updatable = ['titulo', 'texto', 'estado'];
+        $updatable = ['titulo', 'texto', 'estado', 'data'];
         foreach ($updatable as $col) {
             if (array_key_exists($col, $input)) {
                 $fields[] = "$col = ?";

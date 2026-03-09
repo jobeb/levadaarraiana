@@ -10,6 +10,11 @@ async function noticiasLoad() {
         AppState.noticias = [];
     }
     noticiasRender();
+    var searchEl = $('#noticias-search');
+    if (searchEl && !searchEl._deb) {
+        searchEl._deb = true;
+        searchEl.addEventListener('input', debounce(noticiasRender, 300));
+    }
 }
 
 function noticiasRender() {
@@ -17,6 +22,15 @@ function noticiasRender() {
     if (!grid) return;
 
     var list = AppState.noticias || [];
+
+    var searchEl = $('#noticias-search');
+    var searchTerm = searchEl ? searchEl.value.trim().toLowerCase() : '';
+    if (searchTerm) {
+        list = list.filter(function(n) {
+            return (n.titulo || '').toLowerCase().indexOf(searchTerm) !== -1 ||
+                   (n.texto || '').toLowerCase().indexOf(searchTerm) !== -1;
+        });
+    }
 
     if (list.length === 0) {
         grid.innerHTML = '<p class="text-center">' + t('sen_resultados') + '</p>';
@@ -129,7 +143,7 @@ function noticiasModal(item) {
     ], isEdit ? item : null);
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="noticiasSave()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');

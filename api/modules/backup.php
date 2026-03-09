@@ -17,11 +17,13 @@ function handle_backup($method, $uri, $input) {
 
     $db = get_db();
     $tables = [
-        'usuarios', 'noticias', 'bolos', 'albums', 'propostas',
-        'documentos', 'actas',
-        'votacions', 'votos', 'propostas_votos',
+        'usuarios', 'usuario_instrumentos', 'noticias', 'bolos', 'bolos_asistencia',
+        'albums', 'propostas', 'documentos', 'actas', 'actas_asistentes',
+        'votacions', 'votos',
         'ensaios', 'asistencia', 'instrumentos',
-        'repertorio',
+        'repertorio', 'repertorio_medios',
+        'comentarios', 'newsletter', 'landing_seccions', 'solicitudes_bolos',
+        'audit_log',
         'youtube_tokens', 'config'
     ];
 

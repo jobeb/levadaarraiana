@@ -994,6 +994,7 @@ th.sortable:hover { color: var(--primary); }
     margin-top: 6px;
 }
 .instrumento-media-player:focus { outline: none; }
+.instrumento-media-player:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 audio.instrumento-media-player { height: 40px; }
 video.instrumento-media-player { max-height: 220px; }
 iframe.instrumento-yt-embed { height: 220px; border: none; }
@@ -1237,6 +1238,11 @@ iframe.instrumento-yt-embed { height: 220px; border: none; }
 }
 .rec-transcript-result .btn {
     margin-top: 6px;
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+    .modal-overlay, .modal, .app-sidebar, .toast, .stat-card, .dashboard-actions-grid .btn { transition: none !important; animation: none !important; }
 }
 
 /* ---- Print styles ---- */

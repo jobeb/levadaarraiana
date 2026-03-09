@@ -192,7 +192,7 @@ async function propostasDetail(id) {
     $('#modal-body').innerHTML = html;
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('voltar') + '</button>';
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('voltar') + '</button>';
 
     showModal('modal-overlay');
 
@@ -308,7 +308,7 @@ function propostasModal(item) {
     initRichTextEditor('proposta-texto-editor', isEdit ? item.texto || '' : '', { uploadDir: 'propostas' });
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" onclick="propostasSave()">' + t('gardar') + '</button>';
 
     showModal('modal-overlay');

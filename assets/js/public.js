@@ -427,7 +427,7 @@ function _pubFormatDatetime(dt) {
 }
 
 function _pubRenderCommentItem(c, type, id, currentUserId, isAdmin, isSocio, canReply) {
-    var canDelete = (currentUserId === parseInt(c.autor_id)) || isAdmin || isSocio;
+    var canDelete = currentUserId && (currentUserId === parseInt(c.autor_id));
     var html = '<div class="pub-comment">' +
         (c.autor_foto
             ? '<img class="pub-comment-avatar" src="' + esc(uploadUrl(c.autor_foto)) + '" alt="">'
@@ -572,7 +572,7 @@ async function _pubPostComment(type, id) {
 }
 
 async function _pubDeleteComment(commentId, type, itemId) {
-    if (!confirm(t('confirmar_eliminar'))) return;
+    if (!(await confirmAction(t('confirmar_eliminar')))) return;
     try {
         await api('/comentarios/' + commentId, { method: 'DELETE' });
         // Recargar comentarios deste item
@@ -1113,6 +1113,7 @@ async function _pubNewsletter() {
         msg.className = 'newsletter-msg success';
         msg.textContent = t('newsletter_ok');
         document.getElementById('newsletter-email').value = '';
+        setTimeout(function() { msg.textContent = ''; msg.className = 'newsletter-msg'; }, 5000);
     } catch (e) {
         msg.className = 'newsletter-msg error';
         msg.textContent = e.message || 'Error';

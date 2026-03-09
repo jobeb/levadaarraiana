@@ -11,6 +11,19 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'configuracion.php') {
 function handle_configuracion($method, $uri, $input) {
     $db = get_db();
 
+    // POST /config/test-smtp — send test email to admin
+    if ($method === 'POST' && preg_match('#^/config/test-smtp$#', $uri)) {
+        $user = require_admin();
+        $email = $user['email'] ?? '';
+        if (!$email) send_error('Non tes email configurado no teu perfil', 'erro', 400);
+        $ok = send_email($email, 'Levada Arraiana — Test email', 'Esta é unha mensaxe de proba do sistema de correo de Levada Arraiana. Se recibes este email, a configuración é correcta.');
+        if ($ok) {
+            send_json(['ok' => true]);
+        } else {
+            send_error('Erro ao enviar o email de proba', 'erro', 500);
+        }
+    }
+
     // GET /config — return config row (id=1) — público
     if ($method === 'GET') {
         $row = $db->query("SELECT * FROM config WHERE id = 1")->fetch();

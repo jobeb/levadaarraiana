@@ -259,6 +259,7 @@ function handle_votacions($method, $uri, $input) {
         }
 
         audit_log('CREATE', 'votacions', (int)$newId, $input['titulo'] ?? '');
+        notify_socios('Nova votación: ' . trim($input['titulo'] ?? ''), 'Creouse unha nova votación en Levada Arraiana: ' . trim($input['titulo'] ?? ''));
         send_json(['ok' => true, 'id' => $newId], 201);
     }
 

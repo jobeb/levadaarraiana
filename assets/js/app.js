@@ -167,6 +167,7 @@ function initApp() {
     Router.register('instrumentos', instrumentosLoad);
     Router.register('repertorio', repertorioLoad);
     Router.register('comentarios', comentariosLoad);
+    Router.register('paxina-inicio', paxinaInicioLoad);
     Router.register('configuracion', configuracionLoad);
     Router.register('newsletter-admin', newsletterAdminLoad);
     Router.register('papeleira', papeleiraLoad);
@@ -1160,7 +1161,10 @@ function restoreAppearance() {
     var toggle = document.getElementById('compact-toggle');
     if (toggle) toggle.checked = compact;
     toggleCompactMode(compact);
-    var theme = localStorage.getItem('theme') || 'dark';
+    var theme = localStorage.getItem('theme');
+    if (!theme) {
+        theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
     setTheme(theme);
 }
 
@@ -1171,7 +1175,8 @@ document.getElementById('login-user')?.addEventListener('keydown', e => { if (e.
 // Init
 (function() {
     // Apply theme early so login screen respects it
-    var savedTheme = localStorage.getItem('theme') || 'dark';
+    var savedTheme = localStorage.getItem('theme');
+    if (!savedTheme) savedTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     if (savedTheme === 'light') document.documentElement.classList.add('light-mode');
 
     initLangSelector();

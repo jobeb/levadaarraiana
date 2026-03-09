@@ -297,7 +297,7 @@ function documentosModal() {
         '</div>';
 
     $('#modal-footer').innerHTML =
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('cancelar') + '</button>' +
+        '<button class="btn btn-secondary" onclick="closeModal()">' + t('cancelar') + '</button>' +
         '<button class="btn btn-primary" id="upload-btn" onclick="documentosUploadAll()" disabled>' + t('subir') + '</button>';
 
     showModal('modal-overlay');
