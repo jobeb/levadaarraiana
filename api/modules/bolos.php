@@ -154,15 +154,12 @@ function handle_bolos($method, $uri, $input) {
                 "\nData: " . ($input['data'] ?? '') . "\nLugar: " . ($input['lugar'] ?? '')
             );
         }
-        $estado = $input['estado'] ?? 'borrador';
-        if ($estado === 'Programado' || $estado === 'programado') {
-            notify_socios(
-                'Novo bolo programado: ' . $titulo,
-                "Programouse un novo bolo:\n\n" . $titulo .
-                "\nData: " . ($input['data'] ?? '') . "\nLugar: " . ($input['lugar'] ?? '') .
-                "\nHora: " . ($input['hora'] ?? '')
-            );
-        }
+        notify_socios(
+            'Novo bolo: ' . $titulo,
+            "Creouse un novo bolo:\n\n" . $titulo .
+            "\nData: " . ($input['data'] ?? '') . "\nLugar: " . ($input['lugar'] ?? '') .
+            "\nHora: " . ($input['hora'] ?? '') . "\nEstado: " . ($input['estado'] ?? 'borrador')
+        );
 
         send_json(['ok' => true, 'id' => $newId], 201);
     }
@@ -224,14 +221,15 @@ function handle_bolos($method, $uri, $input) {
 
         audit_log('UPDATE', 'bolos', $id);
 
-        // Notify socios if estado changed to Programado
+        // Notify socios if estado changed
         $newEstado = $input['estado'] ?? null;
         $oldEstado = $existing['estado'] ?? '';
-        if ($newEstado && strtolower($newEstado) === 'programado' && strtolower($oldEstado) !== 'programado') {
+        if ($newEstado && $newEstado !== $oldEstado) {
             $titulo = $input['titulo'] ?? $existing['titulo'];
             notify_socios(
-                'Bolo programado: ' . $titulo,
-                "Un bolo foi programado:\n\n" . $titulo .
+                'Bolo actualizado: ' . $titulo,
+                "O bolo cambiou de estado:\n\n" . $titulo .
+                "\nEstado: " . $oldEstado . " → " . $newEstado .
                 "\nData: " . ($input['data'] ?? $existing['data']) .
                 "\nLugar: " . ($input['lugar'] ?? $existing['lugar']) .
                 "\nHora: " . ($input['hora'] ?? $existing['hora'])

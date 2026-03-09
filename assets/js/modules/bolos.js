@@ -202,7 +202,7 @@ function bolosModal(item) {
         return '<option value="' + tp + '"' + sel + '>' + t(tp) + '</option>';
     }).join('');
 
-    var estadoOptions = ['borrador', 'confirmado', 'asinado', 'completado', 'cancelado'].map(function(e) {
+    var estadoOptions = ['borrador', 'confirmado', 'completado', 'cancelado'].map(function(e) {
         var sel = (hasData && item.estado === e) ? ' selected' : '';
         return '<option value="' + e + '"' + sel + '>' + t(e) + '</option>';
     }).join('');
