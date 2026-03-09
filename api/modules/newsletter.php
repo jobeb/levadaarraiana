@@ -27,6 +27,43 @@ function handle_newsletter($method, $uri, $input) {
         exit;
     }
 
+    // GET /newsletter/me — check my subscription status (auth)
+    if ($uri === '/newsletter/me' && $method === 'GET') {
+        require_auth();
+        $user = get_current_user_safe();
+        $email = $user['email'] ?? '';
+        if (!$email) send_json(['suscrito' => false]);
+        $stmt = $db->prepare("SELECT activo FROM newsletter WHERE email = ?");
+        $stmt->execute([$email]);
+        $row = $stmt->fetch();
+        send_json(['suscrito' => $row && $row['activo'] == 1]);
+    }
+
+    // PUT /newsletter/me — toggle my subscription (auth)
+    if ($uri === '/newsletter/me' && $method === 'PUT') {
+        require_auth();
+        $user = get_current_user_safe();
+        $email = $user['email'] ?? '';
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            send_error('Necesitas ter un email no teu perfil', 'erro_email_invalido', 400);
+        }
+        $activo = $input['activo'] ? 1 : 0;
+        if ($activo) {
+            $token = bin2hex(random_bytes(16));
+            $stmt = $db->prepare(
+                "INSERT INTO newsletter (email, activo, token_baixa) VALUES (?, 1, ?)
+                 ON DUPLICATE KEY UPDATE activo = 1, token_baixa = VALUES(token_baixa)"
+            );
+            $stmt->execute([$email, $token]);
+            audit_log('CREATE', 'newsletter', null, $email);
+        } else {
+            $stmt = $db->prepare("UPDATE newsletter SET activo = 0 WHERE email = ?");
+            $stmt->execute([$email]);
+            audit_log('UPDATE', 'newsletter', null, 'desuscrito: ' . $email);
+        }
+        send_json(['ok' => true, 'suscrito' => (bool)$activo]);
+    }
+
     // POST /newsletter — suscribir (público)
     if ($uri === '/newsletter' && $method === 'POST') {
         $email = trim($input['email'] ?? '');

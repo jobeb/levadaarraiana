@@ -793,6 +793,9 @@ const TRANSLATIONS = {
     newsletter_desc:        { gl:'Recibe as noticias e eventos no teu correo', es:'Recibe las noticias y eventos en tu correo', pt:'Receba as noticias e eventos no seu email', en:'Get news and events in your inbox' },
     suscribirse:            { gl:'Suscribirse', es:'Suscribirse', pt:'Subscrever', en:'Subscribe' },
     newsletter_ok:          { gl:'Suscrito correctamente!', es:'Suscrito correctamente!', pt:'Subscrito com sucesso!', en:'Subscribed successfully!' },
+    suscribir_newsletter:   { gl:'Suscribirse á newsletter', es:'Suscribirse a la newsletter', pt:'Subscrever a newsletter', en:'Subscribe to newsletter' },
+    newsletter_activada:    { gl:'Newsletter activada', es:'Newsletter activada', pt:'Newsletter ativada', en:'Newsletter enabled' },
+    newsletter_desactivada: { gl:'Newsletter desactivada', es:'Newsletter desactivada', pt:'Newsletter desativada', en:'Newsletter disabled' },
     email_invalido:         { gl:'Email non valido', es:'Email no valido', pt:'Email invalido', en:'Invalid email' },
 
     // ---- Papeleira (#31) ----

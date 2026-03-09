@@ -959,6 +959,11 @@ function openProfileModal() {
             '<input type="file" class="form-control" id="perfil-foto" accept="image/*">' +
         '</div>' +
         '<hr style="border-color:var(--border);margin:12px 0">' +
+        '<div class="form-group" style="display:flex;align-items:center;justify-content:space-between">' +
+            '<label style="margin:0">' + t('suscribir_newsletter') + '</label>' +
+            '<label class="toggle-switch"><input type="checkbox" id="perfil-newsletter"><span class="toggle-slider"></span></label>' +
+        '</div>' +
+        '<hr style="border-color:var(--border);margin:12px 0">' +
         '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px">' + t('cambiar_contrasinal') + '</p>' +
         '<div class="form-group">' +
             '<label>' + t('contrasinal_actual') + '</label>' +
@@ -984,6 +989,23 @@ function openProfileModal() {
         window._allInstruments = list || [];
         _profileRenderInstruments();
     }).catch(function() {});
+
+    // Load newsletter subscription status
+    var nlCheckbox = document.getElementById('perfil-newsletter');
+    if (nlCheckbox) {
+        api('/newsletter/me').then(function(res) {
+            nlCheckbox.checked = res.suscrito;
+        }).catch(function() {});
+        nlCheckbox.addEventListener('change', function() {
+            var checked = nlCheckbox.checked;
+            api('/newsletter/me', { method: 'PUT', body: { activo: checked } }).then(function() {
+                toast(checked ? t('newsletter_activada') : t('newsletter_desactivada'), 'success');
+            }).catch(function(e) {
+                nlCheckbox.checked = !checked;
+                toast(t('erro') + ': ' + e.message, 'error');
+            });
+        });
+    }
 }
 
 function _profileRenderInstruments() {
