@@ -133,17 +133,25 @@ function handle_ensaios($method, $uri, $input) {
         $id = (int)$m[1];
     }
 
-    // GET — list all or single
+    // GET — list all or single (con paxinación opcional)
     if ($method === 'GET') {
         require_auth();
         if ($id) {
-            $stmt = $db->prepare("SELECT * FROM ensaios WHERE id = ?");
+            $stmt = $db->prepare("SELECT * FROM ensaios WHERE id = ? AND eliminado IS NULL");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) send_error('Ensaio non atopado', 'erro_non_atopado', 404);
             send_json($row);
         }
-        $rows = $db->query("SELECT * FROM ensaios ORDER BY data DESC")->fetchAll();
+        $page = $_GET['page'] ?? null;
+        $limit = $_GET['limit'] ?? 20;
+        if ($page) {
+            $result = paginate_query($db,
+                "SELECT * FROM ensaios WHERE eliminado IS NULL ORDER BY data DESC",
+                [], $page, $limit);
+            send_json($result);
+        }
+        $rows = $db->query("SELECT * FROM ensaios WHERE eliminado IS NULL ORDER BY data DESC")->fetchAll();
         send_json($rows);
     }
 
@@ -209,6 +217,15 @@ function handle_ensaios($method, $uri, $input) {
         ]);
         $newId = (int)$db->lastInsertId();
         audit_log('CREATE', 'ensaios', $newId, $data_base);
+
+        // Notify socios about new ensaio
+        notify_socios(
+            'Novo ensaio: ' . $data_base,
+            "Programouse un novo ensaio:\n\nData: " . $data_base .
+            "\nHora: " . ($input['hora_inicio'] ?? '') . " - " . ($input['hora_fin'] ?? '') .
+            "\nLugar: " . ($input['lugar'] ?? '')
+        );
+
         send_json(['ok' => true, 'id' => $newId], 201);
     }
 
@@ -319,10 +336,8 @@ function handle_ensaios($method, $uri, $input) {
             }
         }
 
-        // Single delete
-        $stmt = $db->prepare("DELETE FROM asistencia WHERE ensaio_id = ?");
-        $stmt->execute([$id]);
-        $stmt = $db->prepare("DELETE FROM ensaios WHERE id = ?");
+        // Single soft delete
+        $stmt = $db->prepare("UPDATE ensaios SET eliminado = NOW() WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([$id]);
         audit_log('DELETE', 'ensaios', $id);
         send_json(['ok' => true]);

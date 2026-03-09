@@ -81,6 +81,7 @@ const TRANSLATIONS = {
 
     // ---- Usuarios ----
     socio:              { gl:'Socio/a', es:'Socio/a', pt:'Sócio/a', en:'Member' },
+    socios:             { gl:'Socios', es:'Socios', pt:'Sócios', en:'Members' },
     instrumento:        { gl:'Instrumento', es:'Instrumento', pt:'Instrumento', en:'Instrument' },
     rol:                { gl:'Rol', es:'Rol', pt:'Papel', en:'Role' },
     estado:             { gl:'Estado', es:'Estado', pt:'Estado', en:'Status' },
@@ -187,6 +188,7 @@ const TRANSLATIONS = {
     resultados:         { gl:'Resultados', es:'Resultados', pt:'Resultados', en:'Results' },
     pechar:             { gl:'Pechar', es:'Cerrar', pt:'Fechar', en:'Close' },
     compartir_whatsapp: { gl:'Compartir en WhatsApp', es:'Compartir en WhatsApp', pt:'Compartilhar no WhatsApp', en:'Share on WhatsApp' },
+    enlace_copiado:     { gl:'Enlace copiado para compartir en Instagram', es:'Enlace copiado para compartir en Instagram', pt:'Link copiado para compartilhar no Instagram', en:'Link copied to share on Instagram' },
 
     // ---- Contratos (reused in bolos) ----
     contrato:           { gl:'Contrato', es:'Contrato', pt:'Contrato', en:'Contract' },
@@ -224,6 +226,9 @@ const TRANSLATIONS = {
     secundario:          { gl:'Secundario', es:'Secundario', pt:'Secundário', en:'Secondary' },
     terciario:           { gl:'Terciario', es:'Terciario', pt:'Terciário', en:'Tertiary' },
     nivel_n:             { gl:'Nivel {n}', es:'Nivel {n}', pt:'Nível {n}', en:'Level {n}' },
+    reasignacions:       { gl:'{n} reasignación(s)', es:'{n} reasignación(es)', pt:'{n} reatribuição(ões)', en:'{n} reassignment(s)' },
+    sen_cobertura:       { gl:'Sen cobertura', es:'Sin cobertura', pt:'Sem cobertura', en:'Uncovered' },
+    instrumento_asignado:{ gl:'Instrumento asignado', es:'Instrumento asignado', pt:'Instrumento atribuído', en:'Assigned instrument' },
     engadir_instrumento: { gl:'Engadir instrumento', es:'Añadir instrumento', pt:'Adicionar instrumento', en:'Add instrument' },
     meus_instrumentos:   { gl:'Os meus instrumentos', es:'Mis instrumentos', pt:'Meus instrumentos', en:'My instruments' },
 
@@ -231,6 +236,10 @@ const TRANSLATIONS = {
     novo_instrumento:   { gl:'Novo instrumento', es:'Nuevo instrumento', pt:'Novo instrumento', en:'New instrument' },
     audio_mostra:       { gl:'Audio/vídeo de mostra', es:'Audio/vídeo de muestra', pt:'Áudio/vídeo de amostra', en:'Sample audio/video' },
     escoitar:           { gl:'Escoitar', es:'Escuchar', pt:'Ouvir', en:'Listen' },
+    ver_video:          { gl:'Ver vídeo', es:'Ver vídeo', pt:'Ver vídeo', en:'Watch video' },
+    gravar_audio:       { gl:'Gravar audio', es:'Grabar audio', pt:'Gravar áudio', en:'Record audio' },
+    gravar_video:       { gl:'Gravar vídeo', es:'Grabar vídeo', pt:'Gravar vídeo', en:'Record video' },
+    parar_gravacion:    { gl:'Parar', es:'Parar', pt:'Parar', en:'Stop' },
 
     // ---- Repertorio ----
     ritmo:              { gl:'Ritmo', es:'Ritmo', pt:'Ritmo', en:'Rhythm' },
@@ -282,6 +291,7 @@ const TRANSLATIONS = {
     // ---- Backup ----
     backup:             { gl:'Copia de seguridade', es:'Copia de seguridad', pt:'Cópia de segurança', en:'Backup' },
     copias_seguridade:  { gl:'Copias de seguridade', es:'Copias de seguridad', pt:'Cópias de segurança', en:'Backups' },
+    servizos_externos:  { gl:'Servizos externos', es:'Servicios externos', pt:'Serviços externos', en:'External services' },
     descargar_backup:   { gl:'Descargar backup', es:'Descargar backup', pt:'Descarregar backup', en:'Download backup' },
     descargar_backup_desc: { gl:'Descarga un arquivo SQL con toda a base de datos', es:'Descarga un archivo SQL con toda la base de datos', pt:'Descarrega um ficheiro SQL com toda a base de dados', en:'Download a SQL file with the entire database' },
 
@@ -295,6 +305,19 @@ const TRANSLATIONS = {
     youtube_ok:             { gl:'YouTube conectado correctamente', es:'YouTube conectado correctamente', pt:'YouTube conectado com sucesso', en:'YouTube connected successfully' },
     youtube_erro:           { gl:'Erro ao conectar YouTube', es:'Error al conectar YouTube', pt:'Erro ao conectar YouTube', en:'Error connecting YouTube' },
     youtube_intro_credenciais: { gl:'Introduce Client ID e Client Secret primeiro', es:'Introduce Client ID y Client Secret primero', pt:'Introduza Client ID e Client Secret primeiro', en:'Enter Client ID and Client Secret first' },
+
+    // ---- Whisper / Transcrición ----
+    transcribir:        { gl:'Transcribir', es:'Transcribir', pt:'Transcrever', en:'Transcribe' },
+    transcribindo:      { gl:'Transcribindo...', es:'Transcribiendo...', pt:'Transcrevendo...', en:'Transcribing...' },
+    transcricion:       { gl:'Transcrición', es:'Transcripción', pt:'Transcrição', en:'Transcription' },
+    inserir_contido:    { gl:'Inserir no contido', es:'Insertar en contenido', pt:'Inserir no conteúdo', en:'Insert into content' },
+    transcricion_inserida: { gl:'Transcrición inserida no contido', es:'Transcripción insertada en contenido', pt:'Transcrição inserida no conteúdo', en:'Transcription inserted into content' },
+    erro_transcricion:  { gl:'Erro ao transcribir o audio', es:'Error al transcribir el audio', pt:'Erro ao transcrever o áudio', en:'Error transcribing audio' },
+    xerar_resumo:       { gl:'Xerar resumo', es:'Generar resumen', pt:'Gerar resumo', en:'Generate summary' },
+    xerando_resumo:     { gl:'Xerando resumo...', es:'Generando resumen...', pt:'Gerando resumo...', en:'Generating summary...' },
+    resumo_inserido:    { gl:'Resumo inserido no contido', es:'Resumen insertado en contenido', pt:'Resumo inserido no conteúdo', en:'Summary inserted into content' },
+    erro_resumo:        { gl:'Erro ao xerar o resumo', es:'Error al generar el resumen', pt:'Erro ao gerar o resumo', en:'Error generating summary' },
+    groq_api_key:       { gl:'Groq API Key (Whisper)', es:'Groq API Key (Whisper)', pt:'Groq API Key (Whisper)', en:'Groq API Key (Whisper)' },
 
     // ---- Notas ----
     notas:              { gl:'Notas', es:'Notas', pt:'Notas', en:'Notes' },
@@ -762,6 +785,44 @@ const TRANSLATIONS = {
     username_xa_existe:     { gl:'Ese usuario xa esta en uso', es:'Ese usuario ya esta en uso', pt:'Esse utilizador ja esta em uso', en:'That username is already taken' },
     email_disponible:       { gl:'Email disponible', es:'Email disponible', pt:'Email disponivel', en:'Email available' },
     email_xa_existe:        { gl:'Ese email xa esta en uso', es:'Ese email ya esta en uso', pt:'Esse email ja esta em uso', en:'That email is already taken' },
+
+    // ---- Newsletter (#12) ----
+    newsletter_titulo:      { gl:'Newsletter', es:'Newsletter', pt:'Newsletter', en:'Newsletter' },
+    newsletter_desc:        { gl:'Recibe as noticias e eventos no teu correo', es:'Recibe las noticias y eventos en tu correo', pt:'Receba as noticias e eventos no seu email', en:'Get news and events in your inbox' },
+    suscribirse:            { gl:'Suscribirse', es:'Suscribirse', pt:'Subscrever', en:'Subscribe' },
+    newsletter_ok:          { gl:'Suscrito correctamente!', es:'Suscrito correctamente!', pt:'Subscrito com sucesso!', en:'Subscribed successfully!' },
+    email_invalido:         { gl:'Email non valido', es:'Email no valido', pt:'Email invalido', en:'Invalid email' },
+
+    // ---- Papeleira (#31) ----
+    papeleira:              { gl:'Papeleira', es:'Papelera', pt:'Reciclagem', en:'Recycle bin' },
+    papeleira_desc:         { gl:'Elementos eliminados nos ultimos 30 dias', es:'Elementos eliminados en los ultimos 30 dias', pt:'Elementos eliminados nos ultimos 30 dias', en:'Items deleted in the last 30 days' },
+    papeleira_baleira:      { gl:'A papeleira esta baleira', es:'La papelera esta vacia', pt:'A reciclagem esta vazia', en:'Recycle bin is empty' },
+    restaurar:              { gl:'Restaurar', es:'Restaurar', pt:'Restaurar', en:'Restore' },
+    restaurado:             { gl:'Restaurado correctamente', es:'Restaurado correctamente', pt:'Restaurado com sucesso', en:'Restored successfully' },
+    eliminar_definitivo:    { gl:'Eliminar definitivo', es:'Eliminar definitivo', pt:'Eliminar definitivo', en:'Delete permanently' },
+    eliminado_definitivo:   { gl:'Eliminado definitivamente', es:'Eliminado definitivamente', pt:'Eliminado definitivamente', en:'Permanently deleted' },
+    confirmar_eliminar_definitivo: { gl:'Seguro que queres eliminar definitivamente? Esta accion non se pode desfacer.', es:'Seguro que quieres eliminar definitivamente? Esta accion no se puede deshacer.', pt:'Tem certeza que deseja eliminar definitivamente? Esta acao nao pode ser desfeita.', en:'Are you sure you want to permanently delete? This action cannot be undone.' },
+    eliminado_en:           { gl:'Eliminado', es:'Eliminado', pt:'Eliminado', en:'Deleted' },
+    modulo:                 { gl:'Modulo', es:'Modulo', pt:'Modulo', en:'Module' },
+
+    // ---- Countdown (#9) ----
+    dias:                   { gl:'Dias', es:'Dias', pt:'Dias', en:'Days' },
+    horas:                  { gl:'Horas', es:'Horas', pt:'Horas', en:'Hours' },
+    minutos:                { gl:'Minutos', es:'Minutos', pt:'Minutos', en:'Minutes' },
+
+    // ---- Comment pagination (#3) ----
+    ver_mais_comentarios:   { gl:'Ver mais comentarios', es:'Ver mas comentarios', pt:'Ver mais comentarios', en:'View more comments' },
+
+    // ---- Form validation (#4) ----
+    campo_obrigatorio:      { gl:'Este campo e obrigatorio', es:'Este campo es obligatorio', pt:'Este campo e obrigatorio', en:'This field is required' },
+    min_caracteres:         { gl:'Minimo {n} caracteres', es:'Minimo {n} caracteres', pt:'Minimo {n} caracteres', en:'Minimum {n} characters' },
+
+    // ---- Landing preview (#39) ----
+    vista_previa_landing:   { gl:'Vista previa', es:'Vista previa', pt:'Pre-visualizacao', en:'Preview' },
+
+    // ---- Pagination (#29) ----
+    paxina:                 { gl:'Paxina', es:'Pagina', pt:'Pagina', en:'Page' },
+    de:                     { gl:'de', es:'de', pt:'de', en:'of' },
 };
 
 function t(key) {

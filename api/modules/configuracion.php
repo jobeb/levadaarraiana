@@ -24,6 +24,9 @@ function handle_configuracion($method, $uri, $input) {
             if (isset($row['youtube_client_secret']) && $row['youtube_client_secret']) {
                 $row['youtube_client_secret'] = '********';
             }
+            if (isset($row['groq_api_key']) && $row['groq_api_key']) {
+                $row['groq_api_key'] = '********';
+            }
         }
         send_json($row);
     }
@@ -63,6 +66,12 @@ function handle_configuracion($method, $uri, $input) {
             $yt_secret = $row['youtube_client_secret'] ?? '';
         }
 
+        // Do not overwrite groq_api_key if the masked value is sent back
+        $groq_key = $input['groq_api_key'] ?? $row['groq_api_key'] ?? '';
+        if ($groq_key === '********') {
+            $groq_key = $row['groq_api_key'] ?? '';
+        }
+
         $stmt = $db->prepare(
             "UPDATE config SET
                 nome_asociacion=?, smtp_host=?, smtp_port=?, smtp_user=?, smtp_pass=?,
@@ -72,7 +81,8 @@ function handle_configuracion($method, $uri, $input) {
                 sobre_nos_gl=?, sobre_nos_es=?, sobre_nos_pt=?, sobre_nos_en=?,
                 youtube_client_id=?, youtube_client_secret=?,
                 comentarios_moderacion=?,
-                cal_cor_ensaios=?, cal_cor_bolos=?, cal_cor_noticias=?, cal_cor_votacions=?
+                cal_cor_ensaios=?, cal_cor_bolos=?, cal_cor_noticias=?, cal_cor_votacions=?,
+                groq_api_key=?
              WHERE id = 1"
         );
         $stmt->execute([
@@ -104,6 +114,7 @@ function handle_configuracion($method, $uri, $input) {
             $input['cal_cor_bolos'] ?? $row['cal_cor_bolos'] ?? '#ff9800',
             $input['cal_cor_noticias'] ?? $row['cal_cor_noticias'] ?? '#005f97',
             $input['cal_cor_votacions'] ?? $row['cal_cor_votacions'] ?? '#a50d3d',
+            $groq_key,
         ]);
         audit_log('CONFIG', 'config');
         send_json(['ok' => true]);

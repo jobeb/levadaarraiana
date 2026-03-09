@@ -190,7 +190,7 @@ function handle_votacions($method, $uri, $input) {
                     (SELECT COUNT(DISTINCT socio_id) FROM votos WHERE votacion_id = v.id) AS total_votantes,
                     (SELECT COUNT(*) FROM votos WHERE votacion_id = v.id) AS total_votos,
                     EXISTS(SELECT 1 FROM votos WHERE votacion_id = v.id AND socio_id = ?) AS user_voted
-                 FROM votacions v WHERE v.id = ?"
+                 FROM votacions v WHERE v.id = ? AND v.eliminado IS NULL"
             );
             $stmt->execute([$uid, $id]);
             $row = $stmt->fetch();
@@ -199,14 +199,23 @@ function handle_votacions($method, $uri, $input) {
             send_json($row);
         }
 
-        $stmt = $db->prepare(
-            "SELECT v.*,
+        $query = "SELECT v.*,
                 (SELECT COUNT(DISTINCT socio_id) FROM votos WHERE votacion_id = v.id) AS total_votantes,
                 (SELECT COUNT(*) FROM votos WHERE votacion_id = v.id) AS total_votos,
                 EXISTS(SELECT 1 FROM votos WHERE votacion_id = v.id AND socio_id = ?) AS user_voted
-             FROM votacions v ORDER BY v.creado DESC"
-        );
-        $stmt->execute([$uid]);
+             FROM votacions v WHERE v.eliminado IS NULL ORDER BY v.creado DESC";
+        $params = [$uid];
+
+        if (isset($_GET['page'])) {
+            $page = max(1, (int)$_GET['page']);
+            $limit = max(1, (int)($_GET['limit'] ?? 20));
+            $result = paginate_query($db, $query, $params, $page, $limit);
+            $result['data'] = fix_rows($result['data'], ['opcions'], ['anonima', 'user_voted']);
+            send_json($result);
+        }
+
+        $stmt = $db->prepare($query);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
         $rows = fix_rows($rows, ['opcions'], ['anonima', 'user_voted']);
         send_json($rows);
@@ -301,13 +310,10 @@ function handle_votacions($method, $uri, $input) {
         send_json(['ok' => true]);
     }
 
-    // DELETE
+    // DELETE (soft)
     if ($method === 'DELETE' && $id) {
         require_socio();
-        // Delete associated votes first (FK cascade should handle, but explicit is safer)
-        $stmt = $db->prepare("DELETE FROM votos WHERE votacion_id = ?");
-        $stmt->execute([$id]);
-        $stmt = $db->prepare("DELETE FROM votacions WHERE id = ?");
+        $stmt = $db->prepare("UPDATE votacions SET eliminado = NOW() WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([$id]);
         audit_log('DELETE', 'votacions', $id);
         send_json(['ok' => true]);

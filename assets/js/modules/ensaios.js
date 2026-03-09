@@ -446,9 +446,9 @@ function ensaiosViewNotas(id) {
 
     $('#modal-body').innerHTML = html;
 
-    var footerHtml = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+    var footerHtml = '';
     if (AppState.isSocio()) {
-        footerHtml += '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + id + '}))">' + t('editar') + '</button>';
+        footerHtml = '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');ensaiosModal(AppState.ensaios.find(function(x){return x.id==' + id + '}))">' + t('editar') + '</button>';
     }
     $('#modal-footer').innerHTML = footerHtml;
 
@@ -1003,8 +1003,7 @@ async function ensaiosConfirmModal(ensaioId) {
     $('#modal-footer').innerHTML =
         (isFuture ? '<button class="btn btn-success" onclick="_ensaiosCardAsistencia(' + ensaioId + ',\'confirmado\');hideModal(\'modal-overlay\')">' + t('confirmo') + '</button>' +
         '<button class="btn btn-warning" onclick="_ensaiosCardAsistencia(' + ensaioId + ',\'chegarei_tarde\');hideModal(\'modal-overlay\')">' + t('chegarei_tarde') + '</button>' +
-        '<button class="btn btn-danger" onclick="_ensaiosCardAsistencia(' + ensaioId + ',\'ausente\');hideModal(\'modal-overlay\')">' + t('non_podo') + '</button>' : '') +
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+        '<button class="btn btn-danger" onclick="_ensaiosCardAsistencia(' + ensaioId + ',\'ausente\');hideModal(\'modal-overlay\')">' + t('non_podo') + '</button>' : '');
 
     showModal('modal-overlay');
 }
@@ -1049,7 +1048,7 @@ async function ensaiosInstrumentCount(id) {
 
     $('#modal-title').textContent = t('reconto_instrumentos');
     $('#modal-body').innerHTML = '<p class="text-muted text-sm">' + t('cargando') + '</p>';
-    $('#modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+    $('#modal-footer').innerHTML = '';
     showModal('modal-overlay');
 
     var asistentes = [];
@@ -1064,7 +1063,7 @@ async function ensaiosInstrumentCount(id) {
         (e.hora_inicio ? '<span>' + esc(e.hora_inicio) + '</span>' : '') +
     '</div>';
 
-    var instHtml = _buildInstrumentCount(asistentes);
+    var instHtml = _buildInstrumentCount(asistentes, {detail: true});
     if (instHtml) {
         html += instHtml;
     } else {

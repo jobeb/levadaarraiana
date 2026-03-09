@@ -64,7 +64,7 @@ function handle_propostas($method, $uri, $input) {
                         COALESCE(SUM(CASE WHEN pv.voto = -1 THEN 1 ELSE 0 END), 0) AS votos_contra
                  FROM propostas p
                  LEFT JOIN propostas_votos pv ON pv.proposta_id = p.id
-                 WHERE p.id = ?
+                 WHERE p.id = ? AND p.eliminado IS NULL
                  GROUP BY p.id"
             );
             $stmt->execute([$id]);
@@ -84,16 +84,36 @@ function handle_propostas($method, $uri, $input) {
             $row['num_comentarios'] = (int)$cs->fetch()['cnt'];
             send_json(fix_row($row, ['ficheiros']));
         }
-        $rows = $db->query(
-            "SELECT p.*,
+        $query = "SELECT p.*,
                     COALESCE(SUM(CASE WHEN pv.voto = 1 THEN 1 ELSE 0 END), 0) AS votos_favor,
                     COALESCE(SUM(CASE WHEN pv.voto = -1 THEN 1 ELSE 0 END), 0) AS votos_contra,
                     (SELECT COUNT(*) FROM comentarios c WHERE c.item_type = 'proposta' AND c.item_id = p.id) AS num_comentarios
              FROM propostas p
              LEFT JOIN propostas_votos pv ON pv.proposta_id = p.id
+             WHERE p.eliminado IS NULL
              GROUP BY p.id
-             ORDER BY p.data DESC"
-        )->fetchAll();
+             ORDER BY p.data DESC";
+        if (isset($_GET['page'])) {
+            $page = max(1, (int)$_GET['page']);
+            $limit = max(1, (int)($_GET['limit'] ?? 20));
+            $result = paginate_query($db, $query, [], $page, $limit);
+            $user = get_session_user();
+            if ($user) {
+                $uid = (int)$user['id'];
+                $stmt_v = $db->prepare("SELECT proposta_id, voto FROM propostas_votos WHERE usuario_id = ?");
+                $stmt_v->execute([$uid]);
+                $votes = $stmt_v->fetchAll();
+                $userVotes = [];
+                foreach ($votes as $v) $userVotes[$v['proposta_id']] = (int)$v['voto'];
+                foreach ($result['data'] as &$r) {
+                    $r['meu_voto'] = $userVotes[$r['id']] ?? 0;
+                }
+                unset($r);
+            }
+            $result['data'] = fix_rows($result['data'], ['ficheiros']);
+            send_json($result);
+        }
+        $rows = $db->query($query)->fetchAll();
         // Check current user's vote
         $user = get_session_user();
         if ($user) {
@@ -191,7 +211,7 @@ function handle_propostas($method, $uri, $input) {
     // DELETE — admin
     if ($method === 'DELETE' && $id) {
         require_socio();
-        $stmt = $db->prepare("DELETE FROM propostas WHERE id = ?");
+        $stmt = $db->prepare("UPDATE propostas SET eliminado = NOW() WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([$id]);
         audit_log('DELETE', 'propostas', $id);
         send_json(['ok' => true]);

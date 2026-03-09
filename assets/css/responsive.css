@@ -195,6 +195,280 @@
     .overlay-card.overlay-legal {
         max-width: 95%;
     }
+
+    /* ============================================================
+       Modal / Confirm — footer always visible, buttons wrap
+       ============================================================ */
+
+    /* Make modal a flex column so header+footer stay visible */
+    .modal {
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        overflow-y: hidden;
+    }
+    .modal-header {
+        flex-shrink: 0;
+    }
+    .modal-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        min-height: 0;
+    }
+    .modal-footer {
+        flex-shrink: 0;
+        flex-wrap: wrap;
+    }
+    .modal-footer .btn {
+        flex: 1 1 auto;
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* Confirm dialog: flex column so footer stays visible */
+    .confirm-box {
+        overflow-y: hidden;
+    }
+    .confirm-box .confirm-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+    }
+    .confirm-box .confirm-footer {
+        flex-shrink: 0;
+        flex-wrap: wrap;
+    }
+    .confirm-box .confirm-footer .btn {
+        flex: 1 1 auto;
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* ============================================================
+       Touch targets — min 44×44px for all interactive elements
+       ============================================================ */
+
+    /* -- Icon buttons (edit, delete, share, etc.) -- */
+    .btn-icon {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
+    }
+
+    /* -- Instrument list up/down/remove buttons -- */
+    .instrument-item .btn-icon {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 8px;
+        font-size: 1rem;
+    }
+    .instrument-item {
+        gap: 6px;
+        padding: 8px;
+    }
+
+    /* -- Card action buttons (instrumento, noticia, etc.) -- */
+    .instrumento-card-actions,
+    .card-actions {
+        gap: 8px;
+    }
+
+    /* -- Modal close button -- */
+    .modal-close {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* -- Overlay close (login/register + detail) -- */
+    .overlay-close {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px;
+        font-size: 1.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .pub-detail-card .overlay-close {
+        width: 44px;
+        height: 44px;
+    }
+
+    /* -- Hamburger menu button -- */
+    .hamburger {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px 12px;
+        font-size: 1.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* -- Header bell (notifications) -- */
+    .header-bell {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
+    }
+
+    /* -- Header profile button -- */
+    .header-profile-btn {
+        min-height: 44px;
+        padding: 6px 12px 6px 6px;
+    }
+
+    /* -- Font size control (A, A+, A++) -- */
+    .font-size-control button {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+
+    /* -- Language selector buttons -- */
+    .lang-selector button {
+        min-height: 40px;
+        padding: 8px 14px;
+        font-size: 0.8rem;
+    }
+
+    /* -- Pagination -- */
+    .pagination button {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    /* -- Tabs -- */
+    .tab-btn {
+        min-height: 44px;
+        padding: 12px 18px;
+        font-size: 0.9rem;
+    }
+
+    /* -- DatePicker -- */
+    .dp-nav {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    .dp-cell {
+        min-height: 40px;
+        padding: 10px 4px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .dp-today-btn {
+        min-height: 44px;
+        padding: 12px;
+        font-size: 0.85rem;
+    }
+
+    /* -- Vote buttons (propostas) -- */
+    .vote-btn {
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+    .vote-buttons {
+        gap: 12px;
+    }
+
+    /* -- Photo editor action buttons (cover, fav, delete) -- */
+    .photo-editor-actions {
+        padding: 6px;
+        gap: 4px;
+    }
+    .photo-editor-actions button {
+        min-width: 36px;
+        min-height: 36px;
+        padding: 6px;
+        font-size: 1.1rem;
+    }
+
+    /* -- Comment buttons (reply, delete) -- */
+    .pub-comment-reply-btn {
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    .pub-comment-delete {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 8px;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* -- Password toggle (eye icon) -- */
+    .pw-toggle {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* -- Cookie banner buttons -- */
+    .cookie-banner .btn {
+        min-height: 44px;
+        padding: 10px 20px;
+    }
+
+    /* -- Standard buttons: ensure minimum height -- */
+    .btn {
+        min-height: 44px;
+        padding: 10px 18px;
+    }
+    .btn-sm {
+        min-height: 38px;
+        padding: 8px 14px;
+    }
+
+    /* -- Recording buttons -- */
+    .btn-rec {
+        min-height: 44px;
+        padding: 10px 16px;
+    }
+
+    /* -- File list item delete button -- */
+    .file-list-item .btn-icon {
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    /* -- Export dropdown items -- */
+    .export-dropdown-menu button {
+        min-height: 44px;
+        padding: 12px 16px;
+    }
+
+    /* -- Section header actions: wrap and space buttons -- */
+    .section-header .btn,
+    .section-header .btn-icon {
+        min-height: 44px;
+    }
+    .section-header {
+        gap: var(--gap-sm);
+    }
+
+    /* -- Search bar button -- */
+    .search-bar .btn {
+        min-height: 44px;
+    }
 }
 
 /* ---- Small mobile (< 480px) ---- */
@@ -236,7 +510,17 @@
         flex-wrap: nowrap;
     }
     .tab-btn {
-        padding: 8px 14px;
-        font-size: 0.8rem;
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    /* Tighter icon buttons to fit more in small screens */
+    .btn-icon {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 8px;
+    }
+    .instrumento-card-actions {
+        gap: 4px;
     }
 }

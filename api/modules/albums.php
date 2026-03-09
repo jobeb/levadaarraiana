@@ -34,7 +34,19 @@ function handle_albums($method, $uri, $input) {
 
     // GET /albums → listar todos (público)
     if ($uri === '/albums' && $method === 'GET') {
-        $rows = $db->query("SELECT * FROM albums ORDER BY data DESC, id DESC")->fetchAll();
+        $query = "SELECT * FROM albums WHERE eliminado IS NULL ORDER BY data DESC, id DESC";
+        if (isset($_GET['page'])) {
+            $page = max(1, (int)$_GET['page']);
+            $limit = max(1, (int)($_GET['limit'] ?? 20));
+            $result = paginate_query($db, $query, [], $page, $limit);
+            $result['data'] = fix_rows($result['data'], ['fotos', 'i18n']);
+            foreach ($result['data'] as &$r) {
+                $r['fotos'] = normalize_fotos($r['fotos']);
+            }
+            unset($r);
+            send_json($result);
+        }
+        $rows = $db->query($query)->fetchAll();
         $rows = fix_rows($rows, ['fotos', 'i18n']);
         foreach ($rows as &$r) {
             $r['fotos'] = normalize_fotos($r['fotos']);
@@ -45,7 +57,7 @@ function handle_albums($method, $uri, $input) {
 
     // GET /albums/ID → un album (público)
     if (preg_match('#^/albums/(\d+)$#', $uri, $m) && $method === 'GET') {
-        $stmt = $db->prepare("SELECT * FROM albums WHERE id = ?");
+        $stmt = $db->prepare("SELECT * FROM albums WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([(int)$m[1]]);
         $row = $stmt->fetch();
         if (!$row) send_error('Album non atopado', 'erro_non_atopado', 404);
@@ -191,7 +203,7 @@ function handle_albums($method, $uri, $input) {
     if (preg_match('#^/albums/(\d+)$#', $uri, $m) && $method === 'DELETE') {
         require_socio();
         $id   = (int)$m[1];
-        $stmt = $db->prepare("DELETE FROM albums WHERE id = ?");
+        $stmt = $db->prepare("UPDATE albums SET eliminado = NOW() WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) {
             send_error('Album non atopado', 'erro_non_atopado', 404);

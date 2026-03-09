@@ -36,15 +36,17 @@ function configuracionRender() {
         '<button class="tab-btn active" data-tab="cfg-xeral" onclick="_configTab(\'cfg-xeral\')">' + t('sec_xeral') + '</button>' +
         (_isAdmin ? '<button class="tab-btn" data-tab="cfg-smtp" onclick="_configTab(\'cfg-smtp\')">' + t('smtp') + '</button>' : '') +
         '<button class="tab-btn" data-tab="cfg-fiscal" onclick="_configTab(\'cfg-fiscal\')">' + t('datos_fiscais') + '</button>' +
-        '<button class="tab-btn" data-tab="cfg-about" onclick="_configTab(\'cfg-about\')">' + t('sobre_nos') + '</button>' +
         '<button class="tab-btn" data-tab="cfg-calendario" onclick="_configTab(\'cfg-calendario\')">' + t('calendario') + '</button>' +
-        (_isAdmin ? '<button class="tab-btn" data-tab="cfg-youtube" onclick="_configTab(\'cfg-youtube\')">YouTube</button>' : '') +
+        (_isAdmin ? '<button class="tab-btn" data-tab="cfg-youtube" onclick="_configTab(\'cfg-youtube\')">' + t('servizos_externos') + '</button>' : '') +
         (_isAdmin ? '<button class="tab-btn" data-tab="cfg-backup" onclick="_configTab(\'cfg-backup\')">' + t('copias_seguridade') + '</button>' : '') +
     '</div>';
 
     /* ---- Landing tab ---- */
     html += '<div class="config-tab-panel" id="cfg-landing" style="display:none">' +
-        '<p style="color:var(--text-muted);margin-bottom:16px">' + t('cargando') + '</p>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+            '<p style="color:var(--text-muted);margin:0">' + t('cargando') + '</p>' +
+            '<button class="btn btn-sm btn-secondary" onclick="window.open(\'index.html\',\'_blank\')">' + t('vista_previa_landing') + '</button>' +
+        '</div>' +
     '</div>';
 
     /* ---- General tab ---- */
@@ -152,24 +154,12 @@ function configuracionRender() {
         '</div>' +
     '</div>';
 
-    /* ---- About tab ---- */
-    html += '<div class="config-tab-panel" id="cfg-about" style="display:none">' +
-        '<div class="form-group">' +
-            '<label>' + t('sobre_nos') + ' (Galego)</label>' +
-            '<textarea class="form-control" id="cfg-sobre-nos-gl" rows="4">' + esc(cfg.sobre_nos_gl || '') + '</textarea>' +
-        '</div>' +
-        '<div class="form-group">' +
-            '<label>' + t('sobre_nos') + ' (Castellano)</label>' +
-            '<textarea class="form-control" id="cfg-sobre-nos-es" rows="4">' + esc(cfg.sobre_nos_es || '') + '</textarea>' +
-        '</div>' +
-        '<div class="form-group">' +
-            '<label>' + t('sobre_nos') + ' (Portugues)</label>' +
-            '<textarea class="form-control" id="cfg-sobre-nos-pt" rows="4">' + esc(cfg.sobre_nos_pt || '') + '</textarea>' +
-        '</div>' +
-        '<div class="form-group">' +
-            '<label>' + t('sobre_nos') + ' (English)</label>' +
-            '<textarea class="form-control" id="cfg-sobre-nos-en" rows="4">' + esc(cfg.sobre_nos_en || '') + '</textarea>' +
-        '</div>' +
+    /* ---- About (hidden panel — textareas live here for save, visible in landing tab) ---- */
+    html += '<div style="display:none">' +
+        '<textarea id="cfg-sobre-nos-gl">' + esc(cfg.sobre_nos_gl || '') + '</textarea>' +
+        '<textarea id="cfg-sobre-nos-es">' + esc(cfg.sobre_nos_es || '') + '</textarea>' +
+        '<textarea id="cfg-sobre-nos-pt">' + esc(cfg.sobre_nos_pt || '') + '</textarea>' +
+        '<textarea id="cfg-sobre-nos-en">' + esc(cfg.sobre_nos_en || '') + '</textarea>' +
     '</div>';
 
     /* ---- Calendar colors tab ---- */
@@ -208,6 +198,11 @@ function configuracionRender() {
         '<div class="flex gap-sm" style="margin-top:12px">' +
             '<button class="btn btn-primary" id="cfg-yt-connect-btn" onclick="youtubeConnect()">' + t('youtube_conectar') + '</button>' +
             '<button class="btn btn-danger" id="cfg-yt-disconnect-btn" onclick="youtubeDisconnect()" style="display:none">' + t('youtube_desconectar') + '</button>' +
+        '</div>' +
+        '<hr style="margin:20px 0;border-color:var(--border)">' +
+        '<div class="form-group">' +
+            '<label>' + t('groq_api_key') + '</label>' +
+            '<input type="password" class="form-control" id="cfg-groq-api-key" value="' + esc(cfg.groq_api_key || '') + '">' +
         '</div>' +
     '</div>';
     }
@@ -271,11 +266,11 @@ async function configuracionSave() {
         fiscal_provincia: ($('#cfg-fiscal-provincia') || {}).value || '',
         fiscal_telefono: ($('#cfg-fiscal-telefono') || {}).value || '',
         fiscal_email: ($('#cfg-fiscal-email') || {}).value || '',
-        // About
-        sobre_nos_gl: ($('#cfg-sobre-nos-gl') || {}).value || '',
-        sobre_nos_es: ($('#cfg-sobre-nos-es') || {}).value || '',
-        sobre_nos_pt: ($('#cfg-sobre-nos-pt') || {}).value || '',
-        sobre_nos_en: ($('#cfg-sobre-nos-en') || {}).value || '',
+        // About (prefer rich text editors if available, fall back to hidden textareas)
+        sobre_nos_gl: getRichTextContent('cfg-sobre-nos-editor-gl') || ($('#cfg-sobre-nos-gl') || {}).value || '',
+        sobre_nos_es: getRichTextContent('cfg-sobre-nos-editor-es') || ($('#cfg-sobre-nos-es') || {}).value || '',
+        sobre_nos_pt: getRichTextContent('cfg-sobre-nos-editor-pt') || ($('#cfg-sobre-nos-pt') || {}).value || '',
+        sobre_nos_en: getRichTextContent('cfg-sobre-nos-editor-en') || ($('#cfg-sobre-nos-en') || {}).value || '',
         // Moderación
         comentarios_moderacion: parseInt(($('#cfg-comentarios-moderacion') || {}).value) || 0,
         // Calendar colors
@@ -297,6 +292,7 @@ async function configuracionSave() {
         body.email_metodo = ($('#cfg-email-metodo') || {}).value || 'php_mail';
         body.youtube_client_id = ($('#cfg-yt-client-id') || {}).value || '';
         body.youtube_client_secret = ($('#cfg-yt-client-secret') || {}).value || '';
+        body.groq_api_key = ($('#cfg-groq-api-key') || {}).value || '';
     }
 
     try {
@@ -438,15 +434,18 @@ function _renderLandingTab(seccions) {
     var panel = $('#cfg-landing');
     if (!panel) return;
 
-    var html = '<p style="color:var(--text-muted);margin-bottom:16px">' + t('paxina_inicio') + '</p>';
+    var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+        '<p style="color:var(--text-muted);margin:0">' + t('paxina_inicio') + '</p>' +
+        '<button class="btn btn-sm btn-secondary" onclick="window.open(\'index.html\',\'_blank\')">' + t('vista_previa_landing') + '</button>' +
+    '</div>';
 
     seccions.forEach(function(s) {
         var name = _landingSecNames[s.id] || s.id;
         var hasImg = !!s.bg_imaxe;
         var hasVid = !!s.bg_video;
 
-        html += '<div class="card landing-sec-card" draggable="true" data-sec-id="' + s.id + '" style="margin-bottom:16px;padding:16px' + (s.activa === false ? ';opacity:0.5' : '') + '">' +
-            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:grab">' +
+        html += '<div class="card landing-sec-card" data-sec-id="' + s.id + '" style="margin-bottom:16px;padding:16px' + (s.activa === false ? ';opacity:0.5' : '') + '">' +
+            '<div class="landing-sec-handle" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:grab">' +
                 '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>' +
                 '<h4 style="margin:0;color:var(--primary);flex:1">' + esc(name) + '</h4>' +
                 '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;color:var(--text-muted)">' +
@@ -551,6 +550,30 @@ function _renderLandingTab(seccions) {
             '</div>' : '') +
         '</div>';
 
+        // Sobre nós: inject language tabs with text editing inside this card
+        if (s.id === 'sobre_nos') {
+            var _cfg = AppState.config || {};
+            var _langs = [
+                { code: 'gl', label: 'Galego' },
+                { code: 'es', label: 'Castellano' },
+                { code: 'pt', label: 'Português' },
+                { code: 'en', label: 'English' }
+            ];
+            html += '<div class="form-group" style="margin-top:12px">' +
+                '<label>' + t('sobre_nos') + '</label>' +
+                '<div class="tabs" style="margin-bottom:8px">';
+            _langs.forEach(function(l, i) {
+                html += '<button class="tab-btn' + (i === 0 ? ' active' : '') + '" data-tab="cfg-about-' + l.code + '" onclick="_cfgAboutLang(\'' + l.code + '\')">' + l.label + '</button>';
+            });
+            html += '</div>';
+            _langs.forEach(function(l, i) {
+                html += '<div class="cfg-about-lang-panel" id="cfg-about-' + l.code + '" style="' + (i !== 0 ? 'display:none' : '') + '">' +
+                    '<div class="rt-wrap" id="cfg-sobre-nos-editor-' + l.code + '"></div>' +
+                '</div>';
+            });
+            html += '</div>';
+        }
+
         // Save button per section
         html += '<button class="btn btn-primary btn-sm" onclick="_landingSaveSec(\'' + s.id + '\')">' + t('gardar') + '</button>' +
         '</div>';
@@ -558,11 +581,30 @@ function _renderLandingTab(seccions) {
 
     panel.innerHTML = html;
 
-    // Init drag-and-drop for section reordering (use onX to avoid stacking listeners)
+    // Init Sobre Nós rich text editors
+    var _cfgAbout = AppState.config || {};
+    ['gl','es','pt','en'].forEach(function(l) {
+        var edId = 'cfg-sobre-nos-editor-' + l;
+        if (document.getElementById(edId)) {
+            initRichTextEditor(edId, _cfgAbout['sobre_nos_' + l] || '');
+        }
+    });
+
+    // Init drag-and-drop: only draggable from the handle area
     var dragEl = null;
+    panel.onmousedown = panel.ontouchstart = function(e) {
+        var handle = e.target.closest('.landing-sec-handle');
+        var card = e.target.closest('.landing-sec-card');
+        if (handle && card) {
+            card.draggable = true;
+        } else if (card) {
+            card.draggable = false;
+        }
+    };
     panel.ondragstart = function(e) {
         dragEl = e.target.closest('.landing-sec-card');
-        if (dragEl) dragEl.classList.add('dragging');
+        if (!dragEl || !dragEl.draggable) { e.preventDefault(); return; }
+        dragEl.classList.add('dragging');
     };
     panel.ondragover = function(e) {
         e.preventDefault();
@@ -575,10 +617,22 @@ function _renderLandingTab(seccions) {
         }
     };
     panel.ondragend = function() {
-        if (dragEl) dragEl.classList.remove('dragging');
+        if (dragEl) { dragEl.classList.remove('dragging'); dragEl.draggable = false; }
         dragEl = null;
         _landingSaveOrder();
     };
+}
+
+function _cfgAboutLang(code) {
+    var panels = document.querySelectorAll('.cfg-about-lang-panel');
+    panels.forEach(function(p) { p.style.display = 'none'; });
+    var active = $('#cfg-about-' + code);
+    if (active) active.style.display = '';
+    // Update tab buttons
+    var btns = active ? active.closest('.card').querySelectorAll('.tab-btn') : [];
+    btns.forEach(function(b) {
+        b.classList.toggle('active', b.dataset.tab === 'cfg-about-' + code);
+    });
 }
 
 function _landingToggleBgSizeCustom(secId) {
@@ -666,6 +720,23 @@ async function _landingSaveSec(secId) {
 
     try {
         await api('/landing-seccions/' + secId, { method: 'PUT', body: body });
+
+        // Also save sobre_nos texts when saving the sobre_nos section
+        if (secId === 'sobre_nos') {
+            var aboutBody = {
+                sobre_nos_gl: getRichTextContent('cfg-sobre-nos-editor-gl') || '',
+                sobre_nos_es: getRichTextContent('cfg-sobre-nos-editor-es') || '',
+                sobre_nos_pt: getRichTextContent('cfg-sobre-nos-editor-pt') || '',
+                sobre_nos_en: getRichTextContent('cfg-sobre-nos-editor-en') || ''
+            };
+            await api('/config', { method: 'PUT', body: aboutBody });
+            ['gl','es','pt','en'].forEach(function(l) {
+                var hidden = $('#cfg-sobre-nos-' + l);
+                if (hidden) hidden.value = aboutBody['sobre_nos_' + l];
+            });
+            Object.assign(AppState.config, aboutBody);
+        }
+
         toast(t('gardado'), 'success');
         _loadLandingSeccions();
     } catch (e) {

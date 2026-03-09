@@ -20,13 +20,25 @@ function handle_instrumentos($method, $uri, $input) {
     // GET — list all or single (público — showcase)
     if ($method === 'GET') {
         if ($id) {
-            $stmt = $db->prepare("SELECT * FROM instrumentos WHERE id = ?");
+            $stmt = $db->prepare("SELECT * FROM instrumentos WHERE id = ? AND eliminado IS NULL");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) send_error('Instrumento non atopado', 'erro_non_atopado', 404);
             send_json(fix_row($row, ['i18n']));
         }
-        $rows = $db->query("SELECT * FROM instrumentos ORDER BY nome ASC")->fetchAll();
+
+        $query = "SELECT * FROM instrumentos WHERE eliminado IS NULL ORDER BY nome ASC";
+        $params = [];
+
+        if (isset($_GET['page'])) {
+            $page = max(1, (int)$_GET['page']);
+            $limit = max(1, (int)($_GET['limit'] ?? 20));
+            $result = paginate_query($db, $query, $params, $page, $limit);
+            $result['data'] = fix_rows($result['data'], ['i18n']);
+            send_json($result);
+        }
+
+        $rows = $db->query($query)->fetchAll();
         send_json(fix_rows($rows, ['i18n']));
     }
 
@@ -137,10 +149,10 @@ function handle_instrumentos($method, $uri, $input) {
         send_json(['ok' => true]);
     }
 
-    // DELETE — admin
+    // DELETE — admin (soft)
     if ($method === 'DELETE' && $id) {
         require_socio();
-        $stmt = $db->prepare("DELETE FROM instrumentos WHERE id = ?");
+        $stmt = $db->prepare("UPDATE instrumentos SET eliminado = NOW() WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([$id]);
         audit_log('DELETE', 'instrumentos', $id);
         send_json(['ok' => true]);

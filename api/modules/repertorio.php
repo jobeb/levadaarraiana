@@ -94,13 +94,25 @@ function handle_repertorio($method, $uri, $input) {
     if ($method === 'GET') {
         require_auth();
         if ($id) {
-            $stmt = $db->prepare("SELECT * FROM repertorio WHERE id = ?");
+            $stmt = $db->prepare("SELECT * FROM repertorio WHERE id = ? AND eliminado IS NULL");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) send_error('Peza non atopada', 'erro_non_atopado', 404);
             send_json(fix_row($row, ['estructura']));
         }
-        $rows = $db->query("SELECT * FROM repertorio ORDER BY nome ASC")->fetchAll();
+
+        $query = "SELECT * FROM repertorio WHERE eliminado IS NULL ORDER BY nome ASC";
+        $params = [];
+
+        if (isset($_GET['page'])) {
+            $page = max(1, (int)$_GET['page']);
+            $limit = max(1, (int)($_GET['limit'] ?? 20));
+            $result = paginate_query($db, $query, $params, $page, $limit);
+            $result['data'] = fix_rows($result['data'], ['estructura']);
+            send_json($result);
+        }
+
+        $rows = $db->query($query)->fetchAll();
         send_json(fix_rows($rows, ['estructura']));
     }
 
@@ -189,19 +201,10 @@ function handle_repertorio($method, $uri, $input) {
         send_json(['ok' => true]);
     }
 
-    // DELETE — admin
+    // DELETE — admin (soft)
     if ($method === 'DELETE' && $id) {
         require_socio();
-        // Remove medio files from disk before CASCADE deletes DB rows
-        $mStmt = $db->prepare("SELECT arquivo FROM repertorio_medios WHERE repertorio_id = ?");
-        $mStmt->execute([$id]);
-        foreach ($mStmt->fetchAll() as $m) {
-            if ($m['arquivo'] && strpos($m['arquivo'], 'youtube.com/') === false) {
-                $p = UPLOADS_DIR . '/' . $m['arquivo'];
-                if (file_exists($p)) @unlink($p);
-            }
-        }
-        $stmt = $db->prepare("DELETE FROM repertorio WHERE id = ?");
+        $stmt = $db->prepare("UPDATE repertorio SET eliminado = NOW() WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([$id]);
         audit_log('DELETE', 'repertorio', $id);
         send_json(['ok' => true]);

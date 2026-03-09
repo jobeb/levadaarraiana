@@ -80,6 +80,17 @@ function bolosRender() {
 
     var list = AppState.bolos || [];
 
+    // Dashboard filter: proximos / realizados
+    if (AppState.dashboardFilter === 'proximos' || AppState.dashboardFilter === 'realizados') {
+        var _hoxe = today();
+        if (AppState.dashboardFilter === 'proximos') {
+            list = list.filter(function(b) { return b.data >= _hoxe; });
+        } else {
+            list = list.filter(function(b) { return b.data < _hoxe; });
+        }
+        AppState.dashboardFilter = null;
+    }
+
     if (list.length === 0) {
         grid.innerHTML = '<p class="text-center">' + t('sen_resultados') + '</p>';
         return;
@@ -505,8 +516,7 @@ async function bolosConfirmModal(boloId) {
     var isFuture = b.data >= today();
     $('#modal-footer').innerHTML =
         (isFuture ? '<button class="btn btn-success" onclick="bolosAsistenciaRapida(' + boloId + ',\'confirmado\');hideModal(\'modal-overlay\')">' + t('confirmo') + '</button>' +
-        '<button class="btn btn-danger" onclick="bolosAsistenciaRapida(' + boloId + ',\'non_podo\');hideModal(\'modal-overlay\')">' + t('non_podo') + '</button>' : '') +
-        '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+        '<button class="btn btn-danger" onclick="bolosAsistenciaRapida(' + boloId + ',\'non_podo\');hideModal(\'modal-overlay\')">' + t('non_podo') + '</button>' : '');
 
     showModal('modal-overlay');
 }
@@ -666,7 +676,7 @@ async function bolosInstrumentCount(id) {
 
     $('#modal-title').textContent = t('reconto_instrumentos');
     $('#modal-body').innerHTML = '<p class="text-muted text-sm">' + t('cargando') + '</p>';
-    $('#modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+    $('#modal-footer').innerHTML = '';
     showModal('modal-overlay');
 
     var asistentes = [];
@@ -681,7 +691,7 @@ async function bolosInstrumentCount(id) {
         (b.lugar ? '<span>' + esc(b.lugar) + '</span>' : '') +
     '</div>';
 
-    var instHtml = _buildInstrumentCount(asistentes);
+    var instHtml = _buildInstrumentCount(asistentes, {detail: true});
     if (instHtml) {
         html += instHtml;
     } else {

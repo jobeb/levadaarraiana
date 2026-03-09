@@ -58,6 +58,9 @@ try {
         '/backup'        => 'backup',
         '/youtube'       => 'youtube',
         '/auditoria'     => 'auditoria',
+        '/whisper'       => 'whisper',
+        '/newsletter'    => 'newsletter',
+        '/papeleira'     => 'papeleira',
     ];
 
     // Find matching route (longest prefix match)

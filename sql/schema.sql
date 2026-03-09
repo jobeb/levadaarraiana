@@ -43,6 +43,7 @@ CREATE TABLE `noticias` (
   `estado` varchar(50) NOT NULL DEFAULT 'publicada',
   `publica` tinyint(1) NOT NULL DEFAULT 0,
   `i18n` JSON DEFAULT NULL,
+  `eliminado` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -66,6 +67,7 @@ CREATE TABLE `bolos` (
   `estado` varchar(50) NOT NULL DEFAULT 'borrador',
   `publica` tinyint(1) NOT NULL DEFAULT 0,
   `i18n` JSON DEFAULT NULL,
+  `eliminado` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -79,6 +81,7 @@ CREATE TABLE `albums` (
   `portada` varchar(512) NOT NULL DEFAULT '',
   `fotos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`fotos`)),
   `i18n` JSON DEFAULT NULL,
+  `eliminado` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -93,6 +96,7 @@ CREATE TABLE `propostas` (
   `autor_nome` varchar(255) NOT NULL DEFAULT '',
   `ficheiros` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`ficheiros`)),
   `estado` varchar(20) NOT NULL DEFAULT 'aberta',
+  `eliminado` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -119,6 +123,7 @@ CREATE TABLE `actas` (
   `estado` varchar(50) NOT NULL DEFAULT 'borrador',
   `arquivos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`arquivos`)),
   `creado` datetime DEFAULT NULL,
+  `eliminado` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -137,6 +142,7 @@ CREATE TABLE `votacions` (
   `creado` datetime DEFAULT current_timestamp(),
   `pechado_en` datetime DEFAULT NULL,
   `data_limite` date DEFAULT NULL,
+  `eliminado` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -168,6 +174,7 @@ CREATE TABLE `ensaios` (
   `recorrencia` varchar(20) DEFAULT NULL,
   `recorrencia_fin` date DEFAULT NULL,
   `grupo_recorrencia` int(11) DEFAULT NULL,
+  `eliminado` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -195,6 +202,7 @@ CREATE TABLE `instrumentos` (
   `imaxe` varchar(512) NOT NULL DEFAULT '',
   `audio_mostra` varchar(512) NOT NULL DEFAULT '',
   `i18n` JSON DEFAULT NULL,
+  `eliminado` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -208,6 +216,7 @@ CREATE TABLE `repertorio` (
   `arquivo_audio` varchar(512) NOT NULL DEFAULT '',
   `arquivo_partitura` varchar(512) NOT NULL DEFAULT '',
   `estructura` JSON DEFAULT NULL,
+  `eliminado` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -260,6 +269,7 @@ CREATE TABLE `config` (
   `cal_cor_votacions` varchar(20) NOT NULL DEFAULT '#a50d3d',
   `gate_password` varchar(255) NOT NULL DEFAULT 'levada2026',
   `audit_retencion_dias` int(11) NOT NULL DEFAULT 90,
+  `groq_api_key` varchar(512) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   CONSTRAINT `config_singleton` CHECK (`id` = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -390,6 +400,18 @@ CREATE TABLE `actas_asistentes` (
   UNIQUE KEY `unique_acta_socio` (`acta_id`, `socio_id`),
   FOREIGN KEY (`acta_id`) REFERENCES `actas` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`socio_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 30. Newsletter (suscricións)
+DROP TABLE IF EXISTS `newsletter`;
+CREATE TABLE `newsletter` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `email` varchar(255) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  `creado` datetime DEFAULT CURRENT_TIMESTAMP,
+  `token_baixa` varchar(255) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

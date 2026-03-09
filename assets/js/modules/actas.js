@@ -542,9 +542,20 @@ function _actaDoRecord() {
                 previewDiv.remove();
             });
 
+            // Transcribe button
+            var transcribeBtn = document.createElement('button');
+            transcribeBtn.type = 'button';
+            transcribeBtn.className = 'btn btn-sm btn-secondary';
+            transcribeBtn.style.marginTop = '4px';
+            transcribeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> ' + t('transcribir');
+            transcribeBtn.addEventListener('click', function() {
+                _actaTranscribe(file, previewDiv);
+            });
+
             previewDiv.appendChild(player);
             previewDiv.appendChild(nameSpan);
             previewDiv.appendChild(removeBtn);
+            previewDiv.appendChild(transcribeBtn);
             container.appendChild(previewDiv);
         }
 
@@ -616,5 +627,127 @@ function _actaDoRecord() {
 
         _actaRecElapsed = 0;
         _actaTimerResume(timerSpan);
+    }
+}
+
+// ---- Audio transcription (Groq Whisper) ----
+
+async function _actaTranscribe(file, previewDiv) {
+    // Remove any previous transcript result in this preview
+    var oldResult = previewDiv.querySelector('.rec-transcript-result');
+    if (oldResult) oldResult.remove();
+
+    // Find and disable the transcribe button
+    var btn = previewDiv.querySelector('.btn-sm.btn-secondary');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="btn-spinner"></span> ' + t('transcribindo');
+    }
+
+    try {
+        var f64 = await fileToBase64(file);
+        var ext = (file.name || '').split('.').pop().toLowerCase() || 'webm';
+
+        var result = await api('/whisper/transcribe', {
+            method: 'POST',
+            body: {
+                audio_data: f64.data,
+                audio_ext: ext,
+                lang: AppState.lang || 'gl'
+            }
+        });
+
+        var text = (result.text || '').trim();
+        if (!text) {
+            toast(t('sen_resultados'), 'info');
+            return;
+        }
+
+        // Show transcript result
+        var resultDiv = document.createElement('div');
+        resultDiv.className = 'rec-transcript-result';
+
+        var textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.rows = 4;
+
+        var insertBtn = document.createElement('button');
+        insertBtn.type = 'button';
+        insertBtn.className = 'btn btn-sm btn-primary';
+        insertBtn.textContent = t('inserir_contido');
+        insertBtn.addEventListener('click', function() {
+            _actaInsertTranscript(textarea.value);
+        });
+
+        var summaryBtn = document.createElement('button');
+        summaryBtn.type = 'button';
+        summaryBtn.className = 'btn btn-sm btn-secondary';
+        summaryBtn.textContent = t('xerar_resumo');
+        summaryBtn.addEventListener('click', function() {
+            _actaSummarize(textarea, summaryBtn);
+        });
+
+        var btnRow = document.createElement('div');
+        btnRow.style.display = 'flex';
+        btnRow.style.gap = '6px';
+        btnRow.style.marginTop = '6px';
+        btnRow.appendChild(insertBtn);
+        btnRow.appendChild(summaryBtn);
+
+        resultDiv.appendChild(textarea);
+        resultDiv.appendChild(btnRow);
+        previewDiv.appendChild(resultDiv);
+
+    } catch (e) {
+        toast(t('erro_transcricion') + ': ' + e.message, 'error');
+    } finally {
+        // Restore button
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> ' + t('transcribir');
+        }
+    }
+}
+
+async function _actaSummarize(textarea, btn) {
+    var text = (textarea.value || '').trim();
+    if (!text) {
+        toast(t('erro_resumo'), 'error');
+        return;
+    }
+
+    var originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> ' + t('xerando_resumo');
+
+    try {
+        var result = await api('/whisper/summarize', {
+            method: 'POST',
+            body: {
+                text: text,
+                lang: AppState.lang || 'gl'
+            }
+        });
+
+        var summary = (result.summary || '').trim();
+        if (summary) {
+            _actaInsertTranscript(summary);
+            toast(t('resumo_inserido'), 'success');
+        }
+    } catch (e) {
+        toast(t('erro_resumo') + ': ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
+function _actaInsertTranscript(text) {
+    if (!text) return;
+    var editor = _rtInstances['acta-contido-editor'];
+    if (editor) {
+        var len = editor.getLength();
+        editor.insertText(len - 1, '\n' + text);
+        toast(t('transcricion_inserida'), 'success');
     }
 }

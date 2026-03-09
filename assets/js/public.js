@@ -4,8 +4,86 @@
 
 // Cached public data
 var _pubData = { noticias: [], bolos: [], instrumentos: [] };
+// Currently playing instrument audio
+var _pubInstrAudio = null;
+var _pubInstrAudioId = null;
 // Cache de comentarios: { noticia: { id: [comments] }, bolo: { id: [comments] } }
 var _pubComments = { noticia: {}, bolo: {} };
+
+// Countdown interval
+var _pubCountdownInterval = null;
+
+// Skeleton loader helper
+function _pubShowSkeletons() {
+    var skeletonCard = '<div class="skeleton-card skeleton"><div class="skeleton-img skeleton"></div><div class="skeleton-line skeleton"></div><div class="skeleton-line short skeleton"></div><div class="skeleton-line xs skeleton"></div></div>';
+    var grids = ['pub-noticias-grid', 'pub-bolos-grid', 'pub-bolos-pasados-grid', 'pub-galeria-grid'];
+    grids.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && !el.children.length) {
+            el.innerHTML = skeletonCard + skeletonCard + skeletonCard;
+        }
+    });
+}
+
+// Social share buttons
+function _pubShareHtml(title, url) {
+    var encoded = encodeURIComponent(title + ' — ' + url);
+    var encodedUrl = encodeURIComponent(url);
+    return '<div class="pub-share-btns">' +
+        '<button class="pub-share-btn whatsapp" onclick="event.stopPropagation();window.open(\'https://api.whatsapp.com/send?text=' + encoded + '\',\'_blank\')" title="WhatsApp">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.118.549 4.107 1.513 5.838L0 24l6.336-1.478A11.937 11.937 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75c-1.98 0-3.82-.558-5.39-1.524l-.387-.229-3.758.877.92-3.634-.253-.4A9.698 9.698 0 012.25 12c0-5.385 4.365-9.75 9.75-9.75S21.75 6.615 21.75 12s-4.365 9.75-9.75 9.75z"/></svg>' +
+        '</button>' +
+        '<button class="pub-share-btn facebook" onclick="event.stopPropagation();window.open(\'https://www.facebook.com/sharer/sharer.php?u=' + encodedUrl + '\',\'_blank\')" title="Facebook">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>' +
+        '</button>' +
+        '<button class="pub-share-btn twitter" onclick="event.stopPropagation();window.open(\'https://twitter.com/intent/tweet?text=' + encoded + '\',\'_blank\')" title="X/Twitter">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>' +
+        '</button>' +
+        '<button class="pub-share-btn instagram" onclick="event.stopPropagation();navigator.clipboard.writeText(\'' + url.replace(/'/g, "\\'") + '\').then(function(){toast(t(\'enlace_copiado\'),\'success\')})" title="Instagram">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>' +
+        '</button>' +
+    '</div>';
+}
+
+// Countdown for next event
+function _pubStartCountdown(bolos) {
+    if (_pubCountdownInterval) clearInterval(_pubCountdownInterval);
+    var now = new Date();
+    var next = null;
+    for (var i = 0; i < bolos.length; i++) {
+        var b = bolos[i];
+        if (!b.publica) continue;
+        var d = new Date(b.data + 'T' + (b.hora || '00:00') + ':00');
+        if (d > now) {
+            if (!next || d < next.date) next = { date: d, bolo: b };
+        }
+    }
+    var el = document.getElementById('pub-countdown');
+    if (!el || !next) {
+        if (el) el.style.display = 'none';
+        return;
+    }
+    el.style.display = '';
+    function update() {
+        var diff = next.date - new Date();
+        if (diff <= 0) {
+            el.style.display = 'none';
+            clearInterval(_pubCountdownInterval);
+            return;
+        }
+        var days = Math.floor(diff / 86400000);
+        var hours = Math.floor((diff % 86400000) / 3600000);
+        var mins = Math.floor((diff % 3600000) / 60000);
+        el.innerHTML = '<h3 style="text-align:center;margin-bottom:8px;color:var(--text)">' + esc(tc(next.bolo,'titulo')) + '</h3>' +
+            '<div class="pub-countdown">' +
+            '<div class="pub-countdown-unit"><div class="pub-countdown-num">' + days + '</div><div class="pub-countdown-label">' + t('dias') + '</div></div>' +
+            '<div class="pub-countdown-unit"><div class="pub-countdown-num">' + hours + '</div><div class="pub-countdown-label">' + t('horas') + '</div></div>' +
+            '<div class="pub-countdown-unit"><div class="pub-countdown-num">' + mins + '</div><div class="pub-countdown-label">' + t('minutos') + '</div></div>' +
+            '</div>';
+    }
+    update();
+    _pubCountdownInterval = setInterval(update, 60000);
+}
 
 // Instrument icons fallback
 var _pubInstrumentIcons = {
@@ -28,12 +106,14 @@ function _renderBoloCard(b) {
     } else {
         imgHtml = `<div class="pub-card-img pub-card-placeholder"><div class="pub-card-placeholder-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div></div>`;
     }
+    var shareUrl = location.origin + location.pathname + '#bolos-pub';
     return `<div class="pub-card" data-type="bolo" onclick="_pubShowBolo(${b.id})">
         ${imgHtml}
         <div class="pub-card-body">
             <h3>${esc(tc(b,'titulo'))}</h3>
             <p>${esc(truncate(stripHtml(tc(b,'descricion')), 120))}</p>
             <div class="pub-card-date">${formatDate(b.data)} ${esc(b.hora || '')} — ${esc(b.lugar || '')}</div>
+            ${_pubShareHtml(tc(b,'titulo'), shareUrl)}
         </div>
         <div class="pub-comment-toggle" onclick="event.stopPropagation();_pubToggleComments('bolo',${b.id},this)">${t('comentarios')} (${count})</div>
         <div class="pub-comments-zone" id="comments-bolo-${b.id}" onclick="event.stopPropagation()"></div>
@@ -47,12 +127,14 @@ function _renderNoticiaCard(n) {
     if (hasImages) {
         imgHtml = `<div class="pub-card-img"><img src="${uploadUrl(n.imaxes[0])}" alt="${esc(tc(n,'titulo'))}" loading="lazy"></div>`;
     }
+    var shareUrl = location.origin + location.pathname + '#noticias-pub';
     return `<div class="pub-card" data-type="noticia" onclick="_pubShowNoticia(${n.id})">
         ${imgHtml}
         <div class="pub-card-body">
             <h3>${esc(tc(n,'titulo'))}</h3>
             <p>${esc(truncate(stripHtml(tc(n,'texto')), 150))}</p>
             <div class="pub-card-date">${formatDate(n.data)}</div>
+            ${_pubShareHtml(tc(n,'titulo'), shareUrl)}
         </div>
         <div class="pub-comment-toggle" onclick="event.stopPropagation();_pubToggleComments('noticia',${n.id},this)">${t('comentarios')} (${count})</div>
         <div class="pub-comments-zone" id="comments-noticia-${n.id}" onclick="event.stopPropagation()"></div>
@@ -113,19 +195,85 @@ function _pubShowBolo(id) {
     _pubShowDetail(imgHtml, bodyHtml);
 }
 
+function _pubMediaPlayer(path) {
+    if (!path) return '';
+    if (path.indexOf('youtube.com/embed/') !== -1) {
+        return '<iframe src="' + esc(path) + '?rel=0&modestbranding=1" class="instrumento-media-player instrumento-yt-embed" allowfullscreen></iframe>';
+    }
+    var url = uploadUrl(path);
+    var ext = (path.split('.').pop() || '').toLowerCase();
+    if (['mp4','webm','mov'].indexOf(ext) !== -1) {
+        return '<video controls class="instrumento-media-player"><source src="' + esc(url) + '"></video>';
+    }
+    return '<audio controls class="instrumento-media-player"><source src="' + esc(url) + '"></audio>';
+}
+
+var _instrPlaySvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>';
+var _instrPauseSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>';
+
+function _instrBtnIcon(card, playing) {
+    if (!card) return;
+    var btn = card.querySelector('.instr-audio-btn');
+    if (btn) btn.innerHTML = playing ? _instrPauseSvg : _instrPlaySvg;
+}
+
+function _pubPlayInstrAudio(id, event) {
+    if (event) event.stopPropagation();
+    var i = _pubData.instrumentos.find(function(x) { return x.id == id; });
+    if (!i || !i.audio_mostra) return;
+
+    var card = document.getElementById('instr-card-' + id);
+
+    // If already playing this instrument, toggle pause/play
+    if (_pubInstrAudioId == id && _pubInstrAudio) {
+        if (_pubInstrAudio.paused) {
+            _pubInstrAudio.play();
+            if (card) { card.classList.add('instr-playing'); _instrBtnIcon(card, true); }
+        } else {
+            _pubInstrAudio.pause();
+            if (card) { card.classList.remove('instr-playing'); _instrBtnIcon(card, false); }
+        }
+        return;
+    }
+
+    // Stop any previously playing audio
+    if (_pubInstrAudio) {
+        _pubInstrAudio.pause();
+        var oldCard = document.getElementById('instr-card-' + _pubInstrAudioId);
+        if (oldCard) { oldCard.classList.remove('instr-playing'); _instrBtnIcon(oldCard, false); }
+        _pubInstrAudio = null;
+        _pubInstrAudioId = null;
+    }
+
+    var url = uploadUrl(i.audio_mostra);
+    _pubInstrAudio = new Audio(url);
+    _pubInstrAudioId = id;
+
+    _pubInstrAudio.addEventListener('ended', function() {
+        if (card) { card.classList.remove('instr-playing'); _instrBtnIcon(card, false); }
+        _pubInstrAudio = null;
+        _pubInstrAudioId = null;
+    });
+
+    _pubInstrAudio.play();
+    if (card) { card.classList.add('instr-playing'); _instrBtnIcon(card, true); }
+}
+
 function _pubShowInstrumento(id) {
-    var i = _pubData.instrumentos.find(function(x) { return x.id === id; });
+    var i = _pubData.instrumentos.find(function(x) { return x.id == id; });
     if (!i) return;
     var iconSrc = i.imaxe ? uploadUrl(i.imaxe) : (_pubInstrumentIcons[i.tipo] || _pubInstrumentIcons['outro']);
     var imgHtml = '<div class="pub-detail-img-wrap pub-detail-img-instrument">' +
         '<img src="' + esc(iconSrc) + '" alt="' + esc(tc(i,'nome')) + '">' +
     '</div>';
+    var audioHtml = i.audio_mostra ? '<div style="margin-top:12px"><label style="font-size:0.85rem;color:var(--text-dim);display:block;margin-bottom:4px">' + t('audio_mostra') + '</label>' + _pubMediaPlayer(i.audio_mostra) + '</div>' : '';
     var bodyHtml = '<div class="pub-detail-header">' +
         '<span class="pub-detail-badge instrumento">' + t('instrumento') + '</span>' +
     '</div>' +
     '<h2>' + esc(tc(i,'nome')) + '</h2>' +
     (tc(i,'notas') ? '<p class="pub-detail-subtitle">' + esc(tc(i,'notas')) + '</p>' : '') +
-    (tc(i,'descricion') ? '<div class="rt-content pub-detail-text">' + sanitizeHtml(tc(i,'descricion')) + '</div>' : '<p class="text-muted">' + t(('desc_' + (i.tipo || 'outro'))) + '</p>');
+    (tc(i,'descricion') ? '<div class="rt-content pub-detail-text">' + sanitizeHtml(tc(i,'descricion')) + '</div>' : '<p class="text-muted">' + t(('desc_' + (i.tipo || 'outro'))) + '</p>') +
+    audioHtml;
     _pubShowDetail(imgHtml, bodyHtml);
 }
 
@@ -229,10 +377,14 @@ function _renderInstrumentCards() {
     grid.innerHTML = shown.map(function(i) {
         var iconSrc = i.imaxe ? uploadUrl(i.imaxe) : (_pubInstrumentIcons[i.tipo] || _pubInstrumentIcons['outro']);
         var tipoClass = i.tipo || 'outro';
-        return '<div class="instrument-pub-card" onclick="_pubShowInstrumento(' + i.id + ')">' +
+        var isYoutube = i.audio_mostra && i.audio_mostra.indexOf('youtube.com/embed/') !== -1;
+        var isAudio = i.audio_mostra && !isYoutube;
+        var playBtn = isAudio ? '<button class="instr-audio-btn" onclick="event.stopPropagation();_pubPlayInstrAudio(' + i.id + ',event)" title="' + t('escoitar') + '"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg></button>' : '';
+        return '<div class="instrument-pub-card" id="instr-card-' + i.id + '" onclick="_pubShowInstrumento(' + i.id + ')">' +
             '<div class="instrument-pub-icon ' + esc(tipoClass) + '"><img src="' + esc(iconSrc) + '" alt="' + esc(tc(i,'nome')) + '"></div>' +
             '<h3>' + esc(tc(i,'nome')) + '</h3>' +
             '<p>' + esc(truncate(stripHtml(tc(i,'notas') || tc(i,'descricion')), 80)) + '</p>' +
+            playBtn +
         '</div>';
     }).join('') + _pubVerMaisBtn('pub-instrumentos-grid', 'instrumentos', list.length, shown.length);
 }
@@ -308,16 +460,18 @@ function _pubRenderComments(type, id) {
         repliesByParent[r.parent_id].push(r);
     });
 
+    var COMMENTS_INITIAL = 3;
+    var zoneKey = type + '-' + id;
+    var expanded = zone.dataset.expanded === '1';
+
     var html = '<div class="pub-comments-list">';
     if (roots.length === 0 && replies.length === 0) {
         html += '<p class="pub-comment-empty">' + t('sen_resultados') + '</p>';
     } else {
-        roots.forEach(function(c) {
-            // Root comment — can reply if authenticated
+        var visibleRoots = expanded ? roots : roots.slice(0, COMMENTS_INITIAL);
+        visibleRoots.forEach(function(c) {
             html += _pubRenderCommentItem(c, type, id, currentUserId, isAdmin, isSocio, isAuthenticated);
-            // Reply form placeholder
             html += '<div id="reply-form-' + c.id + '"></div>';
-            // Replies to this root
             var childReplies = repliesByParent[c.id] || [];
             childReplies.forEach(function(r) {
                 html += '<div class="pub-comment-reply">';
@@ -325,6 +479,10 @@ function _pubRenderComments(type, id) {
                 html += '</div>';
             });
         });
+        if (!expanded && roots.length > COMMENTS_INITIAL) {
+            var remaining = roots.length - COMMENTS_INITIAL;
+            html += '<button class="pub-comments-more" onclick="this.closest(\'.pub-comments-zone\').dataset.expanded=\'1\';_pubRenderComments(\'' + type + '\',' + id + ')">' + t('ver_mais_comentarios') + ' (' + remaining + ')</button>';
+        }
     }
     html += '</div>';
 
@@ -641,8 +799,10 @@ async function _pubRefreshLang() {
     if (eg) {
         eg.innerHTML = pubBol.length ? pubBol.map(_renderBoloCard).join('')
             + _pubVerMaisBtn('pub-bolos-grid', 'bolos', allBol.length, pubBol.length)
-            : '<p class="text-muted" style="text-align:center">' + t('sen_resultados') + '</p>';
+            : '';
     }
+    var bolosSec = document.querySelector('[data-landing-section="bolos"]');
+    if (bolosSec) bolosSec.style.display = allBol.length ? '' : 'none';
 
     // Bolos pasados
     var allPas = _pubData._allBolosPasados || [];
@@ -698,7 +858,7 @@ async function _pubRefreshLang() {
         var key = 'sobre_nos_' + AppState.lang;
         var txt = cfg[key] || cfg['sobre_nos_gl'] || '';
         var sn = document.getElementById('pub-sobre-nos');
-        if (sn) sn.innerHTML = nl2br(txt);
+        if (sn) sn.innerHTML = sanitizeHtml(txt);
         // Re-render legal pages in new language
         _renderLegalPages(cfg);
     } catch (e) {}
@@ -706,6 +866,9 @@ async function _pubRefreshLang() {
 
 async function loadPublicContent() {
     try {
+        // Show skeleton loaders while data loads
+        _pubShowSkeletons();
+
         // Apply configurable backgrounds (also loads max_items config)
         await _applyLandingBackgrounds();
         // Cargar todo en paralelo
@@ -749,8 +912,13 @@ async function loadPublicContent() {
         if (eg) {
             eg.innerHTML = pubBolosFuturos.length ? pubBolosFuturos.map(b => _renderBoloCard(b)).join('')
                 + _pubVerMaisBtn('pub-bolos-grid', 'bolos', allBolosFuturos.length, pubBolosFuturos.length)
-                : `<p class="text-muted" style="text-align:center">${t('sen_resultados')}</p>`;
+                : '';
         }
+        var bolosSec = document.querySelector('[data-landing-section="bolos"]');
+        if (bolosSec) bolosSec.style.display = allBolosFuturos.length ? '' : 'none';
+
+        // Start countdown for next public bolo
+        _pubStartCountdown(bolos);
 
         // Past bolos
         var maxPas = _pubMaxItems('bolos_pasados');
@@ -813,7 +981,7 @@ async function loadPublicContent() {
             const key = 'sobre_nos_' + AppState.lang;
             const txt = cfg[key] || cfg['sobre_nos_gl'] || '';
             const sn = document.getElementById('pub-sobre-nos');
-            if (sn) sn.innerHTML = nl2br(txt);
+            if (sn) sn.innerHTML = sanitizeHtml(txt);
 
             // Legal pages
             _renderLegalPages(cfg);
@@ -929,6 +1097,72 @@ function rejectCookies() {
     localStorage.setItem('cookieConsent', 'rejected');
     var banner = document.getElementById('cookie-banner');
     if (banner) banner.style.display = 'none';
+}
+
+// ---- Newsletter subscribe ----
+async function _pubNewsletter() {
+    var email = document.getElementById('newsletter-email').value.trim();
+    var msg = document.getElementById('newsletter-msg');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        msg.className = 'newsletter-msg error';
+        msg.textContent = t('email_invalido');
+        return;
+    }
+    try {
+        await api('/newsletter', { method: 'POST', body: { email: email } });
+        msg.className = 'newsletter-msg success';
+        msg.textContent = t('newsletter_ok');
+        document.getElementById('newsletter-email').value = '';
+    } catch (e) {
+        msg.className = 'newsletter-msg error';
+        msg.textContent = e.message || 'Error';
+    }
+}
+
+// ---- Form validation (real-time) ----
+function _initFormValidation() {
+    var forms = document.querySelectorAll('#contacto-form, #form-unirse, #form-presuposto, .auth-box');
+    forms.forEach(function(form) {
+        var inputs = form.querySelectorAll('input[required], textarea[required], input[type="email"]');
+        inputs.forEach(function(inp) {
+            // Add error message element if not present
+            if (!inp.parentElement.querySelector('.field-error')) {
+                var err = document.createElement('div');
+                err.className = 'field-error';
+                inp.parentElement.appendChild(err);
+            }
+            inp.addEventListener('blur', function() { _validateField(inp); });
+            inp.addEventListener('input', function() {
+                if (inp.classList.contains('invalid')) _validateField(inp);
+            });
+        });
+    });
+}
+
+function _validateField(inp) {
+    var err = inp.parentElement.querySelector('.field-error');
+    var val = inp.value.trim();
+    var valid = true;
+    var msg = '';
+
+    if (inp.required && !val) {
+        valid = false;
+        msg = t('campo_obrigatorio');
+    } else if (inp.type === 'email' && val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+        valid = false;
+        msg = t('email_invalido');
+    } else if (inp.minLength && inp.minLength > 0 && val.length < inp.minLength) {
+        valid = false;
+        msg = t('min_caracteres').replace('{n}', inp.minLength);
+    }
+
+    inp.classList.toggle('valid', valid && val.length > 0);
+    inp.classList.toggle('invalid', !valid);
+    if (err) {
+        err.textContent = msg;
+        err.classList.toggle('visible', !valid);
+    }
+    return valid;
 }
 
 // ---- Contacto form ----

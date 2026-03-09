@@ -13,6 +13,16 @@ async function usuariosLoad() {
         toast(t('erro') + ': ' + e.message, 'error');
         AppState.usuarios = [];
     }
+    // Apply dashboard filter if coming from stat card
+    if (AppState.dashboardFilter === 'socios') {
+        var rf = $('#usuarios-role-filter');
+        if (rf) rf.value = 'Socio';
+        AppState.dashboardFilter = null;
+    } else if (AppState.dashboardFilter === null && AppState.currentSection === 'usuarios') {
+        // Clear filter when navigating normally
+        var rf2 = $('#usuarios-role-filter');
+        if (rf2 && !rf2.value) { /* leave as is */ }
+    }
     usuariosRender();
 }
 
@@ -202,13 +212,7 @@ function usuariosModal(usuario) {
 
     $('#modal-title').textContent = title;
 
-    var instrumentos = ['surdo', 'caixa', 'repinique', 'tamborim', 'timbao', 'agogo', 'ganza', 'apito', 'outro'];
     var roles = ['Usuario', 'Socio', 'Admin'];
-
-    var instOptions = instrumentos.map(function(i) {
-        var sel = (usuario && usuario.instrumento === i) ? ' selected' : '';
-        return '<option value="' + i + '"' + sel + '>' + i.charAt(0).toUpperCase() + i.slice(1) + '</option>';
-    }).join('');
 
     var roleOptions = roles.map(function(r) {
         var sel = (usuario && usuario.role === r) ? ' selected' : '';
@@ -238,8 +242,12 @@ function usuariosModal(usuario) {
             '<input type="text" class="form-control" id="usuario-telefono" value="' + esc(isEdit ? usuario.telefono || '' : '') + '">' +
         '</div>' +
         '<div class="form-group">' +
-            '<label>' + t('instrumento') + '</label>' +
-            '<select class="form-control" id="usuario-instrumento"><option value="">--</option>' + instOptions + '</select>' +
+            '<label>' + t('instrumentos') + '</label>' +
+            '<div id="usuario-instruments-list" class="profile-instruments-list"></div>' +
+            '<div class="instrument-add-row">' +
+                '<select class="form-control" id="usuario-instrument-add"><option value="">—</option></select>' +
+                '<button type="button" class="btn btn-sm btn-secondary" onclick="_usuarioAddInstrument()">+</button>' +
+            '</div>' +
         '</div>' +
         '<div class="form-group">' +
             '<label>' + t('rol') + '</label>' +
@@ -283,6 +291,16 @@ function usuariosModal(usuario) {
 
     showModal('modal-overlay');
 
+    // Populate multi-instrument list
+    window._usuarioInstruments = (isEdit && usuario.instrumentos || []).map(function(i) {
+        return { instrumento_id: parseInt(i.instrumento_id), nome: i.nome, orde: parseInt(i.orde) };
+    });
+    window._usuarioAllInstruments = [];
+    api('/instrumentos').then(function(list) {
+        window._usuarioAllInstruments = list || [];
+        _usuarioRenderInstruments();
+    }).catch(function() {});
+
     // File input preview
     $('#usuario-foto').onchange = function() {
         var file = this.files[0];
@@ -314,7 +332,9 @@ async function usuariosSave() {
         dni: ($('#usuario-dni') || {}).value || '',
         email: ($('#usuario-email') || {}).value || '',
         telefono: ($('#usuario-telefono') || {}).value || '',
-        instrumento: ($('#usuario-instrumento') || {}).value || '',
+        instrumentos: (window._usuarioInstruments || []).map(function(i) {
+            return { instrumento_id: i.instrumento_id, orde: i.orde };
+        }),
         role: ($('#usuario-role') || {}).value || 'Socio'
     };
 
@@ -376,4 +396,72 @@ async function usuariosEstado(id, estado) {
     } catch (e) {
         toast(t('erro') + ': ' + e.message, 'error');
     }
+}
+
+function _usuarioRenderInstruments() {
+    var listEl = document.getElementById('usuario-instruments-list');
+    if (!listEl) return;
+    var items = window._usuarioInstruments || [];
+    var imgExts = { surdo:'jpg', caixa:'jpg', repinique:'jpg', tamborim:'jpg', timbao:'jpg', agogo:'jpg', ganza:'jpg', apito:'jpg', outro:'png' };
+    var html = '';
+    items.sort(function(a, b) { return a.orde - b.orde; });
+    items.forEach(function(item, idx) {
+        var key = (item.nome || '').toLowerCase();
+        var ext = imgExts[key] || null;
+        var img = ext ? '<img src="assets/img/instrumentos/' + key + '.' + ext + '" class="instrument-img">' : '';
+        html += '<div class="instrument-item" data-idx="' + idx + '">' +
+            '<span class="instrument-orde">' + item.orde + '</span>' +
+            img +
+            '<span class="instrument-nome">' + esc(item.nome) + '</span>' +
+            (idx > 0 ? '<button type="button" class="btn-icon" onclick="_usuarioMoveInstrument(' + idx + ',-1)" title="Subir">&uarr;</button>' : '<span style="width:22px"></span>') +
+            (idx < items.length - 1 ? '<button type="button" class="btn-icon" onclick="_usuarioMoveInstrument(' + idx + ',1)" title="Baixar">&darr;</button>' : '<span style="width:22px"></span>') +
+            '<button type="button" class="btn-icon" onclick="_usuarioRemoveInstrument(' + idx + ')" title="' + t('eliminar') + '">&times;</button>' +
+        '</div>';
+    });
+    listEl.innerHTML = html;
+
+    var sel = document.getElementById('usuario-instrument-add');
+    if (!sel) return;
+    var selectedIds = items.map(function(i) { return parseInt(i.instrumento_id); });
+    sel.innerHTML = '<option value="">— ' + t('engadir_instrumento') + ' —</option>';
+    (window._usuarioAllInstruments || []).forEach(function(inst) {
+        if (selectedIds.indexOf(parseInt(inst.id)) >= 0) return;
+        var opt = document.createElement('option');
+        opt.value = inst.id;
+        opt.textContent = inst.nome;
+        sel.appendChild(opt);
+    });
+}
+
+function _usuarioAddInstrument() {
+    var sel = document.getElementById('usuario-instrument-add');
+    if (!sel || !sel.value) return;
+    var instId = parseInt(sel.value);
+    var inst = (window._usuarioAllInstruments || []).find(function(i) { return parseInt(i.id) === instId; });
+    if (!inst) return;
+    var items = window._usuarioInstruments || [];
+    var maxOrde = items.length > 0 ? Math.max.apply(null, items.map(function(i) { return i.orde; })) : 0;
+    items.push({ instrumento_id: instId, nome: inst.nome, orde: maxOrde + 1 });
+    window._usuarioInstruments = items;
+    _usuarioRenderInstruments();
+}
+
+function _usuarioMoveInstrument(idx, dir) {
+    var items = window._usuarioInstruments || [];
+    var newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= items.length) return;
+    var tmp = items[idx];
+    items[idx] = items[newIdx];
+    items[newIdx] = tmp;
+    items.forEach(function(item, i) { item.orde = i + 1; });
+    window._usuarioInstruments = items;
+    _usuarioRenderInstruments();
+}
+
+function _usuarioRemoveInstrument(idx) {
+    var items = window._usuarioInstruments || [];
+    items.splice(idx, 1);
+    items.forEach(function(item, i) { item.orde = i + 1; });
+    window._usuarioInstruments = items;
+    _usuarioRenderInstruments();
 }

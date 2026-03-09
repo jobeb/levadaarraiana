@@ -212,6 +212,62 @@ function enrich_users_instruments(&$users, $db) {
     unset($u);
 }
 
+// ---- Pagination helper ----
+function paginate_query($db, $query, $params, $page, $limit) {
+    $page = max(1, (int)$page);
+    $limit = max(1, min(100, (int)$limit));
+
+    // Count total
+    $countQuery = preg_replace('/^SELECT .+ FROM/is', 'SELECT COUNT(*) AS total FROM', $query);
+    // Remove ORDER BY for count
+    $countQuery = preg_replace('/ORDER BY .+$/i', '', $countQuery);
+    $stmt = $db->prepare($countQuery);
+    $stmt->execute($params);
+    $total = (int)$stmt->fetch()['total'];
+
+    $pages = max(1, ceil($total / $limit));
+    $offset = ($page - 1) * $limit;
+
+    $stmt = $db->prepare($query . " LIMIT $limit OFFSET $offset");
+    $stmt->execute($params);
+    $data = $stmt->fetchAll();
+
+    return ['data' => $data, 'total' => $total, 'page' => $page, 'pages' => $pages];
+}
+
+// ---- Notify socios+admins by email ----
+function notify_socios($subject, $body) {
+    try {
+        $db = get_db();
+        $rows = $db->query("SELECT email FROM usuarios WHERE role IN ('Admin','Socio') AND estado = 'Activo' AND email != ''")->fetchAll();
+        foreach ($rows as $r) {
+            send_email($r['email'], $subject, $body);
+        }
+    } catch (Exception $e) {
+        error_log('notify_socios error: ' . $e->getMessage());
+    }
+}
+
+// ---- Newsletter: send to all active subscribers ----
+function newsletter_send($subject, $body_html) {
+    try {
+        $db = get_db();
+        $cfg = $db->query("SELECT * FROM config WHERE id = 1")->fetch();
+        $from = ($cfg['smtp_from'] ?: $cfg['smtp_user']) ?: 'noreply@levadaarraiana.gal';
+        $rows = $db->query("SELECT email, token_baixa FROM newsletter WHERE activo = 1")->fetchAll();
+        $base_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
+                    . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $script_dir = dirname(dirname($_SERVER['SCRIPT_NAME'])); // e.g. /Levadaarraiana
+        foreach ($rows as $r) {
+            $unsub_url = $base_url . $script_dir . '/api/newsletter/baixa/' . $r['token_baixa'];
+            $full_body = $body_html . "\n\n---\nPara desuscribirte: " . $unsub_url;
+            send_email($r['email'], $subject, $full_body);
+        }
+    } catch (Exception $e) {
+        error_log('newsletter_send error: ' . $e->getMessage());
+    }
+}
+
 // ---- Email header injection prevention ----
 function sanitize_email_header($value) {
     return preg_replace('/[\r\n]/', '', $value);

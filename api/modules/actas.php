@@ -21,7 +21,7 @@ function handle_actas($method, $uri, $input) {
     if ($method === 'GET') {
         require_auth();
         if ($id) {
-            $stmt = $db->prepare("SELECT * FROM actas WHERE id = ?");
+            $stmt = $db->prepare("SELECT * FROM actas WHERE id = ? AND eliminado IS NULL");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) send_error('Acta non atopada', 'erro_non_atopado', 404);
@@ -29,7 +29,21 @@ function handle_actas($method, $uri, $input) {
             $row['asistentes'] = _actas_get_asistentes($db, [$id])[$id] ?? [];
             send_json($row);
         }
-        $rows = $db->query("SELECT * FROM actas ORDER BY data DESC")->fetchAll();
+        $query = "SELECT * FROM actas WHERE eliminado IS NULL ORDER BY data DESC";
+        if (isset($_GET['page'])) {
+            $page = max(1, (int)$_GET['page']);
+            $limit = max(1, (int)($_GET['limit'] ?? 20));
+            $result = paginate_query($db, $query, [], $page, $limit);
+            $result['data'] = fix_rows($result['data'], ['arquivos']);
+            $ids = array_map(function($r) { return $r['id']; }, $result['data']);
+            $asistMap = _actas_get_asistentes($db, $ids);
+            foreach ($result['data'] as &$r) {
+                $r['asistentes'] = $asistMap[$r['id']] ?? [];
+            }
+            unset($r);
+            send_json($result);
+        }
+        $rows = $db->query($query)->fetchAll();
         $rows = fix_rows($rows, ['arquivos']);
         $ids = array_map(function($r) { return $r['id']; }, $rows);
         $asistMap = _actas_get_asistentes($db, $ids);
@@ -130,7 +144,7 @@ function handle_actas($method, $uri, $input) {
     // DELETE — socio+
     if ($method === 'DELETE' && $id) {
         require_socio();
-        $stmt = $db->prepare("DELETE FROM actas WHERE id = ?");
+        $stmt = $db->prepare("UPDATE actas SET eliminado = NOW() WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([$id]);
         audit_log('DELETE', 'actas', $id);
         send_json(['ok' => true]);

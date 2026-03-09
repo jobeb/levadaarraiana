@@ -67,16 +67,25 @@ function handle_bolos($method, $uri, $input) {
         $id = (int)$m[1];
     }
 
-    // GET — list all or single (public)
+    // GET — list all or single (public, con paxinación opcional)
     if ($method === 'GET') {
         if ($id) {
-            $stmt = $db->prepare("SELECT * FROM bolos WHERE id = ?");
+            $stmt = $db->prepare("SELECT * FROM bolos WHERE id = ? AND eliminado IS NULL");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) send_error('Bolo non atopado', 'erro_non_atopado', 404);
             send_json(fix_row($row, ['i18n'], ['publica'], ['importe']));
         }
-        $rows = $db->query("SELECT * FROM bolos ORDER BY data DESC, hora DESC, id DESC")->fetchAll();
+        $page = $_GET['page'] ?? null;
+        $limit = $_GET['limit'] ?? 20;
+        if ($page) {
+            $result = paginate_query($db,
+                "SELECT * FROM bolos WHERE eliminado IS NULL ORDER BY data DESC, hora DESC, id DESC",
+                [], $page, $limit);
+            $result['data'] = fix_rows($result['data'], ['i18n'], ['publica'], ['importe']);
+            send_json($result);
+        }
+        $rows = $db->query("SELECT * FROM bolos WHERE eliminado IS NULL ORDER BY data DESC, hora DESC, id DESC")->fetchAll();
         send_json(fix_rows($rows, ['i18n'], ['publica'], ['importe']));
     }
 
@@ -135,6 +144,26 @@ function handle_bolos($method, $uri, $input) {
         }
 
         audit_log('CREATE', 'bolos', $newId, trim($input['titulo'] ?? ''));
+
+        // Notify socios + newsletter when public
+        $titulo = trim($input['titulo'] ?? '');
+        if (!empty($input['publica'])) {
+            newsletter_send(
+                'Novo bolo: ' . $titulo,
+                "Publicouse un novo bolo en Levada Arraiana:\n\n" . $titulo .
+                "\nData: " . ($input['data'] ?? '') . "\nLugar: " . ($input['lugar'] ?? '')
+            );
+        }
+        $estado = $input['estado'] ?? 'borrador';
+        if ($estado === 'Programado' || $estado === 'programado') {
+            notify_socios(
+                'Novo bolo programado: ' . $titulo,
+                "Programouse un novo bolo:\n\n" . $titulo .
+                "\nData: " . ($input['data'] ?? '') . "\nLugar: " . ($input['lugar'] ?? '') .
+                "\nHora: " . ($input['hora'] ?? '')
+            );
+        }
+
         send_json(['ok' => true, 'id' => $newId], 201);
     }
 
@@ -194,13 +223,28 @@ function handle_bolos($method, $uri, $input) {
         $db->prepare($sql)->execute($params);
 
         audit_log('UPDATE', 'bolos', $id);
+
+        // Notify socios if estado changed to Programado
+        $newEstado = $input['estado'] ?? null;
+        $oldEstado = $existing['estado'] ?? '';
+        if ($newEstado && strtolower($newEstado) === 'programado' && strtolower($oldEstado) !== 'programado') {
+            $titulo = $input['titulo'] ?? $existing['titulo'];
+            notify_socios(
+                'Bolo programado: ' . $titulo,
+                "Un bolo foi programado:\n\n" . $titulo .
+                "\nData: " . ($input['data'] ?? $existing['data']) .
+                "\nLugar: " . ($input['lugar'] ?? $existing['lugar']) .
+                "\nHora: " . ($input['hora'] ?? $existing['hora'])
+            );
+        }
+
         send_json(['ok' => true, 'id' => $id]);
     }
 
-    // DELETE — admin
+    // DELETE — soft delete
     if ($method === 'DELETE' && $id) {
         require_socio();
-        $stmt = $db->prepare("DELETE FROM bolos WHERE id = ?");
+        $stmt = $db->prepare("UPDATE bolos SET eliminado = NOW() WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) {
             send_error('Bolo non atopado', 'erro_non_atopado', 404);

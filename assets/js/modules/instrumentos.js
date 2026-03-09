@@ -2,6 +2,10 @@
  * Instrumentos — Showcase of instruments we use
  */
 
+var _recordedBlob = null;
+var _mediaRecorder = null;
+var _mediaStream = null;
+
 var _instrumentoIcons = {
     surdo: 'assets/img/instrumentos/surdo.jpg',
     caixa: 'assets/img/instrumentos/caixa.jpg',
@@ -25,6 +29,80 @@ function _instrumentoMediaPlayer(path) {
         return '<video controls class="instrumento-media-player"><source src="' + esc(url) + '"></video>';
     }
     return '<audio controls class="instrumento-media-player"><source src="' + esc(url) + '"></audio>';
+}
+
+function _instrumentoRecord(type) {
+    var constraints = type === 'video' ? { audio: true, video: true } : { audio: true };
+    navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+        _mediaStream = stream;
+        _recordedBlob = null;
+
+        var mime = type === 'video' ? 'video/webm' : 'audio/webm';
+        if (!MediaRecorder.isTypeSupported(mime)) mime = '';
+        _mediaRecorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+        var chunks = [];
+        _mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
+        _mediaRecorder.onstop = function() {
+            _recordedBlob = new Blob(chunks, { type: _mediaRecorder.mimeType || (type === 'video' ? 'video/webm' : 'audio/webm') });
+            _recordedBlob._recType = type;
+            _instrumentoStopRecord();
+        };
+        _mediaRecorder.start();
+
+        // Show live preview + stop button
+        var preview = $('#instrumento-audio-preview');
+        if (preview) {
+            var tag = type === 'video' ? 'video' : 'audio';
+            preview.innerHTML = '<div class="instrumento-rec-live">' +
+                '<' + tag + ' id="instrumento-rec-live" autoplay muted class="instrumento-media-player"></' + tag + '>' +
+                '</div>' +
+                '<button type="button" class="btn-rec btn-rec--recording" onclick="_instrumentoStopRecordBtn()" style="margin-top:8px">' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> ' +
+                t('parar_gravacion') + '</button>';
+            var liveEl = document.getElementById('instrumento-rec-live');
+            if (liveEl) liveEl.srcObject = stream;
+        }
+
+        // Update record buttons state
+        var btnsWrap = document.querySelector('.instrumento-rec-btns');
+        if (btnsWrap) btnsWrap.style.display = 'none';
+    }).catch(function(err) {
+        toast(t('erro') + ': ' + err.message, 'error');
+    });
+}
+
+function _instrumentoStopRecordBtn() {
+    if (_mediaRecorder && _mediaRecorder.state !== 'inactive') {
+        _mediaRecorder.stop();
+    }
+    if (_mediaStream) {
+        _mediaStream.getTracks().forEach(function(t) { t.stop(); });
+        _mediaStream = null;
+    }
+}
+
+function _instrumentoStopRecord() {
+    var preview = $('#instrumento-audio-preview');
+    if (!preview || !_recordedBlob) return;
+
+    var objUrl = URL.createObjectURL(_recordedBlob);
+    var isVideo = _recordedBlob._recType === 'video';
+    if (isVideo) {
+        preview.innerHTML = '<video controls class="instrumento-media-player"><source src="' + objUrl + '"></video>';
+    } else {
+        preview.innerHTML = '<audio controls class="instrumento-media-player"><source src="' + objUrl + '"></audio>';
+    }
+    preview.innerHTML += '<button type="button" class="btn btn-sm btn-danger" style="margin-top:6px" onclick="_instrumentoClearRecording()">' + t('eliminar') + '</button>';
+
+    // Show record buttons again
+    var btnsWrap = document.querySelector('.instrumento-rec-btns');
+    if (btnsWrap) btnsWrap.style.display = 'flex';
+}
+
+function _instrumentoClearRecording() {
+    _recordedBlob = null;
+    var preview = $('#instrumento-audio-preview');
+    if (preview) preview.innerHTML = '';
 }
 
 async function instrumentosLoad() {
@@ -102,6 +180,7 @@ function instrumentosRender() {
 }
 
 function instrumentosModal(item) {
+    _recordedBlob = null;
     var isEdit = item && item.id;
     var title = isEdit ? t('editar') + ' ' + t('instrumento') : t('novo_instrumento');
 
@@ -136,6 +215,16 @@ function instrumentosModal(item) {
         '<div class="form-group">' +
             '<label>' + t('audio_mostra') + '</label>' +
             '<input type="file" class="form-control" id="instrumento-audio" accept="audio/*,video/mp4,video/webm">' +
+            '<div class="instrumento-rec-btns">' +
+                '<button type="button" class="btn-rec" onclick="_instrumentoRecord(\'audio\')">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg> ' +
+                    t('gravar_audio') +
+                '</button>' +
+                '<button type="button" class="btn-rec" onclick="_instrumentoRecord(\'video\')">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> ' +
+                    t('gravar_video') +
+                '</button>' +
+            '</div>' +
             (isEdit && item.audio_mostra ? '<div id="instrumento-audio-preview" class="instrumento-audio-preview">' + _instrumentoMediaPlayer(item.audio_mostra) + '<button type="button" class="btn btn-sm btn-danger" style="margin-top:6px" onclick="$(\'#instrumento-audio-remove\').value=\'1\';this.parentNode.innerHTML=\'<em class=text-muted>' + t('eliminado') + '</em>\'">' + t('eliminar') + '</button><input type="hidden" id="instrumento-audio-remove" value=""></div>' : '<div id="instrumento-audio-preview"></div>') +
         '</div>';
 
@@ -164,10 +253,11 @@ function instrumentosModal(item) {
         });
     }
 
-    // Live preview when selecting audio/video
+    // Live preview when selecting audio/video (clears any recording)
     var audioInput = $('#instrumento-audio');
     if (audioInput) {
         audioInput.addEventListener('change', function() {
+            _recordedBlob = null;
             var preview = $('#instrumento-audio-preview');
             if (!preview) return;
             if (audioInput.files && audioInput.files[0]) {
@@ -211,10 +301,16 @@ async function instrumentosSave() {
         body.imaxe_ext = 'jpg';
     }
 
-    // Audio/video sample
+    // Audio/video sample (from file input or recorded blob)
     var audioInput = $('#instrumento-audio');
-    if (audioInput && audioInput.files && audioInput.files.length > 0) {
-        var mediaFile = audioInput.files[0];
+    var mediaFile = null;
+    if (_recordedBlob) {
+        var recExt = _recordedBlob._recType === 'video' ? 'webm' : 'webm';
+        mediaFile = new File([_recordedBlob], 'recording.' + recExt, { type: _recordedBlob.type });
+    } else if (audioInput && audioInput.files && audioInput.files.length > 0) {
+        mediaFile = audioInput.files[0];
+    }
+    if (mediaFile) {
         var mediaExt = (mediaFile.name.split('.').pop() || '').toLowerCase();
         var isVideoFile = mediaFile.type.startsWith('video/') || ['mp4','webm','ogg','mov','avi'].indexOf(mediaExt) !== -1;
 
@@ -258,6 +354,7 @@ async function instrumentosSave() {
         } else {
             await api('/instrumentos', { method: 'POST', body: body });
         }
+        _recordedBlob = null;
         hideModal('modal-overlay');
         toast(t('exito'), 'success');
         instrumentosLoad();
@@ -295,9 +392,9 @@ function instrumentosView(id) {
         descHtml +
         audioHtml;
 
-    var footerHtml = '<button class="btn btn-secondary" onclick="hideModal(\'modal-overlay\')">' + t('pechar') + '</button>';
+    var footerHtml = '';
     if (AppState.isSocio()) {
-        footerHtml += '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');instrumentosModal(AppState.instrumentos.find(function(x){return x.id==' + id + '}))">' + t('editar') + '</button>';
+        footerHtml = '<button class="btn btn-primary" onclick="hideModal(\'modal-overlay\');instrumentosModal(AppState.instrumentos.find(function(x){return x.id==' + id + '}))">' + t('editar') + '</button>';
     }
     $('#modal-footer').innerHTML = footerHtml;
 

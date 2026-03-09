@@ -11,16 +11,25 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'noticias.php') {
 function handle_noticias($method, $uri, $input) {
     $db = get_db();
 
-    // GET /noticias → listar todas (público)
+    // GET /noticias → listar todas (público, con paxinación opcional)
     if ($uri === '/noticias' && $method === 'GET') {
-        $rows = $db->query("SELECT * FROM noticias ORDER BY data DESC, id DESC")->fetchAll();
+        $page = $_GET['page'] ?? null;
+        $limit = $_GET['limit'] ?? 20;
+        if ($page) {
+            $result = paginate_query($db,
+                "SELECT * FROM noticias WHERE eliminado IS NULL ORDER BY data DESC, id DESC",
+                [], $page, $limit);
+            $result['data'] = fix_rows($result['data'], ['imaxes', 'i18n'], ['publica']);
+            send_json($result);
+        }
+        $rows = $db->query("SELECT * FROM noticias WHERE eliminado IS NULL ORDER BY data DESC, id DESC")->fetchAll();
         $rows = fix_rows($rows, ['imaxes', 'i18n'], ['publica']);
         send_json($rows);
     }
 
     // GET /noticias/ID → unha noticia (público)
     if (preg_match('#^/noticias/(\d+)$#', $uri, $m) && $method === 'GET') {
-        $stmt = $db->prepare("SELECT * FROM noticias WHERE id = ?");
+        $stmt = $db->prepare("SELECT * FROM noticias WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([(int)$m[1]]);
         $row = $stmt->fetch();
         if (!$row) send_error('Noticia non atopada', 'erro_non_atopado', 404);
@@ -65,6 +74,16 @@ function handle_noticias($method, $uri, $input) {
         }
 
         audit_log('CREATE', 'noticias', $id, trim($input['titulo'] ?? ''));
+
+        // Newsletter: auto-send when published
+        if (($input['estado'] ?? 'publicada') === 'publicada') {
+            $titulo = trim($input['titulo'] ?? '');
+            newsletter_send(
+                'Nova noticia: ' . $titulo,
+                "Publicouse unha nova noticia en Levada Arraiana:\n\n" . $titulo
+            );
+        }
+
         send_json(['ok' => true, 'id' => $id], 201);
     }
 
@@ -125,11 +144,11 @@ function handle_noticias($method, $uri, $input) {
         send_json(['ok' => true, 'id' => $id]);
     }
 
-    // DELETE /noticias/ID → eliminar
+    // DELETE /noticias/ID → soft delete
     if (preg_match('#^/noticias/(\d+)$#', $uri, $m) && $method === 'DELETE') {
         require_socio();
         $id   = (int)$m[1];
-        $stmt = $db->prepare("DELETE FROM noticias WHERE id = ?");
+        $stmt = $db->prepare("UPDATE noticias SET eliminado = NOW() WHERE id = ? AND eliminado IS NULL");
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) {
             send_error('Noticia non atopada', 'erro_non_atopado', 404);

@@ -168,6 +168,7 @@ function initApp() {
     Router.register('repertorio', repertorioLoad);
     Router.register('comentarios', comentariosLoad);
     Router.register('configuracion', configuracionLoad);
+    Router.register('papeleira', papeleiraLoad);
     Router.register('auditoria', auditoriaLoad);
 
     Router.init();
@@ -207,18 +208,20 @@ async function loadDashboard() {
             check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 3 9"/></svg>',
             ensaios: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
         };
-        function _statCard(cls, icon, val, label) {
-            return '<div class="stat-card ' + cls + '">' +
+        var numSocios = usuarios.filter(function(s) { return s.estado !== 'Desactivado' && s.role === 'Socio'; }).length;
+        function _statCard(cls, icon, val, label, onclick) {
+            return '<div class="stat-card ' + cls + '"' + (onclick ? ' onclick="' + onclick + '" style="cursor:pointer"' : '') + '>' +
                 '<div class="stat-icon">' + icon + '</div>' +
                 '<div class="stat-body"><div class="stat-value">' + val + '</div><div class="stat-label">' + label + '</div></div>' +
             '</div>';
         }
         statsEl.innerHTML =
-            _statCard('stat-blue', _statIcons.usuarios, activos, t('usuarios')) +
-            _statCard('stat-gold', _statIcons.noticias, noticias.length, t('noticias')) +
-            _statCard('stat-red', _statIcons.bolos, proxBol, t('proximos_bolos')) +
-            _statCard('stat-magenta', _statIcons.check, pastBol, t('bolos_realizados')) +
-            _statCard('stat-green', _statIcons.ensaios, proxEns, t('ensaios'));
+            _statCard('stat-blue', _statIcons.usuarios, activos, t('usuarios'), '_dashNav(&#39;usuarios&#39;)') +
+            _statCard('stat-cyan', '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>', numSocios, t('socios'), '_dashNav(&#39;usuarios&#39;,&#39;socios&#39;)') +
+            _statCard('stat-gold', _statIcons.noticias, noticias.length, t('noticias'), '_dashNav(&#39;noticias&#39;)') +
+            _statCard('stat-red', _statIcons.bolos, proxBol, t('proximos_bolos'), '_dashNav(&#39;bolos&#39;,&#39;proximos&#39;)') +
+            _statCard('stat-magenta', _statIcons.check, pastBol, t('bolos_realizados'), '_dashNav(&#39;bolos&#39;,&#39;realizados&#39;)') +
+            _statCard('stat-green', _statIcons.ensaios, proxEns, t('ensaios'), '_dashNav(&#39;ensaios&#39;)');
 
         // Store in AppState so confirm modals can find the event
         AppState.ensaios = ensaios;
@@ -237,6 +240,11 @@ async function loadDashboard() {
         _renderDashboardActions();
 
     } catch(e) { /* ignore */ }
+}
+
+function _dashNav(section, filter) {
+    AppState.dashboardFilter = filter || null;
+    Router.navigate(section);
 }
 
 function _calColors() {
@@ -452,59 +460,208 @@ function _showCalendarDayPopup(date, events) {
     }, 10);
 }
 
-function _buildInstrumentCount(asistentes) {
+function _buildInstrumentCount(asistentes, opts) {
+    var detail = opts && opts.detail;
     var present = asistentes.filter(function(a) { return a.estado === 'confirmado' || a.estado === 'chegarei_tarde'; });
     if (present.length === 0) return '';
     var imgExts = { surdo:'jpg', caixa:'jpg', repinique:'jpg', tamborim:'jpg', timbao:'jpg', agogo:'jpg', ganza:'jpg', apito:'jpg', outro:'png' };
-    var levelNames = ['', 'principal', 'secundario', 'terciario'];
 
-    // Group instruments by orde level
-    var levels = {}; // { orde: { instKey: { nome, n } } }
-    present.forEach(function(a) {
-        var insts = a.instrumentos;
-        if (Array.isArray(insts) && insts.length > 0) {
+    // Determine relevant instruments from ALL attendees (including absent) — any principal (orde=1)
+    var principalKeys = {};
+    asistentes.forEach(function(a) {
+        var insts = Array.isArray(a.instrumentos) ? a.instrumentos : [];
+        if (insts.length > 0) {
             insts.forEach(function(inst) {
-                var orde = parseInt(inst.orde) || 1;
                 var nome = (inst.nome || '').trim();
                 if (!nome) return;
-                var key = nome.toLowerCase();
-                if (!levels[orde]) levels[orde] = {};
-                if (!levels[orde][key]) levels[orde][key] = { nome: nome, n: 0 };
-                levels[orde][key].n++;
+                if (parseInt(inst.orde) === 1) principalKeys[nome.toLowerCase()] = nome;
             });
         } else {
-            // Fallback: legacy instrumento field as orde=1
-            var inst = (a.instrumento || '').trim();
-            if (!inst) return;
-            var key = inst.toLowerCase();
-            if (!levels[1]) levels[1] = {};
-            if (!levels[1][key]) levels[1][key] = { nome: inst, n: 0 };
-            levels[1][key].n++;
+            var legacy = (a.instrumento || '').trim();
+            if (legacy) principalKeys[legacy.toLowerCase()] = legacy;
         }
     });
 
-    var ordes = Object.keys(levels).map(Number).sort();
-    if (ordes.length === 0) return '';
-
-    var html = '<div class="dashboard-instruments">';
-    ordes.forEach(function(orde) {
-        var label = levelNames[orde] ? t(levelNames[orde]) : t('nivel_n').replace('{n}', orde);
-        var counts = levels[orde];
-        var keys = Object.keys(counts).sort(function(a, b) { return counts[b].n - counts[a].n; });
-        html += '<div class="dashboard-inst-level-row">';
-        if (ordes.length > 1) {
-            html += '<span class="dashboard-inst-level">' + esc(label) + ':</span>';
+    // Build per-person assignment from PRESENT attendees only
+    var people = [];
+    present.forEach(function(a) {
+        var insts = [];
+        if (Array.isArray(a.instrumentos) && a.instrumentos.length > 0) {
+            a.instrumentos.forEach(function(inst) {
+                var nome = (inst.nome || '').trim();
+                if (!nome) return;
+                insts.push({ key: nome.toLowerCase(), nome: nome, orde: parseInt(inst.orde) || 1 });
+            });
+            insts.sort(function(x, y) { return x.orde - y.orde; });
+        } else {
+            var legacy = (a.instrumento || '').trim();
+            if (legacy) insts.push({ key: legacy.toLowerCase(), nome: legacy, orde: 1 });
         }
-        keys.forEach(function(k) {
-            var ext = imgExts[k] || null;
-            var img = ext ? '<img src="assets/img/instrumentos/' + k + '.' + ext + '" alt="" class="dashboard-inst-img">' : '';
-            html += '<span class="dashboard-inst-chip">' + img + esc(counts[k].nome) + ' <strong>' + counts[k].n + '</strong></span>';
+        if (insts.length === 0) return;
+        people.push({
+            id: a.usuario_id || a.id,
+            nome: a.nome_completo || a.socio_nome || a.nome || a.username || '',
+            principal: insts[0].key,
+            assigned: insts[0].key,
+            allInsts: insts,
+            moved: false,
+            movedFrom: null
+        });
+    });
+
+    if (people.length === 0) return '';
+
+    // Step 1: everyone starts on principal — only count instruments that someone uses as principal
+    var counts = {};
+    Object.keys(principalKeys).forEach(function(k) { counts[k] = 0; });
+    people.forEach(function(p) { counts[p.assigned] = (counts[p.assigned] || 0) + 1; });
+
+    // Step 2: greedy gap-filling — fill instruments at 0 from secondary/tertiary players
+    var zeroKeys = Object.keys(counts).filter(function(k) { return counts[k] === 0; });
+    var moves = [];
+    zeroKeys.forEach(function(targetKey) {
+        if (counts[targetKey] > 0) return; // already filled by prior move
+        // Find candidates: not moved, have targetKey at orde>1, their current assigned has >1
+        var candidates = people.filter(function(p) {
+            if (p.moved) return false;
+            if (counts[p.assigned] <= 1) return false;
+            return p.allInsts.some(function(i) { return i.key === targetKey && i.orde > 1; });
+        });
+        if (candidates.length === 0) return;
+        // Sort: lower orde for target first, then higher excess at origin
+        candidates.sort(function(a, b) {
+            var aOrde = a.allInsts.find(function(i) { return i.key === targetKey; }).orde;
+            var bOrde = b.allInsts.find(function(i) { return i.key === targetKey; }).orde;
+            if (aOrde !== bOrde) return aOrde - bOrde;
+            return counts[b.assigned] - counts[a.assigned];
+        });
+        var best = candidates[0];
+        var fromKey = best.assigned;
+        counts[fromKey]--;
+        counts[targetKey] = (counts[targetKey] || 0) + 1;
+        best.assigned = targetKey;
+        best.moved = true;
+        best.movedFrom = fromKey;
+        moves.push({ person: best, from: fromKey, to: targetKey });
+    });
+
+    // Uncovered instruments: still at 0
+    var uncovered = Object.keys(counts).filter(function(k) { return counts[k] === 0; });
+
+    // Build map: instKey → [person names] (for popup)
+    var peopleByInst = {};
+    people.forEach(function(p) {
+        var k = p.assigned;
+        if (!peopleByInst[k]) peopleByInst[k] = [];
+        var label = p.nome;
+        if (p.moved) label += ' (' + principalKeys[p.movedFrom] + ' →)';
+        peopleByInst[k].push(label);
+    });
+
+    // Render
+    var instImg = function(k) {
+        var ext = imgExts[k] || null;
+        return ext ? '<img src="assets/img/instrumentos/' + k + '.' + ext + '" alt="" class="dashboard-inst-img">' : '';
+    };
+
+    var chipHtml = function(k, cls) {
+        var names = (peopleByInst[k] || []).join('||');
+        var dataAttr = names ? ' data-inst-people="' + esc(names) + '" data-inst-nome="' + esc(principalKeys[k]) + '"' : '';
+        var clickAttr = names ? ' onclick="_instChipPopup(event,this)"' : '';
+        var clickCls = names ? ' inst-chip-clickable' : '';
+        return '<span class="' + cls + clickCls + '"' + dataAttr + clickAttr + '>' + instImg(k) + esc(principalKeys[k]) + ' <strong>' + counts[k] + '</strong></span>';
+    };
+
+    // Sorted keys by count desc
+    var sortedKeys = Object.keys(counts).sort(function(a, b) { return counts[b] - counts[a]; });
+
+    if (!detail) {
+        // === COMPACT VIEW (dashboard) ===
+        var html = '<div class="dashboard-instruments">';
+        html += '<div class="dashboard-inst-level-row">';
+        sortedKeys.forEach(function(k) {
+            var cls = 'dashboard-inst-chip';
+            if (counts[k] === 0) cls += ' dashboard-inst-chip--zero';
+            else if (moves.some(function(m) { return m.to === k; })) cls += ' dashboard-inst-chip--filled';
+            html += chipHtml(k, cls);
         });
         html += '</div>';
+        if (moves.length > 0) {
+            html += '<div class="dashboard-inst-moves">' + esc(t('reasignacions').replace('{n}', moves.length)) + '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    // === DETAIL VIEW (modal ensaios/bolos) ===
+    var html = '<div class="dashboard-instruments dashboard-instruments--detail">';
+
+    // Chips summary
+    html += '<div class="inst-alloc-summary">';
+    sortedKeys.forEach(function(k) {
+        var cls = 'dashboard-inst-chip';
+        if (counts[k] === 0) cls += ' dashboard-inst-chip--zero';
+        else if (moves.some(function(m) { return m.to === k; })) cls += ' dashboard-inst-chip--filled';
+        html += chipHtml(k, cls);
     });
+    html += '</div>';
+
+    // Per-person table
+    html += '<table class="inst-alloc-table"><tbody>';
+    // Sort: moved people first, then by name
+    var sorted = people.slice().sort(function(a, b) {
+        if (a.moved && !b.moved) return -1;
+        if (!a.moved && b.moved) return 1;
+        return a.nome.localeCompare(b.nome);
+    });
+    sorted.forEach(function(p) {
+        var rowCls = p.moved ? ' class="inst-alloc-moved"' : '';
+        html += '<tr' + rowCls + '><td>' + esc(p.nome) + '</td><td>';
+        html += instImg(p.assigned) + esc(principalKeys[p.assigned]);
+        if (p.moved) {
+            html += ' <span class="inst-alloc-badge">' + esc(principalKeys[p.movedFrom]) + ' → ' + esc(principalKeys[p.assigned]) + '</span>';
+        }
+        html += '</td></tr>';
+    });
+    html += '</tbody></table>';
+
+    // Uncovered instruments
+    if (uncovered.length > 0) {
+        html += '<div class="inst-alloc-uncovered"><span class="inst-alloc-uncovered-label">' + esc(t('sen_cobertura')) + ':</span> ';
+        uncovered.forEach(function(k) {
+            html += '<span class="dashboard-inst-chip dashboard-inst-chip--zero">' + instImg(k) + esc(principalKeys[k]) + ' <strong>0</strong></span>';
+        });
+        html += '</div>';
+    }
+
+    if (moves.length > 0) {
+        html += '<div class="dashboard-inst-moves">' + esc(t('reasignacions').replace('{n}', moves.length)) + '</div>';
+    }
+
     html += '</div>';
     return html;
 }
+
+// Instrument chip popup — inline onclick calls this, close on outside click
+function _instChipPopup(ev, chip) {
+    ev.stopPropagation();
+    ev.preventDefault();
+    var existing = document.querySelector('.inst-chip-popup');
+    if (existing) { existing.remove(); if (existing.parentElement === chip) return; }
+    var raw = chip.getAttribute('data-inst-people');
+    var nome = chip.getAttribute('data-inst-nome') || '';
+    if (!raw) return;
+    var names = raw.split('||');
+    var popup = document.createElement('div');
+    popup.className = 'inst-chip-popup';
+    popup.innerHTML = '<strong>' + esc(nome) + '</strong><ul>' + names.map(function(n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>';
+    chip.style.position = 'relative';
+    chip.appendChild(popup);
+}
+document.addEventListener('click', function() {
+    var p = document.querySelector('.inst-chip-popup');
+    if (p) p.remove();
+});
 
 var _whatsappSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
 
@@ -524,9 +681,8 @@ async function _renderDashboardNextEnsaio(ensaios) {
         return;
     }
 
-    // Make card clickable to open confirm modal
-    bodyEl.style.cursor = 'pointer';
-    bodyEl.onclick = function() { ensaiosConfirmModal(next.id); };
+    bodyEl.style.cursor = '';
+    bodyEl.onclick = null;
 
     var html = '<div class="dashboard-next-event">' +
         '<div class="dashboard-next-date">' + formatDate(next.data) + '</div>' +
@@ -562,7 +718,10 @@ async function _renderDashboardNextEnsaio(ensaios) {
             listHtml = '<p class="text-muted text-sm">' + t('ninguen_confirmou') + '</p>';
         }
         listHtml += _buildInstrumentCount(asist);
-        listHtml += '<div style="margin-top:8px;text-align:right"><button class="btn-icon btn-whatsapp" onclick="event.stopPropagation();ensaiosShareWhatsapp(' + next.id + ')" title="' + t('compartir_whatsapp') + '">' + _whatsappSvg + '</button></div>';
+        listHtml += '<div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">' +
+            '<button class="btn btn-sm btn-primary" onclick="ensaiosConfirmModal(' + next.id + ')">' + t('confirmar_asistencia_link') + '</button>' +
+            '<button class="btn-icon btn-whatsapp" onclick="ensaiosShareWhatsapp(' + next.id + ')" title="' + t('compartir_whatsapp') + '">' + _whatsappSvg + '</button>' +
+            '</div>';
         bodyEl.innerHTML = html + listHtml;
     } catch (e) {
         bodyEl.innerHTML = html;
@@ -585,9 +744,8 @@ async function _renderDashboardNextBolo(bolos) {
         return;
     }
 
-    // Make card clickable to open confirm modal
-    bodyEl.style.cursor = 'pointer';
-    bodyEl.onclick = function() { bolosConfirmModal(next.id); };
+    bodyEl.style.cursor = '';
+    bodyEl.onclick = null;
 
     var html = '<div class="dashboard-next-event">' +
         '<div class="dashboard-next-title">' + esc(next.titulo) + '</div>' +
@@ -618,7 +776,10 @@ async function _renderDashboardNextBolo(bolos) {
             listHtml = '<p class="text-muted text-sm">' + t('ninguen_confirmou') + '</p>';
         }
         listHtml += _buildInstrumentCount(asist);
-        listHtml += '<div style="margin-top:8px;text-align:right"><button class="btn-icon btn-whatsapp" onclick="event.stopPropagation();bolosShareWhatsapp(' + next.id + ')" title="' + t('compartir_whatsapp') + '">' + _whatsappSvg + '</button></div>';
+        listHtml += '<div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">' +
+            '<button class="btn btn-sm btn-primary" onclick="bolosConfirmModal(' + next.id + ')">' + t('confirmar_asistencia_link') + '</button>' +
+            '<button class="btn-icon btn-whatsapp" onclick="bolosShareWhatsapp(' + next.id + ')" title="' + t('compartir_whatsapp') + '">' + _whatsappSvg + '</button>' +
+            '</div>';
         bodyEl.innerHTML = html + listHtml;
     } catch (e) {
         bodyEl.innerHTML = html;
@@ -864,7 +1025,7 @@ function _profileAddInstrument() {
     var sel = document.getElementById('perfil-instrument-add');
     if (!sel || !sel.value) return;
     var instId = parseInt(sel.value);
-    var inst = (window._allInstruments || []).find(function(i) { return (i.id || parseInt(i.id)) === instId; });
+    var inst = (window._allInstruments || []).find(function(i) { return parseInt(i.id) === instId; });
     if (!inst) return;
     var items = window._profileInstruments || [];
     var maxOrde = items.length > 0 ? Math.max.apply(null, items.map(function(i) { return i.orde; })) : 0;
