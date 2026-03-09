@@ -38,6 +38,7 @@ var LANG_EN = {
     xa_tes_conta: 'Already have an account?',
     non_tes_conta: 'Don\'t have an account?',
     rexistrarse: 'Sign up',
+    reg_newsletter: 'Subscribe to newsletter',
     iniciar_sesion: 'Log in',
     meu_perfil: 'My profile',
     cambiar_contrasinal: 'Change password',

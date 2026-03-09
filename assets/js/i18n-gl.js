@@ -38,6 +38,7 @@ var LANG_GL = {
     xa_tes_conta: 'Xa tes conta?',
     non_tes_conta: 'Non tes conta?',
     rexistrarse: 'Rexistrarse',
+    reg_newsletter: 'Subscribirse á newsletter',
     iniciar_sesion: 'Iniciar sesión',
     meu_perfil: 'O meu perfil',
     cambiar_contrasinal: 'Cambiar contrasinal',

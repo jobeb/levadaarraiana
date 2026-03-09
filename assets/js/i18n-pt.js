@@ -38,6 +38,7 @@ var LANG_PT = {
     xa_tes_conta: 'Já tem conta?',
     non_tes_conta: 'Não tem conta?',
     rexistrarse: 'Registar-se',
+    reg_newsletter: 'Subscrever a newsletter',
     iniciar_sesion: 'Iniciar sessão',
     meu_perfil: 'Meu perfil',
     cambiar_contrasinal: 'Alterar senha',

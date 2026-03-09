@@ -106,6 +106,15 @@ function handle_auth($uri, $method, $input) {
             get_db()->prepare("UPDATE usuarios SET foto = ? WHERE id = ?")->execute([$path, $id]);
         }
 
+        // Newsletter subscription
+        if (!empty($input['newsletter']) && !empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $token = bin2hex(random_bytes(16));
+            $db->prepare(
+                "INSERT INTO newsletter (email, activo, token_baixa) VALUES (?, 1, ?)
+                 ON DUPLICATE KEY UPDATE activo = 1, token_baixa = VALUES(token_baixa)"
+            )->execute([$email, $token]);
+        }
+
         audit_log('REGISTER', 'auth', $id, $username);
         send_json(['ok' => true, 'id' => $id], 201);
     }

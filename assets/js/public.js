@@ -46,8 +46,10 @@ function _pubShareHtml(title, url) {
 }
 
 // Countdown for next event
+var _pubCountdownPrev = { d: -1, h: -1, m: -1 };
 function _pubStartCountdown(bolos) {
     if (_pubCountdownInterval) clearInterval(_pubCountdownInterval);
+    _pubCountdownPrev = { d: -1, h: -1, m: -1 };
     var now = new Date();
     var next = null;
     for (var i = 0; i < bolos.length; i++) {
@@ -76,10 +78,16 @@ function _pubStartCountdown(bolos) {
         var mins = Math.floor((diff % 3600000) / 60000);
         el.innerHTML = '<h3 style="text-align:center;margin-bottom:8px;color:var(--text)">' + esc(tc(next.bolo,'titulo')) + '</h3>' +
             '<div class="pub-countdown">' +
-            '<div class="pub-countdown-unit"><div class="pub-countdown-num">' + days + '</div><div class="pub-countdown-label">' + t('dias') + '</div></div>' +
-            '<div class="pub-countdown-unit"><div class="pub-countdown-num">' + hours + '</div><div class="pub-countdown-label">' + t('horas') + '</div></div>' +
-            '<div class="pub-countdown-unit"><div class="pub-countdown-num">' + mins + '</div><div class="pub-countdown-label">' + t('minutos') + '</div></div>' +
+            '<div class="pub-countdown-unit"><div class="pub-countdown-num" id="cd-days">' + days + '</div><div class="pub-countdown-label">' + t('dias') + '</div></div>' +
+            '<div class="pub-countdown-unit"><div class="pub-countdown-num" id="cd-hours">' + hours + '</div><div class="pub-countdown-label">' + t('horas') + '</div></div>' +
+            '<div class="pub-countdown-unit"><div class="pub-countdown-num" id="cd-mins">' + mins + '</div><div class="pub-countdown-label">' + t('minutos') + '</div></div>' +
             '</div>';
+        if (_pubCountdownPrev.d !== -1) {
+            if (days !== _pubCountdownPrev.d) { var e = document.getElementById('cd-days'); if (e) { e.classList.add('flip'); } }
+            if (hours !== _pubCountdownPrev.h) { var e2 = document.getElementById('cd-hours'); if (e2) { e2.classList.add('flip'); } }
+            if (mins !== _pubCountdownPrev.m) { var e3 = document.getElementById('cd-mins'); if (e3) { e3.classList.add('flip'); } }
+        }
+        _pubCountdownPrev = { d: days, h: hours, m: mins };
     }
     update();
     _pubCountdownInterval = setInterval(update, 60000);
@@ -1131,6 +1139,8 @@ async function _pubNewsletter() {
         msg.textContent = t('email_invalido');
         return;
     }
+    var btn = document.querySelector('#newsletter-form .btn');
+    if (btn) btn.classList.add('loading');
     try {
         await api('/newsletter', { method: 'POST', body: { email: email } });
         msg.className = 'newsletter-msg success';
@@ -1140,6 +1150,8 @@ async function _pubNewsletter() {
     } catch (e) {
         msg.className = 'newsletter-msg error';
         msg.textContent = e.message || 'Error';
+    } finally {
+        if (btn) btn.classList.remove('loading');
     }
 }
 
@@ -1149,12 +1161,6 @@ function _initFormValidation() {
     forms.forEach(function(form) {
         var inputs = form.querySelectorAll('input[required], textarea[required], input[type="email"]');
         inputs.forEach(function(inp) {
-            // Add error message element if not present
-            if (!inp.parentElement.querySelector('.field-error')) {
-                var err = document.createElement('div');
-                err.className = 'field-error';
-                inp.parentElement.appendChild(err);
-            }
             inp.addEventListener('blur', function() { _validateField(inp); });
             inp.addEventListener('input', function() {
                 if (inp.classList.contains('invalid')) _validateField(inp);
@@ -1182,9 +1188,10 @@ function _validateField(inp) {
 
     inp.classList.toggle('valid', valid && val.length > 0);
     inp.classList.toggle('invalid', !valid);
-    if (err) {
-        err.textContent = msg;
-        err.classList.toggle('visible', !valid);
+    if (!valid) {
+        inp.classList.remove('shake');
+        void inp.offsetWidth;
+        inp.classList.add('shake');
     }
     return valid;
 }
@@ -1198,9 +1205,8 @@ function _enviarContacto(e) {
         return false;
     }
     var btn = document.getElementById('contacto-submit-btn');
-    var oldText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '...';
+    btn.classList.add('loading');
 
     var data = {
         nome: document.getElementById('contacto-nome').value.trim(),
@@ -1219,7 +1225,7 @@ function _enviarContacto(e) {
         })
         .finally(function() {
             btn.disabled = false;
-            btn.textContent = oldText;
+            btn.classList.remove('loading');
         });
     return false;
 }

@@ -85,12 +85,18 @@
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(4px);
     z-index: 9999;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s;
+    pointer-events: none;
 }
 .overlay.show {
-    display: flex;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
 }
 .overlay-card {
     background: var(--bg-surface);
@@ -102,7 +108,12 @@
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
-    animation: overlayIn 0.25s ease-out;
+    transform: translateY(20px) scale(0.96);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.overlay.show .overlay-card {
+    animation: overlayIn 0.25s ease-out forwards;
 }
 @keyframes overlayIn {
     from { opacity: 0; transform: translateY(-20px) scale(0.96); }
@@ -1427,6 +1438,10 @@
     object-fit: contain;
     border-radius: var(--radius);
     animation: lightboxZoom 0.3s ease-out;
+    transition: opacity 0.25s ease;
+}
+.lightbox img.lb-fade {
+    opacity: 0;
 }
 @keyframes lightboxZoom {
     from { transform: scale(0.95); opacity: 0; }
@@ -1693,6 +1708,7 @@
 .scroll-top.show {
     opacity: 1;
     transform: translateY(0);
+    animation: scrollTopBounce 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 .scroll-top:hover {
     background: var(--primary-hover);
@@ -2264,9 +2280,96 @@
     background: var(--bg-hover, #2a3244);
 }
 
+/* ============================================================
+   Landing UX Animations
+   ============================================================ */
+
+/* #1 Scroll progress bar */
+.scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent-green), var(--accent-magenta));
+    z-index: 1001;
+    pointer-events: none;
+}
+
+/* #4 Shake on invalid fields */
+@keyframes fieldShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+.form-control.shake {
+    animation: fieldShake 0.4s ease;
+}
+
+/* #9 Input focus glow — newsletter input (not .form-control) */
+.newsletter-form input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(227, 195, 0, 0.2);
+}
+
+/* #10 Loading spinner on submit buttons */
+.btn.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 50%;
+    left: 50%;
+    margin: -9px 0 0 -9px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btnSpin 0.6s linear infinite;
+}
+@keyframes btnSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* #12 Scroll-to-top bounce entrance */
+@keyframes scrollTopBounce {
+    0%   { opacity: 0; transform: translateY(40px); }
+    60%  { opacity: 1; transform: translateY(-8px); }
+    80%  { transform: translateY(4px); }
+    100% { transform: translateY(0); }
+}
+
+/* #8 Countdown flip animation */
+@keyframes countdownFlip {
+    0%   { transform: rotateX(0); }
+    50%  { transform: rotateX(90deg); opacity: 0.5; }
+    100% { transform: rotateX(0); opacity: 1; }
+}
+.pub-countdown-num.flip {
+    animation: countdownFlip 0.5s ease;
+}
+.pub-countdown-unit {
+    perspective: 200px;
+}
+
+/* #13 Nav scrolled gradient border */
+.pub-nav.scrolled {
+    border-image: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent-green), var(--accent-magenta), transparent) 1;
+}
+
 /* ---- Reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
     .skeleton, .skeleton-card, .skeleton-img, .skeleton-line { animation: none !important; }
     .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 1 !important; transform: none !important; transition: none !important; }
     [data-landing-section] > .landing-bg.parallax { background-attachment: scroll; }
+    .scroll-progress { display: none; }
+    .pub-countdown-num.flip { animation: none; }
+    .form-control.shake { animation: none; }
+    .scroll-top.show { animation: none; }
 }
