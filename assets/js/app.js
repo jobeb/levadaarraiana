@@ -168,6 +168,7 @@ function initApp() {
     Router.register('repertorio', repertorioLoad);
     Router.register('comentarios', comentariosLoad);
     Router.register('configuracion', configuracionLoad);
+    Router.register('newsletter-admin', newsletterAdminLoad);
     Router.register('papeleira', papeleiraLoad);
     Router.register('auditoria', auditoriaLoad);
 

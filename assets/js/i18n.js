@@ -90,6 +90,8 @@ const TRANSLATIONS = {
     dni:                { gl:'DNI', es:'DNI', pt:'NIF', en:'ID' },
     data_alta:          { gl:'Data alta', es:'Fecha alta', pt:'Data registo', en:'Join date' },
     activo:             { gl:'Activo', es:'Activo', pt:'Ativo', en:'Active' },
+    activos:            { gl:'activos', es:'activos', pt:'ativos', en:'active' },
+    inactivo:           { gl:'Inactivo', es:'Inactivo', pt:'Inativo', en:'Inactive' },
     desactivado:        { gl:'Desactivado', es:'Desactivado', pt:'Desativado', en:'Disabled' },
     activar:            { gl:'Activar', es:'Activar', pt:'Ativar', en:'Activate' },
     desactivar:         { gl:'Desactivar', es:'Desactivar', pt:'Desativar', en:'Disable' },
