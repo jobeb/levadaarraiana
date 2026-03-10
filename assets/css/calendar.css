@@ -87,6 +87,11 @@
 .calendar-cell.today {
     background: var(--primary-dim);
 }
+.day-event.selected {
+    background: var(--primary-dim);
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
+}
 
 .cell-num {
     display: inline-block;

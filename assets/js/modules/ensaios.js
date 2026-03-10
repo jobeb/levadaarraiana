@@ -8,6 +8,7 @@ var _ensaiosPager = new Paginator('ensaios-pagination', { perPage: 12, onChange:
 var _ensaiosCalendar = new CalendarWidget('ensaios-calendar', {
     onDayClick: function(date, events) {
         if (events.length > 0) {
+            _ensaiosSelectEvent(events[0].id);
             _showDayPopup(date, events);
             _ensaiosRenderInstrumentCount(events[0].id);
         } else if (AppState.isSocio()) {
@@ -18,10 +19,19 @@ var _ensaiosCalendar = new CalendarWidget('ensaios-calendar', {
     onEventClick: function(id) {
         var e = (AppState.ensaios || []).find(function(x) { return x.id == id; });
         if (!e) return;
+        _ensaiosSelectEvent(id);
         _showDayPopup(e.data, _ensaiosCalendar._eventsForDay(e.data));
         _ensaiosRenderInstrumentCount(id);
     }
 });
+
+function _ensaiosSelectEvent(eventId) {
+    var calEl = document.getElementById('ensaios-calendar');
+    if (!calEl) return;
+    calEl.querySelectorAll('.day-event.selected').forEach(function(el) { el.classList.remove('selected'); });
+    var chip = calEl.querySelector('.day-event[data-event-id="' + eventId + '"]');
+    if (chip) chip.classList.add('selected');
+}
 
 function _showDayPopup(date, events) {
     $('#modal-title').textContent = formatDate(date);
@@ -125,7 +135,9 @@ function ensaiosRenderCalendar() {
     });
     _ensaiosCalendar.setEvents(events);
     _ensaiosCalendar.render();
-    _ensaiosRenderInstrumentCount();
+    _ensaiosRenderInstrumentCount().then(function(selectedId) {
+        if (selectedId) _ensaiosSelectEvent(selectedId);
+    });
 }
 
 async function _ensaiosRenderInstrumentCount(ensaioId) {
@@ -145,12 +157,12 @@ async function _ensaiosRenderInstrumentCount(ensaioId) {
         if (upcoming.length > 0) target = upcoming[0];
     }
 
-    if (!target) return;
+    if (!target) return null;
 
     try {
         var asistentes = await api('/asistencia/' + target.id);
         var instHtml = _buildInstrumentCount(asistentes, { detail: false });
-        if (!instHtml) return;
+        if (!instHtml) return target.id;
         var label = ensaioId ? formatDate(target.data) : t('proximo_ensaio') + ': ' + formatDate(target.data);
         container.innerHTML =
             '<div style="margin-top:var(--gap)">' +
@@ -161,8 +173,9 @@ async function _ensaiosRenderInstrumentCount(ensaioId) {
                 instHtml +
             '</div>';
         container.style.display = '';
+        return target.id;
     } catch (e) {
-        // silently fail
+        return null;
     }
 }
 
