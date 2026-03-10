@@ -177,6 +177,23 @@ function handle_usuarios($method, $uri, $input) {
             $db->prepare("UPDATE usuarios SET foto = ? WHERE id = ?")->execute([$foto_path, $newId]);
         }
 
+        // Handle multi-instrument
+        if (isset($input['instrumentos']) && is_array($input['instrumentos'])) {
+            $ins = $db->prepare("INSERT INTO usuario_instrumentos (usuario_id, instrumento_id, orde) VALUES (?, ?, ?)");
+            foreach ($input['instrumentos'] as $item) {
+                $ins->execute([$newId, (int)$item['instrumento_id'], (int)$item['orde']]);
+            }
+            // Sync legacy instrumento field with principal (orde=1)
+            $principal = $db->prepare(
+                "SELECT i.nome FROM usuario_instrumentos ui JOIN instrumentos i ON i.id = ui.instrumento_id WHERE ui.usuario_id = ? ORDER BY ui.orde ASC LIMIT 1"
+            );
+            $principal->execute([$newId]);
+            $pRow = $principal->fetch();
+            if ($pRow) {
+                $db->prepare("UPDATE usuarios SET instrumento = ? WHERE id = ?")->execute([$pRow['nome'], $newId]);
+            }
+        }
+
         audit_log('CREATE', 'usuarios', $newId, $username);
         send_json(['ok' => true, 'id' => $newId], 201);
     }

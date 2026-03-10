@@ -245,8 +245,7 @@ function usuariosModal(usuario) {
             '<label>' + t('instrumentos') + '</label>' +
             '<div id="usuario-instruments-list" class="profile-instruments-list"></div>' +
             '<div class="instrument-add-row">' +
-                '<select class="form-control" id="usuario-instrument-add"><option value="">—</option></select>' +
-                '<button type="button" class="btn btn-sm btn-secondary" onclick="_usuarioAddInstrument()">+</button>' +
+                '<select class="form-control" id="usuario-instrument-add" onchange="_usuarioAddInstrument()"><option value="">— ' + t('engadir_instrumento') + ' —</option></select>' +
             '</div>' +
         '</div>' +
         '<div class="form-group">' +

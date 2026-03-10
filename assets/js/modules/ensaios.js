@@ -9,6 +9,7 @@ var _ensaiosCalendar = new CalendarWidget('ensaios-calendar', {
     onDayClick: function(date, events) {
         if (events.length > 0) {
             _showDayPopup(date, events);
+            _ensaiosRenderInstrumentCount(events[0].id);
         } else if (AppState.isSocio()) {
             ensaiosModal();
             setTimeout(function() { var d = $('#ensaio-data'); if (d) d.value = date; }, 50);
@@ -18,6 +19,7 @@ var _ensaiosCalendar = new CalendarWidget('ensaios-calendar', {
         var e = (AppState.ensaios || []).find(function(x) { return x.id == id; });
         if (!e) return;
         _showDayPopup(e.data, _ensaiosCalendar._eventsForDay(e.data));
+        _ensaiosRenderInstrumentCount(id);
     }
 });
 
@@ -107,6 +109,8 @@ function ensaiosSetView(view) {
     var filtersEl = $('#ensaios-filters');
     if (filtersEl) filtersEl.style.display = view === 'list' ? '' : 'none';
     $('#ensaios-calendar').style.display = view === 'calendar' ? '' : 'none';
+    var instCountEl = $('#ensaios-instrument-count');
+    if (instCountEl) instCountEl.style.display = view === 'calendar' ? '' : 'none';
     $('#ensaios-notas-list').style.display = view === 'notas' ? '' : 'none';
     if (view === 'list') ensaiosRender();
     if (view === 'calendar') ensaiosRenderCalendar();
@@ -121,6 +125,45 @@ function ensaiosRenderCalendar() {
     });
     _ensaiosCalendar.setEvents(events);
     _ensaiosCalendar.render();
+    _ensaiosRenderInstrumentCount();
+}
+
+async function _ensaiosRenderInstrumentCount(ensaioId) {
+    var container = document.getElementById('ensaios-instrument-count');
+    if (!container) return;
+    container.style.display = 'none';
+
+    var target = null;
+    if (ensaioId) {
+        target = (AppState.ensaios || []).find(function(e) { return e.id == ensaioId; });
+    } else {
+        // Default: next scheduled rehearsal
+        var today = new Date().toISOString().slice(0, 10);
+        var upcoming = (AppState.ensaios || []).filter(function(e) {
+            return e.estado === 'programado' && e.data >= today;
+        }).sort(function(a, b) { return (a.data + (a.hora_inicio || '')).localeCompare(b.data + (b.hora_inicio || '')); });
+        if (upcoming.length > 0) target = upcoming[0];
+    }
+
+    if (!target) return;
+
+    try {
+        var asistentes = await api('/asistencia/' + target.id);
+        var instHtml = _buildInstrumentCount(asistentes, { detail: false });
+        if (!instHtml) return;
+        var label = ensaioId ? formatDate(target.data) : t('proximo_ensaio') + ': ' + formatDate(target.data);
+        container.innerHTML =
+            '<div style="margin-top:var(--gap)">' +
+                '<h3 style="font-size:1rem;margin-bottom:8px">' + esc(label) +
+                    (target.lugar ? ' — ' + esc(target.lugar) : '') +
+                    (target.hora_inicio ? ' · ' + esc(target.hora_inicio) : '') +
+                '</h3>' +
+                instHtml +
+            '</div>';
+        container.style.display = '';
+    } catch (e) {
+        // silently fail
+    }
 }
 
 function ensaiosRenderNotas() {

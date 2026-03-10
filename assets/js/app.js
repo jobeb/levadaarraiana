@@ -951,8 +951,7 @@ function openProfileModal() {
             '<label>' + t('meus_instrumentos') + '</label>' +
             '<div id="perfil-instruments-list" class="profile-instruments-list"></div>' +
             '<div class="instrument-add-row">' +
-                '<select class="form-control" id="perfil-instrument-add"><option value="">—</option></select>' +
-                '<button type="button" class="btn btn-sm btn-secondary" onclick="_profileAddInstrument()">+</button>' +
+                '<select class="form-control" id="perfil-instrument-add" onchange="_profileAddInstrument()"><option value="">— ' + t('engadir_instrumento') + ' —</option></select>' +
             '</div>' +
         '</div>' +
         '<div class="form-group">' +
